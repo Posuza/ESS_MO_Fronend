@@ -11,7 +11,7 @@ import ClothIcon from "../../../assets/mo_icon/cloth1.png";
 import WarningIcon from "../../../assets/mo_icon/warinig1.png";
 import styles from "./MoPdfView.module.css";
 import type { SectorReport } from "../../../store/store";
-import SharePdfModal from "../../../components/mo/SharePdfModal";
+import SharePdfModal from "../../../components/Mo/SharePdfModal";
 
 type Props = {
   item: SectorReport;
@@ -105,7 +105,7 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     // Wait for DOM to update
     await new Promise(res => setTimeout(res, 100));
     try {
-      const opt = {
+      const opt: any = {
         margin: 0,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
@@ -134,7 +134,7 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     setScale(1);
     await new Promise(res => setTimeout(res, 100));
     try {
-      const opt = {
+      const opt: any = {
         margin: 0,
         filename: `MO_Report_${data.id || "report"}.pdf`,
         image: { type: "jpeg", quality: 0.98 },

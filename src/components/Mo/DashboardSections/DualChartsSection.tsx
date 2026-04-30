@@ -43,7 +43,7 @@ const BAR_SUB_CATEGORIES: Record<string, { key: string; label: string; color: st
 };
 
 export default function DualCharts() {
-  const records = caseData || [];
+  const records = (caseData as any) || [];
 
   const [topN, setTopN] = useState(5);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export default function DualCharts() {
 
   // Date-range controls at the section level so both charts receive filtered data
   const hasDateField = useMemo(
-    () => records.some((r) => r && (r.date || r.timestamp || r.created_at)),
+    () => records.some((r) => r && (r.date || r.timestamp || r.create_at)),
     [records],
   );
 
@@ -66,7 +66,7 @@ export default function DualCharts() {
     let min: Date | null = null;
     let max: Date | null = null;
     records.forEach((r) => {
-      const v = r.date || r.timestamp || r.created_at;
+      const v = r.date || r.timestamp || r.create_at;
       const pd = parseDate(v);
       if (!pd) return;
       if (!min || pd < min) min = pd;
@@ -89,7 +89,7 @@ export default function DualCharts() {
     const s = parseDate(startDate);
     const e = parseDate(endDate);
     return records.filter((r) => {
-      const v = r.date || r.timestamp || r.created_at;
+      const v = r.date || r.timestamp || r.create_at;
       const pd = parseDate(v);
       if (!pd) return false;
       if (s && pd < s) return false;

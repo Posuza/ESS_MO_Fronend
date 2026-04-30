@@ -19,7 +19,7 @@ import MoDetailPage from "../MoDetailPage/MoDetailPage";
 import MoUpdatePage from "../MoUpdatePage/MoUpdatePage";
 import MoDashboard from "../MoDashboard/MoDashborad";
 
-type SubView = "main" | "new" | "detail" | "update" | "dashboard";
+type SubView = "main" | "new" | "detail" | "update" | "dashboard" | "pdfviewer";
 
 type Props = {
   onBackHome?: () => void;
