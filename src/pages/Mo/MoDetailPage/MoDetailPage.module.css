@@ -1,0 +1,589 @@
+/* --- REPLACED: remove old mixed selectors and conflicting max-width --- */
+/* Separate submit vs back button styles (do NOT mix) */
+
+/* submit button handled by consolidated .guts-submit-btn below */
+
+/* consolidated back/action styles appear later in file */
+
+/* Back hover removed */
+
+/* keep responsive layout (side-by-side on wide screens) */
+@media (min-width: 720px) {
+  .guts-Mo-actions {
+    flex-direction: row;
+    justify-content: center;
+    gap: 12px;
+  }
+}
+
+/* keep responsive spacing when actions are horizontal in other contexts */
+@media (min-width: 720px) {
+  .guts-Mo-actions {
+    flex-direction: row;
+  }
+  .guts-back-link {
+    width: auto;
+    max-width: none;
+    margin-top: 0;
+  }
+}
+
+/* Back/action styles removed per request */
+
+/* Ensure action buttons appear inline on narrow screens without overflowing */
+@media (max-width: 420px) {
+  .guts-Mo-actions {
+    flex-direction: row; /* keep them side-by-side */
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  .guts-Mo-actions .guts-btn,
+  .guts-Mo-actions .guts-submit-btn {
+    min-width: 0 !important; /* allow shrinking */
+    max-width: none !important;
+    width: auto !important; /* don't force full-width per-button */
+    flex: 1 1 0; /* let both buttons share the row equally */
+  }
+
+  /* reduce overall padding/margins so buttons fit better on tiny screens */
+  .guts-Mo-actions {
+    margin-top: 8px;
+  }
+}
+
+/* Back button (outside form) */
+.gut-detail-btns-box {
+  display: flex;
+  width: 100%;
+  justify-content: space-between; /* spread back pill and action icons */
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  box-sizing: border-box;
+}
+
+/* Hover states */
+.gut-back-icon {
+  height: 40px;
+  padding: 10px; /* make it a broader pill */
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brandDark, rgba(2, 75, 118, 0.9));
+  border: 1px solid rgba(2, 75, 118, 0.06);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.gut-back-icon:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
+  background: rgba(4, 110, 146, 0.9);
+  border-color: rgba(2, 75, 118, 0.18);
+}
+
+/* ensure the arrow icon follows the button color */
+.gut-back-icon svg {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+.guts-action-icons {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.guts-icon-btn {
+  height: 38px;
+  width: 38px;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid rgba(2, 75, 118, 0.06);
+  color: var(--brandDark, rgba(2, 75, 118, 0.9));
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(2, 16, 43, 0.1);
+}
+
+.guts-icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
+}
+
+.guts-icon-btn[title="Preview PDF"]:hover {
+  background: rgba(16, 185, 129, 0.14); /* light green */
+  color: rgb(16, 185, 129); /* icon stroke follows this (dark green) */
+  border-color: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
+  transform: translateY(-2px);
+}
+
+.guts-icon-btn[title="Preview PDF"]:hover svg {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+.guts-icon-btn svg {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+/* MO form shell */
+.guts-Mo-layout {
+  margin-top: 10px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  border: 2px solid rgba(2, 75, 118, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.1);
+  padding: 14px 10px 10px;
+  display: grid;
+  grid-template-columns: 1fr; /* always single column (mobile-first) */
+  gap: 5px;
+  align-items: start;
+}
+
+/* When the inline action icons are hidden, use a lighter border/shadow */
+.guts-Mo-layout.icons-hidden {
+  border: 2px solid rgba(2, 75, 118, 0.18);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.1);
+}
+
+/* Explicit rule for visible state to ensure consistent look */
+.guts-Mo-layout.icons-visible {
+  border: 2px solid rgba(2, 75, 118, 0.24);
+  box-shadow: 0 18px 34px rgba(2, 75, 118, 0.14);
+}
+
+/* box title */
+.guts-box-title {
+  font-weight: 900;
+  color: var(--blueText);
+  font-size: 18px;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+/* Right-aligned title for item header inside the form */
+.guts-box-title.box-id {
+  justify-self: end; /* places it at the right in the form grid */
+  text-align: right;
+  width: 100%;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+.report-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.meta-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-meta .box-id {
+  margin: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid transparent;
+  line-height: 1;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.status-badge svg {
+  flex-shrink: 0;
+}
+
+.status-pending {
+  background: linear-gradient(180deg, rgba(255, 247, 237, 0.96), rgba(255, 237, 213, 0.98));
+  color: rgb(154, 82, 20);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.status-approved {
+  background: linear-gradient(180deg, rgba(240, 253, 244, 0.96), rgba(220, 252, 231, 0.98));
+  color: rgb(6, 95, 70);
+  border-color: rgba(52, 211, 153, 0.34);
+}
+
+.status-reject {
+  background: linear-gradient(180deg, rgba(254, 242, 242, 0.96), rgba(254, 226, 226, 0.98));
+  color: rgb(153, 27, 27);
+  border-color: rgba(248, 113, 113, 0.32);
+}
+
+.approval-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.approval-header .guts-box-title {
+  margin-bottom: 0;
+}
+
+.guts-box.approval-box {
+  border-width: 1px;
+}
+
+.guts-box.approval-box-pending {
+  border: 1px solid rgba(217, 119, 6, 0.28);
+  background: rgba(217, 119, 6, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.03);
+}
+
+.guts-box.approval-box-approved {
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.03);
+}
+
+.guts-box.approval-box-reject {
+  border: 1px solid rgba(185, 28, 28, 0.28);
+  background: rgba(185, 28, 28, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.06);
+}
+
+.guts-box {
+  margin-bottom: 0; /* spacing handled by grid gap */
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(2, 75, 118, 0.06);
+  box-shadow: 0 6px 14px rgba(2, 75, 118, 0.03);
+}
+
+/* collapsible box (used for "ลา") */
+.guts-box.collapsible .guts-box-title {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* label + control row (default: horizontal — label left, control right) */
+.guts-field-row {
+  display: flex;
+  flex-direction: row; /* keep inline on mobile */
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.guts-field-row .guts-label {
+  max-width: 40%;
+  text-align: left;
+  font-weight: 700;
+  color: var(--blueText);
+  font-size: 14px;
+  padding-left: 6px;
+}
+
+.guts-field-row .guts-mo-selection {
+  max-width: 40%;
+  text-align: left;
+  font-weight: 700;
+  color: var(--blueText);
+  font-size: 14px;
+  margin-left: 3px;
+}
+
+.guts-field-row .guts-mo-group-label {
+  flex: auto;
+  text-align: left;
+  font-weight: 700;
+  color: var(--blueText);
+  font-size: 15.5px;
+  padding-left: 5px;
+}
+
+.guts-field-row .guts-input,
+.guts-field-row select,
+.guts-field-row textarea {
+  max-width: 60%;
+  align-self: right;
+  height: 35px;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 15px;
+  border: 1px solid rgba(2, 75, 118, 0.12);
+  background: #fff;
+  box-shadow: none;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.guts-field-row .guts-input-full,
+.guts-field-row select,
+.guts-field-row textarea {
+  max-width: 100%;
+  align-self: right;
+  height: 35px;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 15px;
+  border: 1px solid rgba(2, 75, 118, 0.12);
+  background: #fff;
+  box-shadow: none;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.guts-field-row textarea.guts-input {
+  min-height: 88px;
+  height: auto;
+}
+
+.guts-field-row .guts-input:focus,
+.guts-field-row select:focus,
+.guts-field-row textarea:focus {
+  border-color: rgba(2, 75, 118, 0.22);
+  box-shadow: 0 6px 14px rgba(2, 75, 118, 0.06);
+  outline: none;
+}
+
+/* when a row should be full width (no left label) stack vertically */
+.guts-field-row.full-width {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* make inputs/selects/textarea fill available space in full-width rows */
+.guts-field-row.full-width .guts-input,
+.guts-field-row.full-width select,
+.guts-field-row.full-width textarea,
+.guts-field-row.full-width .guts-mo-selection {
+  max-width: 100%;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* two-column small-row: label left, input+suffix right (mobile inline) */
+.guts-field-row.two-col {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.guts-field-row.two-col .guts-label {
+  flex: 0 0 120px; /* fixed label column width */
+  max-width: 40%;
+  padding-left: 6px;
+  text-align: left;
+}
+
+.guts-field-row.two-col .guts-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}
+
+.guts-field-row.two-col .guts-input.small {
+  width: 56px;
+  height: 30px;
+  min-width: 56px;
+  max-width: 56px;
+  text-align: center;
+}
+
+.guts-field-row.two-col .guts-suffix {
+  font-weight: 700;
+  color: var(--blueText);
+  white-space: nowrap;
+}
+
+/* ensure full-width textarea uses guts-input styling and fills width */
+.guts-field-row.full-width .guts-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* small spacing tweak under section label */
+.guts-field-row + .guts-field-row.full-width {
+  margin-top: 6px;
+}
+
+/* make full-width textareas appear as real multi-line fields */
+.guts-field-row.full-width textarea,
+.guts-input-full {
+  min-height: 48px; /* shortened from 64px */
+  height: auto;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.4;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* override the generic 35px height so it doesn't shrink full-width textareas */
+.guts-field-row .guts-input-full,
+.guts-field-row.full-width textarea.guts-input-full {
+  height: auto !important;
+  min-height: 48px !important;
+}
+
+/* small numeric inputs used inside collapsed section */
+.guts-input.small {
+  width: 56px;
+  max-width: 56px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.guts-collapse-toggle {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: rgba(27, 43, 74, 0.9);
+}
+
+/* hide body when collapsed */
+.guts-box-body.collapsed {
+  display: none;
+}
+
+/* make the small section label match the box title visually */
+.guts-label.section-label {
+  font-weight: 900;
+  color: var(--blueText);
+  font-size: 18px;
+  margin: 0;
+  padding-left: 6px; /* keep alignment with other labels */
+}
+
+/* subbox (inner panel used for การควงกะ) */
+.guts-subbox {
+  border: 1px solid rgba(2, 75, 118, 0.08);
+  border-radius: 8px;
+  background: #fafafa;
+  padding: 8px;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+
+/* ensure two-col rows inside subbox follow same layout */
+.guts-subbox .guts-field-row.two-col {
+  padding: 6px 2px;
+}
+
+.guts-subbox-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.guts-subbox-title .guts-mo-selection {
+  width: auto;
+  min-width: 160px;
+}
+
+.guts-subbox-toggle {
+  font-weight: 700;
+  color: var(--blueText);
+  padding-right: 6px;
+}
+
+.guts-subbox-body.collapsed {
+  display: none;
+}
+
+.guts-subbox-body {
+  padding-top: 8px;
+}
+
+/* ensure full-width textarea always fills the available width */
+.guts-input-full {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.approval-remark {
+  min-height: 52px !important;
+  background: transparent !important;
+}
+
+/* Status border color for approval remark textarea */
+.guts-box.approval-box-pending .approval-remark {
+  border-color: rgba(217, 119, 6, 0.22) !important;
+}
+
+.guts-box.approval-box-approved .approval-remark {
+  border-color: rgba(16, 185, 129, 0.22) !important;
+}
+
+.guts-box.approval-box-reject .approval-remark {
+  border-color: rgba(185, 28, 28, 0.22) !important;
+}
+
+/* ensure detail-box textareas use the same full-width styling */
+.guts-detail-box .guts-input-full,
+.guts-detail-box .guts-detail-textarea {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  min-height: 48px;
+  height: auto;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.4;
+  border-radius: 8px;
+  border: 1px solid rgba(2, 75, 118, 0.12);
+  background: #fff;
+  font-weight: 700;
+}
