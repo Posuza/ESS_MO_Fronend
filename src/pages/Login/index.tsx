@@ -4,7 +4,7 @@ import Header from "@/layout/Header";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 
-import styles from "./login.module.css";
+import styles from "./Login.module.css";
 
 type Props = {
   empCode: string;
