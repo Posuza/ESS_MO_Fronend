@@ -30,26 +30,33 @@ export interface SectorReportCreate {
 
 export const sectorReportService = {
     async getAll(filters?: SectorReportFilters): Promise<SectorReport[]> {
-        const queryParams = new URLSearchParams();
-        if (filters) {
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    queryParams.append(key, String(value));
+        try {
+            const queryParams = new URLSearchParams();
+            if (filters) {
+                Object.entries(filters).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        queryParams.append(key, String(value));
+                    }
+                });
+            }
+            const queryString = queryParams.toString();
+            const url = `${API_URL}/sector-reports/${queryString ? `?${queryString}` : ''}`;
+            
+            console.log("📡 Fetching sector reports from:", url);
+            const response = await fetch(url, {
+                ...API_CONFIG,
+                headers: {
+                    ...API_CONFIG.headers,
+                    ...API_CONFIG.getAuthHeader()
                 }
             });
+            console.log("✅ Response status:", response.status);
+            if (!response.ok) throw new Error('Failed to fetch sector reports');
+            return response.json();
+        } catch (error) {
+            console.error("❌ Error fetching sector reports:", error);
+            throw error;
         }
-        const queryString = queryParams.toString();
-        const url = `${API_URL}/sector-reports/${queryString ? `?${queryString}` : ''}`;
-        
-        const response = await fetch(url, {
-            ...API_CONFIG,
-            headers: {
-                ...API_CONFIG.headers,
-                ...API_CONFIG.getAuthHeader()
-            }
-        });
-        if (!response.ok) throw new Error('Failed to fetch sector reports');
-        return response.json();
     },
 
 

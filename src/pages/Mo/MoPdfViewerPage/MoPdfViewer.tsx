@@ -20,7 +20,7 @@ type Props = {
 };
 
 export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
-  const data: any = item;
+  const data = item;
 
   // Date formatting
   let displayDate = "";
@@ -111,16 +111,17 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     // Wait for DOM to update
     await new Promise(res => setTimeout(res, 150));
     try {
-      const opt: any = {
+      const opt = {
         margin: 0,
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg" as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "px", format: [PDF_WIDTH, PDF_HEIGHT], orientation: "portrait" },
+        jsPDF: { unit: "px" as const, format: [PDF_WIDTH, PDF_HEIGHT] as [number, number], orientation: "portrait" as const },
       };
       const worker = html2pdf().set(opt).from(pdfElement);
       const pdfBlob = await worker.outputPdf('blob');
       return pdfBlob;
-    } catch (e) {
+    } catch (error) {
+      console.error("PDF generation failed:", error);
       alert("PDF generation failed");
       return null;
     } finally {
@@ -149,15 +150,16 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     
     await new Promise(res => setTimeout(res, 150));
     try {
-      const opt: any = {
+      const opt = {
         margin: 0,
         filename: `MO_Report_${data.id || "report"}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg" as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "px", format: [PDF_WIDTH, PDF_HEIGHT], orientation: "portrait" },
+        jsPDF: { unit: "px" as const, format: [PDF_WIDTH, PDF_HEIGHT] as [number, number], orientation: "portrait" as const },
       };
       await html2pdf().set(opt).from(pdfElement).save();
-    } catch (e) {
+    } catch (error) {
+      console.error("PDF download failed:", error);
       alert("PDF download failed");
     } finally {
       // Restore original styles
@@ -249,8 +251,8 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
   const scaledHeight = PDF_HEIGHT * scale;
 
   return (
-    <div className={styles["pdf-viewer-wrapper"]}>
-      {/* FIXED ACTION BAR (Outside of zoom/scroll container) */}
+    <>
+      {/* ACTION BAR - Outside wrapper to prevent overflow conflicts */}
       <div className={styles["btns-box"]}>
         <button
           className={styles["gut-back-icon"]}
@@ -285,8 +287,10 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
         </div>
       </div>
 
-      {/* CANVAS VIEWPORT */}
-      <div className={styles["pdf-container"]} ref={containerRef}>
+      {/* PDF VIEWER WRAPPER */}
+      <div className={styles["pdf-viewer-wrapper"]}>
+        {/* CANVAS VIEWPORT */}
+        <div className={styles["pdf-container"]} ref={containerRef}>
         {/* Sized wrapper so layout height tracks the scaled size */}
         <div style={{ width: scaledWidth, height: scaledHeight, minHeight: '100%', position: 'relative', flexShrink: 0 }}>
           <div
@@ -327,7 +331,7 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
           <div className={styles["pdf-meta-row"]}>
             <div className={styles["meta-location"]}>
               <MapPin size={18} strokeWidth={2.5} />
-              <span>{sectorName || data.location || "-"}</span>
+              <span>{sectorName || "-"}</span>
             </div>
             <div className={styles["meta-date"]}>{displayDate}</div>
           </div>
@@ -549,15 +553,16 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
           </div>
         </div>
       </div>
-      </div>
-
-          {/* Show SharePdfModal with only PDF share if sharePdfBlob is set */}
-          <SharePdfModal
-            open={shareOpen}
-            onClose={() => { setShareOpen(false); setSharePdfBlob(null); }}
-            shareUrl={''}
-            pdfBlob={sharePdfBlob}
-          />
     </div>
+  </div>
+
+      {/* Show SharePdfModal with only PDF share if sharePdfBlob is set */}
+      <SharePdfModal
+        open={shareOpen}
+        onClose={() => { setShareOpen(false); setSharePdfBlob(null); }}
+        shareUrl={''}
+        pdfBlob={sharePdfBlob}
+      />
+    </>
   );
 }
