@@ -101,9 +101,15 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     setPdfLoading(true);
     // Prepare: close overlays and set scale to 1
     const prevScale = prepareForPdf();
-    setScale(1);
+    
+    // Temporarily remove transform and position styles for PDF generation
+    const originalTransform = (pdfElement as HTMLElement).style.transform;
+    const originalPosition = (pdfElement as HTMLElement).style.position;
+    (pdfElement as HTMLElement).style.transform = 'none';
+    (pdfElement as HTMLElement).style.position = 'static';
+    
     // Wait for DOM to update
-    await new Promise(res => setTimeout(res, 100));
+    await new Promise(res => setTimeout(res, 150));
     try {
       const opt: any = {
         margin: 0,
@@ -118,6 +124,9 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
       alert("PDF generation failed");
       return null;
     } finally {
+      // Restore original styles
+      (pdfElement as HTMLElement).style.transform = originalTransform;
+      (pdfElement as HTMLElement).style.position = originalPosition;
       // Restore scale after PDF generation
       restoreAfterPdf(prevScale);
       setPdfLoading(false);
@@ -131,8 +140,14 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     setPdfLoading(true);
     // Prepare: close overlays and set scale to 1
     const prevScale = prepareForPdf();
-    setScale(1);
-    await new Promise(res => setTimeout(res, 100));
+    
+    // Temporarily remove transform and position styles for PDF generation
+    const originalTransform = (pdfElement as HTMLElement).style.transform;
+    const originalPosition = (pdfElement as HTMLElement).style.position;
+    (pdfElement as HTMLElement).style.transform = 'none';
+    (pdfElement as HTMLElement).style.position = 'static';
+    
+    await new Promise(res => setTimeout(res, 150));
     try {
       const opt: any = {
         margin: 0,
@@ -145,6 +160,9 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     } catch (e) {
       alert("PDF download failed");
     } finally {
+      // Restore original styles
+      (pdfElement as HTMLElement).style.transform = originalTransform;
+      (pdfElement as HTMLElement).style.position = originalPosition;
       // Restore scale after PDF generation
       restoreAfterPdf(prevScale);
       setPdfLoading(false);
@@ -270,11 +288,17 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
       {/* CANVAS VIEWPORT */}
       <div className={styles["pdf-container"]} ref={containerRef}>
         {/* Sized wrapper so layout height tracks the scaled size */}
-        <div style={{ minWidth: scaledWidth, minHeight: scaledHeight, flexShrink: 0 }}>
+        <div style={{ width: scaledWidth, height: scaledHeight, minHeight: '100%', position: 'relative', flexShrink: 0 }}>
           <div
             className={styles["pdf-page"]}
             id="guts-pdf-content"
-            style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
           >
           {/* Top Header Section */}
           <div className={styles["pdf-header-row"]}>
@@ -495,20 +519,31 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
             </div>
           </div>
 
+          {/* APPROVAL REMARK SECTION */}
+          <div className={styles["approval-divider"]}>
+            <div className={styles["approval-divider-line"]}></div>
+            <div className={styles["approval-divider-text"]}>การอนุมัติ</div>
+            <div className={styles["approval-divider-line"]}></div>
+          </div>
+
+          <div className={styles["approval-content"]}>
+            <p className={styles["approval-text"]}>
+              {data.approved_remark ? `• ${data.approved_remark}` : "• วันที่ 5 เดือน"}
+            </p>
+          </div>
+
           {/* SIGNATURE SECTIONS */}
           <div className={styles["pdf-signatures"]}>
             <div className={styles["signature-slot"]}>
-              <div className={styles["signature-title"]}>คุณ ส่ง</div>
+              <div className={styles["signature-title"]}>ผู้ บันทึก</div>
               <div className={styles["signature-line"]}>
                 {data.created_by || "ADMIN"}
               </div>
             </div>
             <div className={styles["signature-slot"]}>
-              <div className={styles["signature-title"]}>คุณ อนุมัติ</div>
+              <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
               <div className={styles["signature-line"]}>
-                {data.approved_status === "APPROVED"
-                  ? "ผู้ดูแลระบบอนุมัติเรียบร้อย"
-                  : ""}
+                {data.approved_by || "\u00A0"}
               </div>
             </div>
           </div>

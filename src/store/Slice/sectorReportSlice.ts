@@ -24,8 +24,14 @@ export interface SectorReport {
   wear_shirt_count: number;
   wear_pant_count: number;
   wear_shoe_count: number;
+  rule_sleep_count: number;
+  rule_use_phone_count: number;
+  rule_no_card_count: number;
   other_Job?: string;
   other_Job_count?: number;
+  other_training?: string;
+  other_training_count?: number;
+  other_extral?: string;
   created_at?: string;
   created_by: string;
 }
