@@ -1,5 +1,5 @@
 // API Configuration
-export const API_URL = "https://evil-wings-eat.loca.lt/api/v1";
+export const API_URL = "https://new-garlics-dig.loca.lt/api/v1";
 console.log("API URL:", API_URL);
 
 export const API_CONFIG = {
