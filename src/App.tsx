@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import CheckInOut from "./pages/Attendance/CheckInOut";
 import FaceVerify from "./pages/Attendance/FaceVerify";
 import FirstLoginModal from "./components/FirstLoginModal";
+import { employeeService } from "./services/employee.Service";
 
 type Route =
   | "login"
@@ -30,7 +31,9 @@ export default function App() {
   const pinValid = useMemo(() => /^\d{6}$/.test(pin), [pin]);
   const canSubmit = empValid && pinValid;
 
-  const [displayName] = useState("สุพจน์ หอมดอก");
+  const [displayName, setDisplayName] = useState(
+    () => localStorage.getItem("display_name") || "",
+  );
 
   const [lastInAt, setLastInAt] = useState<string | null>(null);
   const [lastOutAt, setLastOutAt] = useState<string | null>(null);
@@ -62,10 +65,23 @@ export default function App() {
       return;
     }
 
-    // Keep current actor identity for backend audit/authorization headers.
-    localStorage.setItem("emp_code", empCode);
-    localStorage.setItem("token", empCode); // dev fallback until real auth token is integrated
-    reset("home");
+    try {
+      const employee = await employeeService.getByCode(empCode);
+      const nextDisplayName = [employee.first_name, employee.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      localStorage.setItem("emp_code", empCode);
+      localStorage.setItem("display_name", nextDisplayName);
+
+      setDisplayName(nextDisplayName);
+      reset("home");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "ไม่พบข้อมูลพนักงานหรือเข้าสู่ระบบไม่สำเร็จ";
+      alert(message);
+    }
   }
 
   async function onRequestPassword() {
@@ -75,8 +91,9 @@ export default function App() {
 
   function onLogout() {
     setPin("");
+    setDisplayName("");
     localStorage.removeItem("emp_code");
-    localStorage.removeItem("token");
+    localStorage.removeItem("display_name");
     reset("login");
   }
 
