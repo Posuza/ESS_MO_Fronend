@@ -1,10 +1,27 @@
 /* Single unified card wrapping controls + chart */
 .mo-linechart {
   background: linear-gradient(180deg, var(--cardTop), var(--cardBottom));
-  border: 1px solid rgba(2, 75, 118, 0.06);
+  border: none !important;
   border-radius: 13px;
   box-shadow: 0 6px 14px rgba(2, 75, 118, 0.03);
   margin: 12px 0px;
+  outline: none !important;
+  box-sizing: border-box;
+  overflow: visible;
+  padding: 1px;
+}
+
+.mo-linechart *,
+.mo-linechart *::before,
+.mo-linechart *::after {
+  box-sizing: border-box;
+}
+
+.mo-linechart:focus,
+.mo-linechart:focus-visible,
+.mo-linechart:focus-within {
+  outline: none !important;
+  border: none !important;
 }
 
 /* Controls row sits inside the card — no extra box */
@@ -22,11 +39,19 @@
 /* Remove the inner chart-card's own background/border so it blends in */
 .mo-linechart .chart-card {
   background: transparent;
-  border: none;
+  border: none !important;
   border-radius: 0;
   box-shadow: none;
   padding: 0;
   margin-bottom: 0;
+  outline: none !important;
+  overflow: visible;
+}
+
+.mo-linechart .chart-card:focus,
+.mo-linechart .chart-card:focus-visible {
+  outline: none !important;
+  border: none !important;
 }
 
 .chart-pill-select {

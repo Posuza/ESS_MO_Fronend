@@ -53,6 +53,18 @@ const LineChart = ({ chartData, chartCategories }) => {
     setIncludedCategories(categories.map(c => c.key));
   }, [categories]);
 
+  // Remove keyboard focus from Recharts SVG
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      const svgs = document.querySelectorAll('.chart-card svg.recharts-surface');
+      svgs.forEach(el => {
+        el.setAttribute('focusable', 'false');
+        el.removeAttribute('tabindex');
+      });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [chartData]);
+
   const handleCategoryToggle = (key) => {
     setIncludedCategories((prev) =>
       prev.includes(key)
@@ -62,7 +74,7 @@ const LineChart = ({ chartData, chartCategories }) => {
   };
 
   return (
-    <div className="chart-card">
+    <div className="chart-card" tabIndex={-1} role="img" aria-label="Line chart">
       {/* Category Options */}
       {/* <div className="chart-controls">
         <span className="font-semibold">Categories:</span>
@@ -80,16 +92,19 @@ const LineChart = ({ chartData, chartCategories }) => {
 
       <div className="chart-mobile">
         {/* Mobile chart: smaller axis text */}
-        <ResponsiveContainer width="100%" height={192}>
+        <ResponsiveContainer width="100%" height={240}>
           <RechartsLineChart
             data={chartData}
-            margin={{ top: 10, right: 5, left: -35, bottom: 5 }}
+            margin={{ top: 10, right: 5, left: -35, bottom: 55 }}
           >
             <CartesianGrid strokeDasharray="2 2" />
             <XAxis
               dataKey="group"
+              type="category"
+              interval={0}
               stroke="#8884d8"
-              tick={{ fontSize: tickSize, fill: "#8884d8" }}
+              tick={{ fontSize: tickSize, fill: "#8884d8", angle: -45, textAnchor: 'end' }}
+              height={60}
             />
             <YAxis
               stroke="#8884d8"
@@ -117,16 +132,19 @@ const LineChart = ({ chartData, chartCategories }) => {
       </div>
       <div className="chart-desktop">
         {/* Desktop/tablet chart: larger axis text */}
-        <ResponsiveContainer width="100%" height={256}>
+        <ResponsiveContainer width="100%">
           <RechartsLineChart
             data={chartData}
-            margin={{ top: 10, right: 10, left: -20, bottom: 10 }}
+            margin={{ top: 10, left: -25}}
           >
             <CartesianGrid strokeDasharray="2 2" />
             <XAxis
               dataKey="group"
+              type="category"
+              interval={0}
               stroke="#8884d8"
-              tick={{ fontSize: tickSize, fill: "#8884d8" }}
+              tick={{ fontSize: tickSize, fill: "#8884d8", angle: -45, textAnchor: 'end' }}
+              height={60}
             />
             <YAxis
               stroke="#8884d8"

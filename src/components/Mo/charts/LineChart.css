@@ -3,9 +3,33 @@
   border-radius: 12px;
   background: linear-gradient(180deg, var(--cardTop), var(--cardBottom));
   box-shadow: 0 6px 14px rgba(2, 75, 118, 0.03);
-  border: 1px solid rgba(2, 75, 118, 0.06);
+  border: none !important;
   color: var(--textDark);
   margin-bottom: 16px;
+  outline: none !important;
+  overflow: hidden;
+}
+
+.chart-card svg {
+  overflow: visible;
+  outline: none !important;
+  border: none !important;
+}
+
+.chart-card svg:focus {
+  outline: none !important;
+}
+
+.chart-card *,
+.chart-card svg,
+.chart-card div {
+  box-sizing: border-box;
+}
+
+.chart-card:focus,
+.chart-card:focus-visible {
+  outline: none !important;
+  border: none !important;
 }
 
 .chart-controls {
@@ -46,15 +70,38 @@
   height: 192px;
   display: block;
   width: 100%;
+  border: none !important;
+  outline: none !important;
+  overflow: visible;
+  position: relative;
+}
+
+.chart-mobile *,
+.chart-mobile svg {
+  border: none !important;
+  outline: none !important;
 }
 
 .chart-desktop {
   height: 256px;
   display: none;
   width: 100%;
+  border: none !important;
+  outline: none !important;
+  overflow: visible;
+  position: relative;
 }
 
-@media (min-width: 640px) {
-  .chart-mobile { display: none; }
-  .chart-desktop { display: block; }
+.chart-desktop *,
+.chart-desktop svg {
+  border: none !important;
+  outline: none !important;
 }
+
+/* Prevent Recharts SVG from being keyboard-focusable */
+.recharts-wrapper,
+.recharts-surface {
+  outline: none !important;
+  border: none !important;
+}
+

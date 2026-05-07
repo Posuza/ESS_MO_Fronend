@@ -60,7 +60,10 @@ export default function LineChartSection() {
       if (groupBy === "year") key = String(d.getFullYear());
       else if (groupBy === "month")
         key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      else key = d.toISOString().slice(0, 10); // day
+      else {
+        // Use local date formatting to avoid timezone issues
+        key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
 
       const prev: any = map.get(key) || {};
 
@@ -101,7 +104,50 @@ export default function LineChartSection() {
       map.set(key, prev);
     });
 
+    // Fill missing periods so chart shows complete sequence
+    const ensureAllPeriods = () => {
+      const fullKeys: string[] = [];
+      
+      if (groupBy === 'year') {
+        // Show all available years
+        availableYears.forEach(y => fullKeys.push(String(y)));
+      } else if (groupBy === 'month') {
+        // Show all 12 months for selected year
+        for (let m = 0; m < 12; m++) {
+          const key = `${year}-${String(m + 1).padStart(2, '0')}`;
+          fullKeys.push(key);
+        }
+      } else {
+        // Show all days in selected month
+        const lastDay = new Date(Number(year), Number(month) + 1, 0).getDate();
+        for (let d = 1; d <= lastDay; d++) {
+          // Use local date formatting to avoid timezone issues
+          const dayKey = `${year}-${String(Number(month) + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          fullKeys.push(dayKey);
+        }
+      }
+      
+      // Add missing keys with zero values
+      fullKeys.forEach((k) => {
+        if (!map.has(k)) {
+          map.set(k, {
+            leave: 0,
+            shift: 0,
+            rule: 0,
+            wear: 0,
+            issues: 0,
+            warning: 0,
+            locations: 0,
+            _locationsSet: new Set()
+          });
+        }
+      });
+    };
+
+    ensureAllPeriods();
+
     const data = Array.from(map.entries())
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB)) // Sort by original key FIRST
       .map(([k, v]: any) => {
         // convert _locationsSet to a numeric 'locations' count
         const locationsCount = v._locationsSet
@@ -127,13 +173,12 @@ export default function LineChartSection() {
         // remove internal set before returning
         delete copy._locationsSet;
         return copy;
-      })
-      .sort((a, b) => a.group.localeCompare(b.group));
+      });
     // categories: leave, shift, rule, wear, other_job, other_training, absent, warning, other_counts
     // categories now include a single aggregated 'locations' series
     const categories = ["leave", "shift", "issues", "wear", "locations"];
     return { data, categories };
-  }, [groupBy, year, month]);
+  }, [groupBy, year, month, availableYears]);
 
   return (
     <div className="mo-linechart">
