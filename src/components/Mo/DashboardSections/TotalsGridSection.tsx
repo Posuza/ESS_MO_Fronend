@@ -20,7 +20,7 @@ const cards = [
   },
   {
     id: 5,
-    count: "1,200,000",
+    count: "1,200,0000000",
     unit: "คน",
     label: "ผิดข้อปฏิบัติ",
     cls: "card-red",

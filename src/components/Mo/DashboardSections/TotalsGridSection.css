@@ -4,14 +4,14 @@
 
 .totals-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 3fr));
-  gap: 4px;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 2fr));
+  gap: 3px;
   align-items: stretch;
 }
 
 .totals-card {
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 6px;
+  padding: 8px;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -23,14 +23,18 @@
 }
 
 .totals-count-row {
+  margin-top: 4px;
+  margin-botom: 4px;
   display: flex;
   align-items: baseline;
-  gap: 3px;
+  justify-content: space-between;
+  width: 100%;
+  gap: 5px;
 }
 
 .totals-count {
-  font-weight: 600;
-  font-size: 19px;
+  font-weight: 500;
+  font-size: 16px;
   line-height: 1;
   overflow-wrap: break-word;
   word-break: break-all;
@@ -39,17 +43,18 @@
 }
 
 .totals-unit {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 200;
+  font-size: 13px;
   line-height: 1;
   max-width: 100%;
+  color: rgb(238, 233, 233);
 }
 
 .totals-label {
   margin-top: auto;
-  font-size: 18px;
+  font-size: 14px;
   font-family: 'Prompt', prompt, sans-serif;
-  font-weight: 800;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -57,6 +62,7 @@
   opacity: 0.95;
   text-align: right;
   align-self: flex-end;
+  color: rgb(236, 236, 236);
 }
 
 .card-blue { background: #1e6fb3; }

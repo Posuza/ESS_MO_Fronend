@@ -39,6 +39,7 @@
 
 /* Back button (outside form) */
 .guts-dashboard-grid {
+  margin-top:25px;
   padding-bottom: 20px;
 }
 
