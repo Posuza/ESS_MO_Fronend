@@ -1,10 +1,11 @@
 // src/pages/Home.tsx
 import { useState } from "react";
-import { ChevronDown, ChevronRight, ArrowLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, ArrowLeft, MapPinCheck } from "lucide-react";
 import styles from "./MoNewPage.module.css";
 import { useStore } from "../../../store/store";
 import ConfirmCancelDialog from "../../../components/Mo/ConfirmCancelDialog";
 import InfoModel from "../../../components/Mo/InfoModel";
+import AutoResizeTextarea from "../../../components/AutoResizeTextarea";
 
 type Props = {
   onCancel?: () => void;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function MoNewPage(props: Props) {
+  const [date] = useState(() => new Date().toLocaleDateString("th-TH"));
   // ลา
   const [sickLeave, setSickLeave] = useState("");
   const [personalLeave, setPersonalLeave] = useState("");
@@ -49,6 +51,7 @@ export default function MoNewPage(props: Props) {
   const [foundNote, setFoundNote] = useState("");
   const [trainCount, setTrainCount] = useState("");
   const [trainNote, setTrainNote] = useState("");
+  const [otherOpen, setOtherOpen] = useState(true);
 
   // new: collapse state for "ลา" card
   const [leaveOpen, setLeaveOpen] = useState(true);
@@ -211,20 +214,26 @@ export default function MoNewPage(props: Props) {
       />
 
       <form className={styles["guts-Mo-layout"]} onSubmit={onSubmit}>
-        <div className={styles["guts-box"]}>
-          <div className={styles["guts-box-title"]}>ภาค</div>
-          <div
-            className={[styles["guts-field-row"], styles["full-width"]].join(
-              " ",
-            )}
-          >
-            <input
-              className={styles["guts-input"]}
-              type="text"
-              value={props.selectedLocation || ""}
-              disabled
-              placeholder="ไม่มีการเลือก"
-            />
+        <div className={styles["region-card-header"]}>
+          <div className={styles["region-card-left"]}>
+            <div className={styles["region-card-avatar"]}>
+              <MapPinCheck size={20} />
+            </div>
+            <div className={styles["region-card-body"]}>
+              <div className={styles["region-card-top-row"]}>
+                <div className={styles["region-card-title-wrap"]}>
+                  <div className={styles["region-card-title"]}>ภาค</div>
+                </div>
+              </div>
+
+              <div className={styles["region-card-value"]}>
+                {props.selectedLocation || "-"}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles["region-card-right"]}>
+            <p className={styles["region-card-meta-date"]}>{date}</p>
           </div>
         </div>
 
@@ -624,20 +633,16 @@ export default function MoNewPage(props: Props) {
               </label>
             </div>
 
-            <div
-              className={[styles["guts-field-row"], styles["full-width"]].join(
-                " ",
-              )}
-            >
-              <textarea
-                className={styles["guts-input-full"]}
+
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
                 rows={2}
                 value={disciplineNote}
                 onChange={(e) => setDisciplineNote(e.target.value)}
                 placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
               />
             </div>
-          </div>
+          
         </div>
 
         <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
@@ -768,96 +773,120 @@ export default function MoNewPage(props: Props) {
             </div>
           </div>
         </div>
-        <div className={styles["guts-box"]}>
-          <div className={styles["guts-box-title"]}>อื่น ๆ</div>
+        <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
           <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+            className={styles["guts-box-title"]}
+            role="button"
+            aria-expanded={otherOpen}
+            onClick={() => setOtherOpen((v) => !v)}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") setOtherOpen((v) => !v);
+            }}
           >
-            <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
-            <div className={styles["guts-input-group"]}>
-              <input
-                className={[styles["guts-input"], styles["small"]].join(" ")}
-                type="number"
-                min={0}
-                step={1}
-                value={foundCount}
-                onChange={(e) =>
-                  setFoundCount(e.target.value.replace(/\D/g, ""))
-                }
-                onWheel={(e) => e.currentTarget.blur()}
-                placeholder="0"
-                inputMode="numeric"
-              />
-              <span className="guts-suffix">จุด</span>
+            อื่น ๆ
+            <button
+              type="button"
+              className={styles["guts-collapse-toggle"]}
+              aria-label={otherOpen ? "ย่อ อื่น ๆ" : "ขยาย อื่น ๆ"}
+            >
+              {otherOpen ? (
+                <ChevronDown size={18} />
+              ) : (
+                <ChevronRight size={18} />
+              )}
+            </button>
+          </div>
+
+          <div
+            className={[
+              styles["guts-box-body"],
+              otherOpen ? "" : styles["collapsed"],
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+            >
+              <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={[styles["guts-input"], styles["small"]].join(" ")}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={foundCount}
+                  onChange={(e) =>
+                    setFoundCount(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>จุด</span>
+              </div>
             </div>
-          </div>
 
-          <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={[
-                styles["guts-input-full"],
-                styles["guts-detail-textarea"],
-              ].join(" ")}
-              rows={2}
-              value={foundNote}
-              onChange={(e) => setFoundNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
-          </div>
-
-          <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
-            style={{ marginTop: 8 }}
-          >
-            <label className={styles["guts-label"]}>อบรม:</label>
-            <div className={styles["guts-input-group"]}>
-              <input
-                className={[styles["guts-input"], styles["small"]].join(" ")}
-                type="number"
-                min={0}
-                step={1}
-                value={trainCount}
-                onChange={(e) =>
-                  setTrainCount(e.target.value.replace(/\D/g, ""))
-                }
-                onWheel={(e) => e.currentTarget.blur()}
-                placeholder="0"
-                inputMode="numeric"
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={foundNote}
+                onChange={(e) => setFoundNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
               />
-              <span className={styles["guts-suffix"]}>จุด:</span>
             </div>
-          </div>
 
-          <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={[
-                styles["guts-input-full"],
-                styles["guts-detail-textarea"],
-              ].join(" ")}
-              rows={2}
-              value={trainNote}
-              onChange={(e) => setTrainNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
-          </div>
-          <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
-            style={{ marginTop: 8 }}
-          >
-            <label className={styles["guts-label"]}>เพิ่มเติม:</label>
-          </div>
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+              style={{ marginTop: 8 }}
+            >
+              <label className={styles["guts-label"]}>อบรม:</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={[styles["guts-input"], styles["small"]].join(" ")}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={trainCount}
+                  onChange={(e) =>
+                    setTrainCount(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>จุด</span>
+              </div>
+            </div>
 
-          <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={[
-                styles["guts-input-full"],
-                styles["guts-detail-textarea"],
-              ].join(" ")}
-              rows={2}
-              value={otherNote}
-              onChange={(e) => setOtherNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={trainNote}
+                onChange={(e) => setTrainNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
+              />
+            </div>
+
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+              style={{ marginTop: 8 }}
+            >
+              <label className={styles["guts-label"]}>เพิ่มเติม:</label>
+            </div>
+
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={otherNote}
+                onChange={(e) => setOtherNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
+              />
+            </div>
           </div>
         </div>
 

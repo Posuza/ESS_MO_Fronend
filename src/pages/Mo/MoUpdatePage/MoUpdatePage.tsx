@@ -1,5 +1,6 @@
 // src/pages/Home.tsx
 import { useState, useEffect, useRef } from "react";
+import AutoResizeTextarea from "../../../components/AutoResizeTextarea";
 import {
   ChevronDown,
   ChevronRight,
@@ -10,6 +11,7 @@ import {
   Clock3,
   XCircle,
   Eye,
+  MapPinCheck,
 } from "lucide-react";
 import ConfirmDeleteDialog from "../../../components/Mo/ConfirmDeleteDialog";
 import InfoModel from "../../../components/Mo/InfoModel";
@@ -46,7 +48,6 @@ export default function MoUpdatePage(props: Props) {
   // collapse state for "กำลังพล" box
   const [personnelOpen, setPersonnelOpen] = useState(true);
   // ผิดข้อปฏิบัติ / การตักเตือน
-  const [disciplineType, setDisciplineType] = useState("");
   const [disciplineNote, setDisciplineNote] = useState("");
   // collapse + numeric counts for ผิดข้อปฏิบัติ UI
   const [disciplineOpen, setDisciplineOpen] = useState(true);
@@ -54,8 +55,6 @@ export default function MoUpdatePage(props: Props) {
   const [phoneCount, setPhoneCount] = useState("");
   const [badgeCount, setBadgeCount] = useState("");
   // เครื่องแต่งกาย
-  const [uniformIssue, setUniformIssue] = useState("");
-  const [uniformNote, setUniformNote] = useState("");
   // เครื่องแต่งกาย - counts
   const [hatCount, setHatCount] = useState("");
   const [shirtCount, setShirtCount] = useState("");
@@ -70,9 +69,8 @@ export default function MoUpdatePage(props: Props) {
   const [foundNote, setFoundNote] = useState("");
   const [trainCount, setTrainCount] = useState("");
   const [trainNote, setTrainNote] = useState("");
-  // extra fields used in sector_report
-  const [onDutyCount, setOnDutyCount] = useState("");
-  const [workHours, setWorkHours] = useState("");
+  // collapse state for อื่น ๆ
+  const [otherOpen, setOtherOpen] = useState(true);
 
   // new: collapse state for "ลา" card
   const [leaveOpen, setLeaveOpen] = useState(true);
@@ -86,7 +84,8 @@ export default function MoUpdatePage(props: Props) {
   const [successDescription, setSuccessDescription] = useState(
     "ระบบได้ทำการอัปเดตข้อมูลของคุณเรียบร้อยแล้ว",
   );
-  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>("PENDING");
+  const [approvalStatus, setApprovalStatus] =
+    useState<ApprovalStatus>("PENDING");
   const [approvalRemark, setApprovalRemark] = useState("");
   const initialValuesRef = useRef<Record<string, string | number> | null>(null);
 
@@ -104,12 +103,6 @@ export default function MoUpdatePage(props: Props) {
     if (value === "APPROVED") return "อนุมัติแล้ว";
     if (value === "REJECT") return "ไม่อนุมัติ";
     return "รออนุมัติ";
-  }
-
-  function approvalBoxClass(value: ApprovalStatus): string {
-    if (value === "APPROVED") return styles["approval-box-approved"];
-    if (value === "REJECT") return styles["approval-box-reject"];
-    return styles["approval-box-pending"];
   }
 
   function ApprovalStatusIcon({ value }: { value: ApprovalStatus }) {
@@ -244,8 +237,6 @@ export default function MoUpdatePage(props: Props) {
     );
 
     setAbsentCount(it.absent_count != null ? String(it.absent_count) : "");
-    setOnDutyCount(it.on_duty_count != null ? String(it.on_duty_count) : "");
-    setWorkHours(it.work_hours != null ? String(it.work_hours) : "");
 
     setShift18(it.shift_18_count != null ? String(it.shift_18_count) : "");
     setShift24(it.shift_24_count != null ? String(it.shift_24_count) : "");
@@ -444,97 +435,55 @@ export default function MoUpdatePage(props: Props) {
         className={`${styles["guts-Mo-layout"]} ${showActionIcons ? styles["icons-visible"] : styles["icons-hidden"]}`}
         onSubmit={onSubmit}
       >
-        <div className={styles["report-meta"]}>
-          <div className={styles["meta-right"]}>
-            <span
-              className={[
-                styles["status-badge"],
-                approvalStatus === "APPROVED"
-                  ? styles["status-approved"]
-                  : approvalStatus === "REJECT"
-                    ? styles["status-reject"]
-                    : styles["status-pending"],
-              ].join(" ")}
-            >
-              <ApprovalStatusIcon value={approvalStatus} />
-              {approvalStatusLabel(approvalStatus)}
-            </span>
-            <div className={`${styles["guts-box-title"]} ${styles["box-id"]}`}>
-              #{props.item?.id ?? ""}
+     
+      <div className={styles["region-card-header"]}>
+          <div className={styles["region-card-left"]}>
+            <div className={styles["region-card-avatar"]}>
+              <MapPinCheck size={20} />
+            </div>
+            <div className={styles["region-card-body"]}>
+              <div className={styles["region-card-top-row"]}>
+                <div className={styles["region-card-title-wrap"]}>
+                  <div className={styles["region-card-title"]}>ภาค</div>
+                  <span
+                    className={[
+                      styles["status-badge"],
+                      approvalStatus === "APPROVED"
+                        ? styles["status-approved"]
+                        : approvalStatus === "REJECT"
+                          ? styles["status-reject"]
+                          : styles["status-pending"],
+                    ].join(" ")}
+                  >
+                    <ApprovalStatusIcon value={approvalStatus} />
+                    {approvalStatusLabel(approvalStatus)}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles["region-card-value"]}>{region || "-"}</div>
             </div>
           </div>
-        </div>
-        <div className={styles["guts-box"]}>
-          <div className={styles["guts-box-title"]}>ภาค</div>
-          <div
-            className={[styles["guts-field-row"], styles["full-width"]].join(
-              " ",
-            )}
-          >
-            <input
-              className={styles["guts-input"]}
-              value={region}
-              disabled={!showActionIcons}
-              onChange={(e) => setRegion(e.target.value)}
-              placeholder="ระบุภาคที่ปฏิบัติงาน"
-            />
+
+          <div className={styles["region-card-right"]}>
+            <p className={styles["region-card-meta-id"]}>#{props.item?.id ?? ""}</p>
+            <p className={styles["region-card-meta-date"]}>
+              {props.item?.created_at
+                ? new Date(props.item.created_at).toLocaleDateString("th-TH")
+                : date}
+            </p>
           </div>
         </div>
+  
+  
+
         <div
           className={[
             styles["guts-box"],
-            styles["approval-box"],
-            approvalBoxClass(approvalStatus),
+            styles["collapsible"],
+            leaveOpen ? "" : styles["collapsed"],
           ].join(" ")}
         >
-          <div className={styles["approval-header"]}>
-            <div className={styles["guts-box-title"]}>การอนุมัติ</div>
-          </div>
-          {isManager ? (
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>สถานะ</label>
-              <select
-                className={[
-                  styles["approval-select"],
-                  approvalStatus === "APPROVED"
-                    ? styles["approval-select-approved"]
-                    : approvalStatus === "REJECT"
-                      ? styles["approval-select-reject"]
-                      : styles["approval-select-pending"],
-                ].join(" ")}
-                value={approvalStatus}
-                disabled={!showActionIcons}
-                onChange={(e) =>
-                  setApprovalStatus(toApprovalStatus(e.target.value))
-                }
-              >
-                <option value="PENDING">รออนุมัติ</option>
-                <option value="APPROVED">อนุมัติแล้ว</option>
-                <option value="REJECT">ไม่อนุมัติ</option>
-              </select>
-            </div>
-          ) : null}
-          <div
-            className={[styles["guts-field-row"], styles["full-width"]].join(
-              " ",
-            )}
-          >
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["approval-remark"]}`}
-              rows={2}
-              value={approvalRemark}
-              disabled={!isManager || !showActionIcons}
-              onChange={(e) => setApprovalRemark(e.target.value)}
-              placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
-            />
-          </div>
-        </div>
-
-        <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
           <div
             className={`${styles["guts-box-title"]} ${styles["collapsible"]}`}
             role="button"
@@ -641,7 +590,13 @@ export default function MoUpdatePage(props: Props) {
           </div>
         </div>
 
-        <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
+        <div
+          className={[
+            styles["guts-box"],
+            styles["collapsible"],
+            personnelOpen ? "" : styles["collapsed"],
+          ].join(" ")}
+        >
           <div
             className={styles["guts-box-title"]}
             role="button"
@@ -695,7 +650,12 @@ export default function MoUpdatePage(props: Props) {
               </div>
             </div>
 
-            <div className={styles["guts-subbox"]}>
+            <div
+              className={[
+                styles["guts-subbox"],
+                workShiftOpen ? "" : styles["collapsed"],
+              ].join(" ")}
+            >
               <div
                 className={styles["guts-subbox-title"]}
                 role="button"
@@ -799,7 +759,13 @@ export default function MoUpdatePage(props: Props) {
           </div>
         </div>
 
-        <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
+        <div
+          className={[
+            styles["guts-box"],
+            styles["collapsible"],
+            disciplineOpen ? "" : styles["collapsed"],
+          ].join(" ")}
+        >
           <div
             className={styles["guts-box-title"]}
             role="button"
@@ -914,24 +880,24 @@ export default function MoUpdatePage(props: Props) {
               </label>
             </div>
 
-            <div
-              className={[styles["guts-field-row"], styles["full-width"]].join(
-                " ",
-              )}
-            >
-              <textarea
-                className={styles["guts-input-full"]}
-                rows={2}
-                value={disciplineNote}
-                disabled={!showActionIcons}
-                onChange={(e) => setDisciplineNote(e.target.value)}
-                placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
-              />
-            </div>
+            <AutoResizeTextarea
+              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+              rows={2}
+              value={disciplineNote}
+              disabled={!showActionIcons}
+              onChange={(e) => setDisciplineNote(e.target.value)}
+              placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
+            />
           </div>
         </div>
 
-        <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
+        <div
+          className={[
+            styles["guts-box"],
+            styles["collapsible"],
+            uniformOpen ? "" : styles["collapsed"],
+          ].join(" ")}
+        >
           <div
             className={styles["guts-box-title"]}
             role="button"
@@ -1063,92 +1029,196 @@ export default function MoUpdatePage(props: Props) {
           </div>
         </div>
 
-        <div className={styles["guts-box"]}>
-          <div className={styles["guts-box-title"]}>อื่น ๆ</div>
+        <div
+          className={[
+            styles["guts-box"],
+            styles["collapsible"],
+            otherOpen ? "" : styles["collapsed"],
+          ].join(" ")}
+        >
           <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+            className={styles["guts-box-title"]}
+            role="button"
+            aria-expanded={otherOpen}
+            onClick={() => setOtherOpen((v) => !v)}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") setOtherOpen((v) => !v);
+            }}
           >
-            <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
-            <div className={styles["guts-input-group"]}>
-              <input
-                className={`${styles["guts-input"]} ${styles["small"]}`}
-                type="number"
-                min={0}
-                step={1}
-                value={foundCount}
+            อื่น ๆ
+            <button
+              type="button"
+              className={styles["guts-collapse-toggle"]}
+              aria-label={otherOpen ? "ย่อ อื่น ๆ" : "ขยาย อื่น ๆ"}
+            >
+              {otherOpen ? (
+                <ChevronDown size={18} />
+              ) : (
+                <ChevronRight size={18} />
+              )}
+            </button>
+          </div>
+
+          <div
+            className={`${styles["guts-box-body"]} ${otherOpen ? "" : styles["collapsed"]}`}
+          >
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+            >
+              <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={`${styles["guts-input"]} ${styles["small"]}`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={foundCount}
+                  disabled={!showActionIcons}
+                  onChange={(e) =>
+                    setFoundCount(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>จุด</span>
+              </div>
+            </div>
+
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={foundNote}
                 disabled={!showActionIcons}
-                onChange={(e) =>
-                  setFoundCount(e.target.value.replace(/\D/g, ""))
-                }
-                onWheel={(e) => e.currentTarget.blur()}
-                placeholder="0"
-                inputMode="numeric"
+                onChange={(e) => setFoundNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
               />
-              <span className={styles["guts-suffix"]}>จุด</span>
+            </div>
+
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+              style={{ marginTop: 8 }}
+            >
+              <label className={styles["guts-label"]}>อบรม:</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={`${styles["guts-input"]} ${styles["small"]}`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={trainCount}
+                  disabled={!showActionIcons}
+                  onChange={(e) =>
+                    setTrainCount(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>จุด:</span>
+              </div>
+            </div>
+
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={otherNote}
+                disabled={!showActionIcons}
+                onChange={(e) => setOtherNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
+              />
+            </div>
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+              style={{ marginTop: 8 }}
+            >
+              <label className={styles["guts-label"]}>เพิ่มเติม:</label>
+            </div>
+
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={trainNote}
+                disabled={!showActionIcons}
+                onChange={(e) => setTrainNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
+              />
             </div>
           </div>
+        </div>
 
-          <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]}`}
-              rows={2}
-              value={foundNote}
-              disabled={!showActionIcons}
-              onChange={(e) => setFoundNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
-          </div>
-
+        <div className={styles["approval-section"]}>
           <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
-            style={{ marginTop: 8 }}
+            className={[
+              styles["approval-remark-section"],
+              approvalStatus === "APPROVED"
+                ? styles["approval-remark-approved"]
+                : approvalStatus === "REJECT"
+                  ? styles["approval-remark-reject"]
+                  : styles["approval-remark-pending"],
+            ].join(" ")}
           >
-            <label className={styles["guts-label"]}>อบรม:</label>
-            <div className={styles["guts-input-group"]}>
-              <input
-                className={`${styles["guts-input"]} ${styles["small"]}`}
-                type="number"
-                min={0}
-                step={1}
-                value={trainCount}
-                disabled={!showActionIcons}
-                onChange={(e) =>
-                  setTrainCount(e.target.value.replace(/\D/g, ""))
-                }
-                onWheel={(e) => e.currentTarget.blur()}
-                placeholder="0"
-                inputMode="numeric"
+            {isManager ? (
+              <div className={styles["approval-status-row"]}>
+                <label className={styles["approval-status-label"]}>
+                  การอนุมัติ:
+                </label>
+                <select
+                  className={[
+                    styles["approval-select"],
+                    approvalStatus === "APPROVED"
+                      ? styles["approval-select-approved"]
+                      : approvalStatus === "REJECT"
+                        ? styles["approval-select-reject"]
+                        : styles["approval-select-pending"],
+                  ].join(" ")}
+                  value={approvalStatus}
+                  disabled={!showActionIcons}
+                  onChange={(e) =>
+                    setApprovalStatus(toApprovalStatus(e.target.value))
+                  }
+                >
+                  <option value="PENDING">รออนุมัติ</option>
+                  <option value="APPROVED">อนุมัติแล้ว</option>
+                  <option value="REJECT">ไม่อนุมัติ</option>
+                </select>
+              </div>
+            ) : null}
+
+            <div className={styles["approval-content"]}>
+              <AutoResizeTextarea
+                className={styles["approval-textarea"]}
+                rows={3}
+                value={approvalRemark}
+                disabled={!isManager || !showActionIcons}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
               />
-              <span className={styles["guts-suffix"]}>จุด:</span>
             </div>
           </div>
-
-          <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]}`}
-              rows={2}
-              value={otherNote}
-              disabled={!showActionIcons}
-              onChange={(e) => setOtherNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
-          </div>
-          <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
-            style={{ marginTop: 8 }}
-          >
-            <label className={styles["guts-label"]}>เพิ่มเติม:</label>
-          </div>
-
-          <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]}`}
-              rows={2}
-              value={trainNote}
-              disabled={!showActionIcons}
-              onChange={(e) => setTrainNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
+          <div className={styles["signature-section"]}>
+            <div className={styles["signature-slot"]}>
+              <div className={styles["signature-title"]}>ผู้ บันทึก</div>
+              <div className={styles["signature-line"]}>
+                {props.item?.created_by || "ADMIN"}
+              </div>
+            </div>
+            <div className={styles["signature-slot"]}>
+              <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
+              <div className={styles["signature-line"]}>
+                {props.item?.approved_by || "\u00A0"}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1167,7 +1237,7 @@ export default function MoUpdatePage(props: Props) {
                   setShowActionIcons((v) => !v);
                 }}
               >
-                Cancel
+                ยกเลิก
               </button>
 
               <button
@@ -1175,7 +1245,7 @@ export default function MoUpdatePage(props: Props) {
                 className={`${styles["guts-btn"]} ${styles["guts-submit-btn"]}`}
                 disabled={!hasAnyData() || !isDirty()}
               >
-                Update
+                อัปเดต
               </button>
             </>
           )}

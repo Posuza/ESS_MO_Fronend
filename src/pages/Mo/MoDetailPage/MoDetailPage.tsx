@@ -8,9 +8,10 @@ import {
   Clock3,
   XCircle,
   Eye,
+  MapPinCheck,
 } from "lucide-react";
 import styles from "./MoDetailPage.module.css";
-import { useStore } from "../../../store/store";
+import AutoResizeTextarea from "../../../components/AutoResizeTextarea";
 import MoPdfViewer from "../MoPdfViewerPage/MoPdfViewer";
 
 type Props = {
@@ -21,9 +22,19 @@ type Props = {
 
 type ApprovalStatus = "PENDING" | "APPROVED" | "REJECT";
 
+function ApprovalStatusIcon({ value }: { value: ApprovalStatus }) {
+  if (value === "APPROVED") {
+    return <CheckCircle2 size={16} strokeWidth={2.2} />;
+  }
+  if (value === "REJECT") {
+    return <XCircle size={16} strokeWidth={2.2} />;
+  }
+  return <Clock3 size={16} strokeWidth={2.2} />;
+}
+
 export default function MoDetailPage(props: Props) {
   const [showPdf, setShowPdf] = useState(false);
-  const sectors = useStore((state) => state.sectors);
+  const [date] = useState(() => new Date().toLocaleDateString("th-TH"));
   const [region, setRegion] = useState("");
   // ลา
   const [sickLeave, setSickLeave] = useState("");
@@ -60,6 +71,8 @@ export default function MoDetailPage(props: Props) {
   const [foundNote, setFoundNote] = useState("");
   const [trainCount, setTrainCount] = useState("");
   const [trainNote, setTrainNote] = useState("");
+  // collapse state for อื่น ๆ
+  const [otherOpen, setOtherOpen] = useState(true);
 
   // new: collapse state for "ลา" card
   const [leaveOpen, setLeaveOpen] = useState(true);
@@ -77,22 +90,6 @@ export default function MoDetailPage(props: Props) {
     if (value === "APPROVED") return "อนุมัติแล้ว";
     if (value === "REJECT") return "ไม่อนุมัติ";
     return "รออนุมัติ";
-  }
-
-  function approvalBoxClass(value: ApprovalStatus): string {
-    if (value === "APPROVED") return styles["approval-box-approved"];
-    if (value === "REJECT") return styles["approval-box-reject"];
-    return styles["approval-box-pending"];
-  }
-
-  function ApprovalStatusIcon({ value }: { value: ApprovalStatus }) {
-    if (value === "APPROVED") {
-      return <CheckCircle2 size={16} strokeWidth={2.2} />;
-    }
-    if (value === "REJECT") {
-      return <XCircle size={16} strokeWidth={2.2} />;
-    }
-    return <Clock3 size={16} strokeWidth={2.2} />;
   }
 
   useEffect(() => {
@@ -188,65 +185,42 @@ export default function MoDetailPage(props: Props) {
         </div>
       </div>
       <div className={styles["guts-Mo-layout"]}>
-        <div className={styles["report-meta"]}>
-          <div className={styles["meta-right"]}>
-            <span
-              className={[
-                styles["status-badge"],
-                approvalStatus === "APPROVED"
-                  ? styles["status-approved"]
-                  : approvalStatus === "REJECT"
-                    ? styles["status-reject"]
-                    : styles["status-pending"],
-              ].join(" ")}
-            >
-              <ApprovalStatusIcon value={approvalStatus} />
-              {approvalStatusLabel(approvalStatus)}
-            </span>
-            <div className={`${styles["guts-box-title"]} ${styles["box-id"]}`}>
-              #{props.item?.id ?? ""}
+        <div className={styles["region-card-header"]}>
+          <div className={styles["region-card-left"]}>
+            <div className={styles["region-card-avatar"]}>
+              <MapPinCheck size={20} />
+            </div>
+            <div className={styles["region-card-body"]}>
+              <div className={styles["region-card-top-row"]}>
+                <div className={styles["region-card-title-wrap"]}>
+                  <div className={styles["region-card-title"]}>ภาค</div>
+                  <span
+                    className={[
+                      styles["status-badge"],
+                      approvalStatus === "APPROVED"
+                        ? styles["status-approved"]
+                        : approvalStatus === "REJECT"
+                          ? styles["status-reject"]
+                          : styles["status-pending"],
+                    ].join(" ")}
+                  >
+                    <ApprovalStatusIcon value={approvalStatus} />
+                    {approvalStatusLabel(approvalStatus)}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles["region-card-value"]}>{region || "-"}</div>
             </div>
           </div>
-        </div>
-        <div className={styles["guts-box"]}>
-          <div className={styles["guts-box-title"]}>ภาค</div>
-          <div
-            className={[styles["guts-field-row"], styles["full-width"]].join(
-              " ",
-            )}
-          >
-            <input
-              className={styles["guts-input"]}
-              value={region}
-              disabled={true}
-              onChange={(e) => setRegion(e.target.value)}
-              placeholder="ระบุภาคที่ปฏิบัติงาน"
-            />
-          </div>
-        </div>
-        <div
-          className={[
-            styles["guts-box"],
-            styles["approval-box"],
-            approvalBoxClass(approvalStatus),
-          ].join(" ")}
-        >
-          <div className={styles["approval-header"]}>
-            <div className={styles["guts-box-title"]}>การอนุมัติ</div>
-          </div>
-          <div
-            className={[styles["guts-field-row"], styles["full-width"]].join(
-              " ",
-            )}
-          >
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["approval-remark"]}`}
-              rows={2}
-              value={approvalRemark}
-              disabled={true}
-              onChange={(e) => setApprovalRemark(e.target.value)}
-              placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
-            />
+
+          <div className={styles["region-card-right"]}>
+            <p className={styles["region-card-meta-date"]}>
+              {props.item?.created_at
+                ? new Date(props.item.created_at).toLocaleDateString("th-TH")
+                : date}
+            </p>
+            <p className={styles["region-card-meta-id"]}>#{props.item?.id ?? ""}</p>
           </div>
         </div>
 
@@ -630,20 +604,15 @@ export default function MoDetailPage(props: Props) {
               </label>
             </div>
 
-            <div
-              className={[styles["guts-field-row"], styles["full-width"]].join(
-                " ",
-              )}
-            >
-              <textarea
-                className={styles["guts-input-full"]}
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
                 rows={2}
                 value={disciplineNote}
                 disabled={true}
                 onChange={(e) => setDisciplineNote(e.target.value)}
                 placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
               />
-            </div>
+        
           </div>
         </div>
 
@@ -779,8 +748,34 @@ export default function MoDetailPage(props: Props) {
           </div>
         </div>
 
-        <div className={styles["guts-box"]}>
-          <div className={styles["guts-box-title"]}>อื่น ๆ</div>
+        <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
+          <div
+            className={styles["guts-box-title"]}
+            role="button"
+            aria-expanded={otherOpen}
+            onClick={() => setOtherOpen((v) => !v)}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") setOtherOpen((v) => !v);
+            }}
+          >
+            อื่น ๆ
+            <button
+              type="button"
+              className={styles["guts-collapse-toggle"]}
+              aria-label={otherOpen ? "ย่อ อื่น ๆ" : "ขยาย อื่น ๆ"}
+            >
+              {otherOpen ? (
+                <ChevronDown size={18} />
+              ) : (
+                <ChevronRight size={18} />
+              )}
+            </button>
+          </div>
+
+          <div
+            className={`${styles["guts-box-body"]} ${otherOpen ? "" : styles["collapsed"]}`}
+          >
           <div
             className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
           >
@@ -805,8 +800,8 @@ export default function MoDetailPage(props: Props) {
           </div>
 
           <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]}`}
+            <AutoResizeTextarea
+              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
               rows={2}
               value={foundNote}
               disabled={true}
@@ -840,8 +835,8 @@ export default function MoDetailPage(props: Props) {
           </div>
 
           <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]}`}
+            <AutoResizeTextarea
+              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
               rows={2}
               value={trainNote}
               disabled={true}
@@ -857,14 +852,54 @@ export default function MoDetailPage(props: Props) {
           </div>
 
           <div className={styles["guts-detail-box"]}>
-            <textarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]}`}
+            <AutoResizeTextarea
+              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
               rows={2}
               value={otherNote}
               disabled={true}
               onChange={(e) => setOtherNote(e.target.value)}
               placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
             />
+          </div>
+          </div>
+        </div>
+
+        <div className={styles["approval-section"]}>
+          <div
+            className={[
+              styles["approval-remark-section"],
+              approvalStatus === "APPROVED"
+                ? styles["approval-remark-approved"]
+                : approvalStatus === "REJECT"
+                  ? styles["approval-remark-reject"]
+                  : styles["approval-remark-pending"],
+            ].join(" ")}
+          >
+            <div className={styles["approval-content"]}>
+              <AutoResizeTextarea
+                className={styles["approval-textarea"]}
+                rows={3}
+                value={approvalRemark}
+                disabled={true}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
+              />
+            </div>
+          </div>
+
+          <div className={styles["signature-section"]}>
+            <div className={styles["signature-slot"]}>
+              <div className={styles["signature-title"]}>ผู้ บันทึก</div>
+              <div className={styles["signature-line"]}>
+                {props.item?.created_by || "ADMIN"}
+              </div>
+            </div>
+            <div className={styles["signature-slot"]}>
+              <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
+              <div className={styles["signature-line"]}>
+                {props.item?.approved_by || "\u00A0"}
+              </div>
+            </div>
           </div>
         </div>
       </div>
