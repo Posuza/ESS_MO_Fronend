@@ -1,5 +1,5 @@
 // API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || "https://new-garlics-dig.loca.lt/api/v1";
+export const API_URL = import.meta.env.VITE_API_URL || "https://guts.n6t.online/api/v1";
 console.log("🔧 API URL:", API_URL);
 console.log("🌍 User Agent:", navigator.userAgent);
 console.log("📱 Platform:", navigator.platform);
