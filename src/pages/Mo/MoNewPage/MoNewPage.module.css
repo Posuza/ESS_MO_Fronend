@@ -408,6 +408,29 @@
   box-shadow: inset 0 0 0 1px rgba(92, 133, 214, 0.04);
 }
 
+.guts-field-row input.guts-input:not(:focus),
+.guts-field-row input.guts-input.small:not(:focus) {
+  background: #f3f6f9;
+  border: none;
+  box-shadow: none;
+}
+
+.guts-field-row input.guts-input:focus,
+.guts-field-row input.guts-input.small:focus {
+  background: #ffffff;
+  border: none;
+  box-shadow: 0 0 0 3px rgba(92, 133, 214, 0.12);
+}
+
+.guts-field-row input.guts-input:disabled,
+.guts-field-row input.guts-input.small:disabled {
+  background: #f3f6f9;
+  border: none;
+  box-shadow: none;
+  color: #334155;
+  opacity: 1;
+}
+
 .guts-collapse-toggle {
   background: transparent;
   border: 0;
