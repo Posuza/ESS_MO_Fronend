@@ -162,12 +162,9 @@ export default function LineChartSection() {
             new Date(Number(y), Number(m) - 1, 1),
           );
         } else if (groupBy === "day") {
-          // "2026-02-01" → "Feb 01"
-          const d = new Date(k);
-          label = new Intl.DateTimeFormat("en-US", {
-            month: "short",
-            day: "2-digit",
-          }).format(d);
+          // "2026-02-01" → "1"
+          const [, , day] = k.split("-");
+          label = String(Number(day)); // Remove leading zero (01 → 1)
         }
         const copy = { group: label, ...v, locations: locationsCount };
         // remove internal set before returning
@@ -175,14 +172,14 @@ export default function LineChartSection() {
         return copy;
       });
     // categories: leave, shift, rule, wear, other_job, other_training, absent, warning, other_counts
-    // categories now include a single aggregated 'locations' series
-    const categories = ["leave", "shift", "issues", "wear", "locations"];
+    // show 'locations' first for easier access in the UI
+    const categories = ["locations", "leave", "shift", "issues", "wear"];
     return { data, categories };
   }, [groupBy, year, month, availableYears]);
 
   return (
     <div className="mo-linechart">
-      <div className="chart-controls">
+      <div className="linechart-button-container">
         <select
           className="chart-pill-select"
           value={selectedYear ?? "all"}
@@ -221,6 +218,7 @@ export default function LineChartSection() {
       <LineChart
         chartData={chartResult.data}
         chartCategories={chartResult.categories}
+        isDayView={groupBy === "day"}
       />
     </div>
   );

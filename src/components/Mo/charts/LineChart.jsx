@@ -8,7 +8,7 @@ function getColor(idx) {
   return `hsl(${hue}, 70%, 50%)`;
 }
 
-const LineChart = ({ chartData, chartCategories }) => {
+const LineChart = ({ chartData, chartCategories, isDayView }) => {
   // using CSS variables in charts.css instead of theme hook
 
   const [windowWidth, setWindowWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
@@ -31,20 +31,36 @@ const LineChart = ({ chartData, chartCategories }) => {
 
   const categories = useMemo(() => {
     if (chartCategories && chartCategories.length > 0) {
+      const labelMap = {
+        locations: 'สถานที่',
+        leave: 'ลา',
+        shift: 'กะ',
+        issues: 'ปัญหา',
+        wear: 'สวมใส่',
+      };
       return chartCategories.map((key, idx) => ({
         key,
-        label: key.charAt(0).toUpperCase() + key.slice(1),
+        label: labelMap[key] ?? (key.charAt(0).toUpperCase() + key.slice(1)),
         color: getColor(idx),
       }));
     }
     if (!chartData || chartData.length === 0) return [];
     return Object.keys(chartData[0])
       .filter(key => key !== "group" && typeof chartData[0][key] === "number")
-      .map((key, idx) => ({
-        key,
-        label: key.charAt(0).toUpperCase() + key.slice(1),
-        color: getColor(idx),
-      }));
+      .map((key, idx) => {
+        const labelMap = {
+          locations: 'สถานที่',
+          leave: 'ลา',
+          shift: 'กะ',
+          issues: 'ปัญหา',
+          wear: 'สวมใส่',
+        };
+        return {
+          key,
+          label: labelMap[key] ?? (key.charAt(0).toUpperCase() + key.slice(1)),
+          color: getColor(idx),
+        };
+      });
   }, [chartCategories, chartData]);
 
   const [includedCategories, setIncludedCategories] = useState(categories.map(c => c.key));
@@ -74,25 +90,28 @@ const LineChart = ({ chartData, chartCategories }) => {
   };
 
   return (
-    <div className="chart-card" tabIndex={-1} role="img" aria-label="Line chart">
+    <div className="chart-card no-bg" tabIndex={-1} role="img" aria-label="Line chart">
       {/* Category Options */}
-      {/* <div className="chart-controls">
-        <span className="font-semibold">Categories:</span>
+      <div className="chart-category-controls">
         {categories.map((cat) => (
-          <label key={cat.key} className="chart-checkbox">
+          <label key={cat.key} className="chart-checkbox" style={{ ['--dot-color']: cat.color }}>
             <input
               type="checkbox"
               checked={includedCategories.includes(cat.key)}
               onChange={() => handleCategoryToggle(cat.key)}
+              aria-label={cat.label}
             />
-            <span style={{ color: cat.color }}>{cat.label}</span>
+            <span style={{ color: 'var(--dot-color)' }}>{cat.label}</span>
           </label>
         ))}
-      </div> */}
+      </div>
 
-      <div className="chart-mobile">
+      <div
+        className="chart-container"
+        style={{ overflowX: isDayView ? 'auto' : 'visible', overflowY: 'hidden' }}
+      >
         {/* Mobile chart: smaller axis text */}
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width={isDayView ? chartData.length * 35 : "100%"} height={350} background={"red"}>
           <RechartsLineChart
             data={chartData}
             margin={{ top: 10, right: 5, left: -35, bottom: 55 }}
@@ -103,7 +122,7 @@ const LineChart = ({ chartData, chartCategories }) => {
               type="category"
               interval={0}
               stroke="#8884d8"
-              tick={{ fontSize: tickSize, fill: "#8884d8", angle: -45, textAnchor: 'end' }}
+              tick={{ fontSize: tickSize, fill: "#8884d8", angle: 0, textAnchor: 'end' }}
               height={60}
             />
             <YAxis
@@ -111,7 +130,6 @@ const LineChart = ({ chartData, chartCategories }) => {
               tick={{ fontSize: tickSize, fill: "#8884d8" }}
             />
             <Tooltip wrapperStyle={{ fontSize: tooltipFont }} />
-            <Legend wrapperStyle={{ fontSize: legendFont }} />
             {categories.map(
               (cat) =>
                 includedCategories.includes(cat.key) && (
@@ -130,46 +148,7 @@ const LineChart = ({ chartData, chartCategories }) => {
           </RechartsLineChart>
         </ResponsiveContainer>
       </div>
-      <div className="chart-desktop">
-        {/* Desktop/tablet chart: larger axis text */}
-        <ResponsiveContainer width="100%">
-          <RechartsLineChart
-            data={chartData}
-            margin={{ top: 10, left: -25}}
-          >
-            <CartesianGrid strokeDasharray="2 2" />
-            <XAxis
-              dataKey="group"
-              type="category"
-              interval={0}
-              stroke="#8884d8"
-              tick={{ fontSize: tickSize, fill: "#8884d8", angle: -45, textAnchor: 'end' }}
-              height={60}
-            />
-            <YAxis
-              stroke="#8884d8"
-              tick={{ fontSize: tickSize, fill: "#8884d8" }}
-            />
-            {/* <Tooltip wrapperStyle={{ fontSize: tooltipFont }} /> */}
-            <Legend wrapperStyle={{ fontSize: legendFont }} />
-            {categories.map(
-              (cat) =>
-                includedCategories.includes(cat.key) && (
-                  <Line
-                    key={cat.key}
-                    type="monotone"
-                    dataKey={cat.key}
-                    stroke={cat.color}
-                    strokeWidth={sizes.strokeWidth}
-                    dot={{ r: sizes.dot }}
-                    activeDot={{ r: sizes.activeDot }}
-                    name={cat.label}
-                  />
-                )
-            )}
-          </RechartsLineChart>
-        </ResponsiveContainer>
-      </div>
+
 
     </div>
   );

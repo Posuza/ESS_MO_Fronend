@@ -1,6 +1,7 @@
 .chart-card {
   padding: 3px;
-  border-radius: 12px;
+  border-radius: 1px;
+  /* keep default background but allow section to override; make it easy to remove */
   background: linear-gradient(180deg, var(--cardTop), var(--cardBottom));
   box-shadow: 0 6px 14px rgba(2, 75, 118, 0.03);
   border: none !important;
@@ -32,27 +33,55 @@
   border: none !important;
 }
 
-.chart-controls {
-  margin-bottom: 12px;
-  border: 1px solid rgba(2, 75, 118, 0.06);
-  border-radius: 8px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.9);
+.chart-category-controls {
+  padding: 6px 8px 6px 8px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 2px !important; /* force reduced gap between labels */
   align-items: center;
-  font-size: 14px;
-  max-height: 120px;
-  overflow-y: auto;
+  font-size: 12px; /* slightly smaller for compact layout */
 }
 
 .chart-checkbox {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 1px !important; /* tighter space between control and label */
+  margin: 0 !important;
+  padding: 0 2px !important; /* small horizontal padding to keep clickable area but reduce visual gap */
   cursor: pointer;
 }
+
+/* ensure direct children spacing isn't influenced by label internals */
+.chart-category-controls > .chart-checkbox {
+  margin-right: 2px !important;
+}
+
+/* Rounded radio-style checkbox visuals while keeping multi-select behavior */
+.chart-category-controls .chart-checkbox input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  accent-color: transparent !important;
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(2, 75, 118, 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(3,132,198,0.10);
+  background: transparent !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  position: relative !important;
+  cursor: pointer !important;
+  transition: box-shadow .12s ease, border-color .12s ease, transform .08s ease !important;
+  color: transparent !important;
+  background-clip: padding-box !important;
+}
+.chart-category-controls .chart-checkbox input[type="checkbox"]:checked {
+  color: var(--dot-color, #0384c6) !important;
+  border-color: currentColor !important;
+  /* smaller colored ring */
+  box-shadow: 0 0 0 1px currentColor !important;
+}
+
 
 .chart-title {
   font-size: 1.125rem;
@@ -66,37 +95,25 @@
   min-height: 140px;
 }
 
-.chart-mobile {
-  height: 192px;
+.chart-container {
+  width: 100%;
+  min-height: 140px;
+  height: 280px;
   display: block;
   width: 100%;
   border: none !important;
   outline: none !important;
-  overflow: visible;
+  overflow-y: hidden;
   position: relative;
 }
 
-.chart-mobile *,
-.chart-mobile svg {
+.chart-container *,
+.chart-container svg {
   border: none !important;
   outline: none !important;
 }
 
-.chart-desktop {
-  height: 256px;
-  display: none;
-  width: 100%;
-  border: none !important;
-  outline: none !important;
-  overflow: visible;
-  position: relative;
-}
 
-.chart-desktop *,
-.chart-desktop svg {
-  border: none !important;
-  outline: none !important;
-}
 
 /* Prevent Recharts SVG from being keyboard-focusable */
 .recharts-wrapper,

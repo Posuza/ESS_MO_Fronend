@@ -2,7 +2,7 @@
 .mo-linechart {
   background: linear-gradient(180deg, var(--cardTop), var(--cardBottom));
   border: none !important;
-  border-radius: 13px;
+  border-radius: 6px; /* reduced from 13px to make corners less rounded */
   box-shadow: 0 6px 14px rgba(2, 75, 118, 0.03);
   margin: 12px 0px;
   outline: none !important;
@@ -25,7 +25,7 @@
 }
 
 /* Controls row sits inside the card — no extra box */
-.mo-linechart .chart-controls {
+.mo-linechart .linechart-button-container {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -35,6 +35,9 @@
   justify-content: flex-end;
   margin-bottom: 8px;
 }
+
+/* Checkbox sizing and spacing for this card are defined in the LineChart component's CSS
+   to keep checkbox styles component-scoped. */
 
 /* Remove the inner chart-card's own background/border so it blends in */
 .mo-linechart .chart-card {
