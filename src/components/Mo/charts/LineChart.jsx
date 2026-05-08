@@ -2,9 +2,20 @@ import React, { useState, useMemo } from "react";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import "./LineChart.css";
 
-// Generate a distinct color for each index using HSL
-function getColor(idx) {
-  const hue = (idx * 47) % 360;
+// Use a shared palette first (matches TotalsGridSection), fallback to generated HSL.
+const PALETTE = [
+  '#1e6fb3', // blue
+  '#2b9aa3', // teal
+  '#3fb374', // green
+  '#f59e2e', // orange
+  '#e76b6b', // red
+];
+
+function getColor(idx, baseHue = 220) {
+  if (Number.isInteger(idx) && idx >= 0 && idx < PALETTE.length) {
+    return PALETTE[idx];
+  }
+  const hue = (baseHue + idx * 47) % 360;
   return `hsl(${hue}, 70%, 50%)`;
 }
 
