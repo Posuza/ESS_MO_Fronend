@@ -83,6 +83,16 @@ export const authService = {
   },
 
   /**
+   * Logout and record audit on backend (fire-and-forget)
+   */
+  async logout(employee_code: string): Promise<void> {
+    await fetch(`${API_BASE_URL}/auth/logout?employee_code=${employee_code}`, {
+      method: "POST",
+      headers: { ..._geoHeaders() },
+    }).catch(() => {});
+  },
+
+  /**
    * Login with employee code and PIN
    */
   async login(

@@ -87,10 +87,7 @@ export default function App() {
   async function onLogout() {
     const code = localStorage.getItem("emp_code") || empCode;
     if (code) {
-      // Fire-and-forget logout audit on backend
-      fetch(`${(await import("./config/api.config")).API_URL}/auth/logout?employee_code=${code}`, {
-        method: "POST",
-      }).catch(() => {});
+      authService.logout(code);
     }
     setPin("");
     setDisplayName("");

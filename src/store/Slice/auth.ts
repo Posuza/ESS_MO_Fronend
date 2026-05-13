@@ -52,14 +52,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   },
 
   logout: async (employee_code) => {
-    try {
-      await fetch(
-        `${(await import("@/config/api.config")).API_URL}/auth/logout?employee_code=${employee_code}`,
-        { method: "POST" }
-      );
-    } catch {
-      // fire-and-forget — clear local state regardless
-    }
+    await authService.logout(employee_code);
     localStorage.removeItem("emp_code");
     localStorage.removeItem("display_name");
     set({ authEmployee: null, authError: null });
