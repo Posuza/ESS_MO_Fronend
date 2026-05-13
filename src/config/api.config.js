@@ -1,5 +1,5 @@
 // API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || "https://guts.n6t.online/api/v1";
+export const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 console.log("🔧 API URL:", API_URL);
 console.log("🌍 User Agent:", navigator.userAgent);
 console.log("📱 Platform:", navigator.platform);
@@ -13,12 +13,20 @@ export const API_CONFIG = {
     console.log("🔑 api.config.js: getAuthHeader was called!");
     const token = localStorage.getItem("token");
     const employeeCode = localStorage.getItem("emp_code") || "";
+    const lat = localStorage.getItem("geo_lat");
+    const lng = localStorage.getItem("geo_lng");
+    const geoStatus = localStorage.getItem("geo_status");
     console.log("🔑 Token exists:", !!token);
     console.log("🔑 Employee Code:", employeeCode);
 
     return {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(employeeCode ? { "X-Employee-Code": employeeCode } : {}),
+      ...(lat && lng
+        ? { "X-Latitude": lat, "X-Longitude": lng }
+        : geoStatus
+          ? { "X-Geo-Status": geoStatus }
+          : {}),
     };
   },
 };

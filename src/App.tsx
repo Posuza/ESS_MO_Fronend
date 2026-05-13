@@ -7,7 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import CheckInOut from "./pages/Attendance/CheckInOut";
 import FaceVerify from "./pages/Attendance/FaceVerify";
 import FirstLoginModal from "./components/FirstLoginModal";
-import { employeeService } from "./services/employee.Service";
+import { authService } from "./services/auth.Service";
 
 type Route =
   | "login"
@@ -22,8 +22,9 @@ export default function App() {
   const [stack, setStack] = useState<Route[]>(["login"]);
   const route = stack[stack.length - 1];
 
-  const [empCode, setEmpCode] = useState("632070");
+  const [empCode, setEmpCode] = useState("");
   const [pin, setPin] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const [firstLoginOpen, setFirstLoginOpen] = useState(false);
 
@@ -52,44 +53,45 @@ export default function App() {
     return v.replace(/\D/g, "").slice(0, 6);
   }
 
-  function isFirstTimeUser(code: string) {
-    return code === "632070";
-  }
-
   async function onLogin() {
     if (!canSubmit) return;
+    setLoginError(null);
 
-    if (isFirstTimeUser(empCode)) {
-      setPin("");
-      setFirstLoginOpen(true);
-      return;
-    }
+    const result = await authService.login(empCode, pin);
 
-    try {
-      const employee = await employeeService.getByCode(empCode);
-      const nextDisplayName = [employee.first_name, employee.last_name]
-        .filter(Boolean)
-        .join(" ")
-        .trim();
+    if (result.success && result.data) {
+      const emp = result.data.employee;
+      const nextDisplayName = `${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
 
-      localStorage.setItem("emp_code", empCode);
+      localStorage.setItem("emp_code", emp.employee_code);
       localStorage.setItem("display_name", nextDisplayName);
 
       setDisplayName(nextDisplayName);
+      setPin("");
       reset("home");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "ไม่พบข้อมูลพนักงานหรือเข้าสู่ระบบไม่สำเร็จ";
-      alert(message);
+    } else {
+      setLoginError(result.message || "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง");
     }
   }
 
-  async function onRequestPassword() {
-    if (!empValid) return;
-    alert("ส่งรหัสไปอีเมลแล้ว (ตัวอย่าง)");
+  async function onRequestPassword(): Promise<{ success: boolean; message: string }> {
+    if (!empValid) {
+      return {
+        success: false,
+        message: "กรุณากรอกรหัสพนักงาน 6 หลักให้ถูกต้อง",
+      };
+    }
+    return await authService.forgotPassword(empCode);
   }
 
-  function onLogout() {
+  async function onLogout() {
+    const code = localStorage.getItem("emp_code") || empCode;
+    if (code) {
+      // Fire-and-forget logout audit on backend
+      fetch(`${(await import("./config/api.config")).API_URL}/auth/logout?employee_code=${code}`, {
+        method: "POST",
+      }).catch(() => {});
+    }
     setPin("");
     setDisplayName("");
     localStorage.removeItem("emp_code");
@@ -128,8 +130,9 @@ export default function App() {
           <Login
             empCode={empCode}
             pin={pin}
-            onChangeEmp={(v) => setEmpCode(onlyDigits6(v))}
-            onChangePin={(v) => setPin(onlyDigits6(v))}
+            loginError={loginError}
+            onChangeEmp={(v) => { setEmpCode(onlyDigits6(v)); setLoginError(null); }}
+            onChangePin={(v) => { setPin(onlyDigits6(v)); setLoginError(null); }}
             onSubmit={onLogin}
             onSendForgot={onRequestPassword}
           />

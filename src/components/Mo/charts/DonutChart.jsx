@@ -183,8 +183,8 @@ const DonutChartCard = ({
   );
 
   return (
-    <div className="chart-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
-      <div className="rl-header-row" style={{ marginBottom: 8 }}>
+    <div className="chart-card donut-chart-card">
+      <div className="rl-header-row">
         <h2 className="rl-title">{title}</h2>
         {filteredCategories.length > 0 && (
           <div className="rl-kebab-wrap">
@@ -202,13 +202,7 @@ const DonutChartCard = ({
           </div>
         )}
       </div>
-      <div
-        className="chart-container"
-        style={{
-          flex: 1,
-          minHeight: 200,
-        }}
-      >
+      <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <RePieChart margin={margin}>
             <RePie

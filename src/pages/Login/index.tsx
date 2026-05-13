@@ -9,17 +9,17 @@ import styles from "./Login.module.css";
 type Props = {
   empCode: string;
   pin: string;
-  isFirstTime?: boolean;
+  loginError?: string | null;
   onChangeEmp: (v: string) => void;
   onChangePin: (v: string) => void;
   onSubmit: () => void;
-  onSendForgot: () => void;
+  onSendForgot: () => Promise<{ success: boolean; message: string }>;
 };
 
 export default function Login({
   empCode,
   pin,
-  isFirstTime = false,
+  loginError,
   onChangeEmp,
   onChangePin,
   onSubmit,
@@ -30,7 +30,7 @@ export default function Login({
 
   const empValid = /^\d{6}$/.test(empCode);
   const pinValid = /^\d{6}$/.test(pin);
-  const canSubmit = isFirstTime ? empValid : empValid && pinValid;
+  const canSubmit = empValid && pinValid;
 
   return (
     <main className={styles["guts-bg"]}>
@@ -76,8 +76,7 @@ export default function Login({
           </div>
 
           {/* PIN */}
-          {!isFirstTime && (
-            <div>
+          <div>
               <div className={styles["guts-label"]}>
                 กรอกรหัส ( PIN 6 หลัก )
               </div>
@@ -112,6 +111,11 @@ export default function Login({
                 </button>
               </div>
             </div>
+
+          {loginError && (
+            <p role="alert" style={{ color: "var(--color-error, #e53935)", margin: "0 0 8px", fontSize: "0.875rem", textAlign: "center" }}>
+              {loginError}
+            </p>
           )}
 
           <button
@@ -150,9 +154,13 @@ export default function Login({
           onChangePin("");
           setForgotOpen(false);
         }}
-        onSend={() => {
-          onSendForgot();
-          setForgotOpen(false);
+        onSend={async () => {
+          const result = await onSendForgot();
+          if (result.success) {
+            onChangePin("");
+            // Modal will close automatically after success
+          }
+          return result;
         }}
       />
     </main>

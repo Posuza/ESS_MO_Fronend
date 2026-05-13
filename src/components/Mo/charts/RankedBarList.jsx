@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { X } from "lucide-react";
 import "./RankedBarList.css";
 
 /**
@@ -48,15 +49,15 @@ const RankedBarList = ({
   const currentTitle = expandedGroup ?? title;
 
   return (
-    <div className="rl-card">
+    <div className={`rl-card  ${expandedGroup ? 'is-expanded' : ''}`}>
       <div className="rl-header-row">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <div className="rl-header-left">
+          {title && <h2 className="rl-title">{currentTitle}</h2>}
           {expandedGroup && (
-            <button className="rl-back-btn" onClick={handleBack} aria-label="Back">
-              ›
+            <button className="rl-back-btn" onClick={handleBack} aria-label="Back" title="Back">
+              <X size={14} strokeWidth={2} aria-hidden />
             </button>
           )}
-          {title && <h2 className="rl-title">{currentTitle}</h2>}
         </div>
         {legend.length > 0 && (
           <div className="rl-kebab-wrap">
@@ -82,33 +83,25 @@ const RankedBarList = ({
           const trackPct = Math.round((total / maxTotal) * 100);
           const isTop = idx === 0;
           return (
-            <div key={item.group} className={`rl-row${isTop ? " rl-row--top" : ""}`}>
+            <div
+              key={item.group}
+              className={`rl-row${isTop ? " rl-row--top" : ""}`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleRowClick(item.group)}
+            >
               <div
                 className="rl-label-row"
                 onClick={() => handleRowClick(item.group)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && handleRowClick(item.group)}
               >
                 <span className="rl-name">{item.group}</span>
                 <span className="rl-value">{total.toLocaleString()}</span>
               </div>
-              <div className="rl-track" style={{ width: `${trackPct}%` }}>
-                {categories ? (
-                  categories.map((c) => {
-                    const segPct = total > 0 ? (item[c.key] || 0) / total * 100 : 0;
-                    return segPct > 0 ? (
-                      <div
-                        key={c.key}
-                        className="rl-bar"
-                        style={{ width: `${segPct}%`, background: c.color }}
-                        title={`${c.label}: ${(item[c.key] || 0).toLocaleString()}`}
-                      />
-                    ) : null;
-                  })
-                ) : (
-                  <div className="rl-bar" style={{ width: "100%", background: isTop ? "#8b1a1a" : "#d0d5dd" }} />
-                )}
+              
+              <div className="rl-track-container" style={{ width: `100%` }}>
+                <div className="rl-track" style={{ width: `${trackPct}%` }}>
+                  <div className="rl-bar" style={{ width: "100%", background: "#4e9af1" }} />
+                </div>
               </div>
             </div>
           );
@@ -127,21 +120,25 @@ const RankedBarList = ({
             const isExpanded = expandedCat === c.key;
             const subs = hasSubs ? subCategories[c.key] : [];
             return (
-              <div key={c.key} className="rl-row">
-                <div
-                  className="rl-label-row"
-                  style={{ cursor: hasSubs ? 'pointer' : 'default' }}
-                  onClick={hasSubs ? () => { setExpandedCat(c.key); onCatSelect?.(c.key); } : undefined}
-                  role={hasSubs ? 'button' : undefined}
-                  tabIndex={hasSubs ? 0 : undefined}
-                  onKeyDown={hasSubs ? (e) => { if (e.key === 'Enter') { setExpandedCat(c.key); onCatSelect?.(c.key); } } : undefined}
-                >
-                  <span className="rl-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span className="rl-legend-dot" style={{ background: c.color }} />
+              <div
+                key={c.key}
+                className={`rl-row ${hasSubs ? 'rl-row--clickable' : ''} ${isExpanded ? 'is-selected' : ''}`}
+                style={{ 
+                  borderLeft: `3px solid ${c.color}`
+                }}
+                onClick={hasSubs ? () => { setExpandedCat(c.key); onCatSelect?.(c.key); } : undefined}
+                role={hasSubs ? 'button' : undefined}
+                tabIndex={hasSubs ? 0 : undefined}
+                onKeyDown={hasSubs ? (e) => { if (e.key === 'Enter') { setExpandedCat(c.key); onCatSelect?.(c.key); } } : undefined}
+              >
+                <div className="rl-label-row">
+
+                  <span className="rl-name">
                     {c.label}
                   </span>
                   <span className="rl-value">{val.toLocaleString()}</span>
                 </div>
+                <div className="rl-track-container" style={{ width: `100%` }}>
                 <div className="rl-track" style={{ width: `${trackPct}%` }}>
                   {hasSubs ? subs.map((sc) => {
                     const sv = item[sc.key] || 0;
@@ -157,6 +154,7 @@ const RankedBarList = ({
                   }) : (
                     <div className="rl-bar" style={{ width: '100%', background: c.color }} />
                   )}
+                </div>
                 </div>
               </div>
             );

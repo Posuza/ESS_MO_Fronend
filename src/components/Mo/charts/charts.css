@@ -54,7 +54,3 @@
   width: 100%;
 }
 
-@media (min-width: 640px) {
-  .chart-mobile { display: none; }
-  .chart-desktop { display: block; }
-}

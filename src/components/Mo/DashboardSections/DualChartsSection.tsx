@@ -199,7 +199,7 @@ export default function DualCharts() {
   return (
     <div style={{ marginBottom: 12 }}>
 
-      <div className="mo-dualcharts" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}>
+      <div className="mo-dualcharts" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "start", height: 250 }}>
         <RankedBarList
           data={barData}
           title="ภาค"

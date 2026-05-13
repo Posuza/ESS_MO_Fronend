@@ -1,5 +1,5 @@
 // src/pages/Home.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -9,10 +9,17 @@ import {
   XCircle,
   Eye,
   MapPinCheck,
+  Edit3,
+  Trash2,
+  Save,
+  X,
 } from "lucide-react";
 import styles from "./MoDetailPage.module.css";
 import AutoResizeTextarea from "../../../components/AutoResizeTextarea";
 import MoPdfViewer from "../MoPdfViewerPage/MoPdfViewer";
+import ConfirmDeleteDialog from "../../../components/Mo/ConfirmDeleteDialog";
+import InfoModel from "../../../components/Mo/InfoModel";
+import { useStore } from "../../../store/store";
 
 type Props = {
   onCancel?: () => void;
@@ -33,6 +40,19 @@ function ApprovalStatusIcon({ value }: { value: ApprovalStatus }) {
 }
 
 export default function MoDetailPage(props: Props) {
+  const currentEmployee = useStore((state) => state.currentEmployee);
+  const updateReport = useStore((state) => state.updateReport);
+  const deleteReport = useStore((state) => state.deleteReport);
+  // All authenticated users can edit/delete
+  const canEdit = currentEmployee?.role_id === 1;
+  const isManager = currentEmployee?.role_id === 1 || currentEmployee?.role_id === 2;
+  const [isEditing, setIsEditing] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successTitle, setSuccessTitle] = useState("");
+  const [successDescription, setSuccessDescription] = useState("");
+  const initialValuesRef = useRef<Record<string, string | number> | null>(null);
+  const [savedSnapshot, setSavedSnapshot] = useState<Record<string, string | number> | null>(null);
   const [showPdf, setShowPdf] = useState(false);
   const [date] = useState(() => new Date().toLocaleDateString("th-TH"));
   const [region, setRegion] = useState("");
@@ -44,16 +64,16 @@ export default function MoDetailPage(props: Props) {
   // กำลังพล
   const [absentCount, setAbsentCount] = useState("");
   // breakdown for การควงกะ
-  const [workShiftOpen, setWorkShiftOpen] = useState(true);
+  const [workShiftOpen, setWorkShiftOpen] = useState(false);
   const [shift18, setShift18] = useState("");
   const [shift24, setShift24] = useState("");
   const [shift36, setShift36] = useState("");
   // collapse state for "กำลังพล" box
-  const [personnelOpen, setPersonnelOpen] = useState(true);
+  const [personnelOpen, setPersonnelOpen] = useState(false);
   // ผิดข้อปฏิบัติ / การตักเตือน
   const [disciplineNote, setDisciplineNote] = useState("");
   // collapse + numeric counts for ผิดข้อปฏิบัติ UI
-  const [disciplineOpen, setDisciplineOpen] = useState(true);
+  const [disciplineOpen, setDisciplineOpen] = useState(false);
   const [sleepCount, setSleepCount] = useState("");
   const [phoneCount, setPhoneCount] = useState("");
   const [badgeCount, setBadgeCount] = useState("");
@@ -63,7 +83,7 @@ export default function MoDetailPage(props: Props) {
   const [pantsCount, setPantsCount] = useState("");
   const [shoesCount, setShoesCount] = useState("");
   // collapse state for เครื่องแต่งกาย
-  const [uniformOpen, setUniformOpen] = useState(true);
+  const [uniformOpen, setUniformOpen] = useState(false);
   // อื่น ๆ
   const [otherNote, setOtherNote] = useState("");
   // "อื่น ๆ" detailed rows
@@ -72,12 +92,14 @@ export default function MoDetailPage(props: Props) {
   const [trainCount, setTrainCount] = useState("");
   const [trainNote, setTrainNote] = useState("");
   // collapse state for อื่น ๆ
-  const [otherOpen, setOtherOpen] = useState(true);
+  const [otherOpen, setOtherOpen] = useState(false);
 
   // new: collapse state for "ลา" card
-  const [leaveOpen, setLeaveOpen] = useState(true);
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>("PENDING");
   const [approvalRemark, setApprovalRemark] = useState("");
+  const [createdBy, setCreatedBy] = useState("");
+  const [approvedBy, setApprovedBy] = useState("");
 
   function toApprovalStatus(value?: string): ApprovalStatus {
     if (value === "APPROVED" || value === "REJECT" || value === "PENDING") {
@@ -90,6 +112,178 @@ export default function MoDetailPage(props: Props) {
     if (value === "APPROVED") return "อนุมัติแล้ว";
     if (value === "REJECT") return "ไม่อนุมัติ";
     return "รออนุมัติ";
+  }
+
+  const normalizeNumber = (value: string | number | null | undefined) => {
+    const num = Number(value);
+    return Number.isNaN(num) ? 0 : num;
+  };
+  const normalizeText = (value: string | null | undefined) =>
+    (value ?? "").trim();
+
+  const buildInitialValues = (it: SectorReport) => {
+    const base: Record<string, string | number> = {
+      leave_sick_count: normalizeNumber(it.leave_sick_count),
+      leave_business_count: normalizeNumber(it.leave_business_count),
+      leave_other_count: normalizeNumber(it.leave_other_count),
+      absent_count: normalizeNumber(it.absent_count),
+      shift_18_count: normalizeNumber(it.shift_18_count),
+      shift_24_count: normalizeNumber(it.shift_24_count),
+      shift_36_count: normalizeNumber(it.shift_36_count),
+      rule_sleep_count: normalizeNumber(it.rule_sleep_count),
+      rule_use_phone_count: normalizeNumber(it.rule_use_phone_count),
+      rule_no_card_count: normalizeNumber(it.rule_no_card_count),
+      wear_hat_count: normalizeNumber(it.wear_hat_count),
+      wear_shirt_count: normalizeNumber(it.wear_shirt_count),
+      wear_pant_count: normalizeNumber(it.wear_pant_count),
+      wear_shoe_count: normalizeNumber(it.wear_shoe_count),
+      warning: normalizeText(it.warning),
+      other_Job: normalizeText(it.other_Job),
+      other_Job_count: normalizeNumber(it.other_Job_count),
+      other_training: normalizeText(it.other_training),
+      other_training_count: normalizeNumber(it.other_training_count),
+      other_extral: normalizeText(it.other_extral),
+    };
+    if (isManager) {
+      base.approved_status = toApprovalStatus(it.approved_status);
+      base.approved_remark = normalizeText(it.approved_remark);
+    }
+    if (canEdit) {
+      base.created_by = normalizeText(it.created_by);
+      base.approved_by = normalizeText(it.approved_by);
+    }
+    return base;
+  };
+
+  const currentValues = () => {
+    const base: Record<string, string | number> = {
+      leave_sick_count: normalizeNumber(sickLeave),
+      leave_business_count: normalizeNumber(personalLeave),
+      leave_other_count: normalizeNumber(otherLeaveType),
+      absent_count: normalizeNumber(absentCount),
+      shift_18_count: normalizeNumber(shift18),
+      shift_24_count: normalizeNumber(shift24),
+      shift_36_count: normalizeNumber(shift36),
+      rule_sleep_count: normalizeNumber(sleepCount),
+      rule_use_phone_count: normalizeNumber(phoneCount),
+      rule_no_card_count: normalizeNumber(badgeCount),
+      wear_hat_count: normalizeNumber(hatCount),
+      wear_shirt_count: normalizeNumber(shirtCount),
+      wear_pant_count: normalizeNumber(pantsCount),
+      wear_shoe_count: normalizeNumber(shoesCount),
+      warning: normalizeText(disciplineNote),
+      other_Job: normalizeText(foundNote),
+      other_Job_count: normalizeNumber(foundCount),
+      other_training: normalizeText(trainNote),
+      other_training_count: normalizeNumber(trainCount),
+      other_extral: normalizeText(otherNote),
+    };
+    if (isManager) {
+      base.approved_status = approvalStatus;
+      base.approved_remark = normalizeText(approvalRemark);
+    }
+    if (canEdit) {
+      base.created_by = normalizeText(createdBy);
+      base.approved_by = normalizeText(approvedBy);
+    }
+    return base;
+  };
+
+  // isDirty: compare current field values against the last saved snapshot
+  // (reads only state — no ref access during render)
+  const isDirtyState = isEditing && savedSnapshot !== null && (() => {
+    const current = currentValues();
+    return Object.keys(current).some((key) => current[key] !== savedSnapshot[key]);
+  })();
+
+  function handleSave() {
+    if (!props.item?.id) return;
+    const payload = {
+      leave_sick_count: Number(sickLeave) || 0,
+      leave_business_count: Number(personalLeave) || 0,
+      leave_other_count: Number(otherLeaveType) || 0,
+      absent_count: Number(absentCount) || 0,
+      shift_18_count: Number(shift18) || 0,
+      shift_24_count: Number(shift24) || 0,
+      shift_36_count: Number(shift36) || 0,
+      rule_sleep_count: Number(sleepCount) || 0,
+      rule_use_phone_count: Number(phoneCount) || 0,
+      rule_no_card_count: Number(badgeCount) || 0,
+      wear_hat_count: Number(hatCount) || 0,
+      wear_shirt_count: Number(shirtCount) || 0,
+      wear_pant_count: Number(pantsCount) || 0,
+      wear_shoe_count: Number(shoesCount) || 0,
+      warning: disciplineNote,
+      other_Job: foundNote,
+      other_Job_count: Number(foundCount) || 0,
+      other_training: trainNote,
+      other_training_count: Number(trainCount) || 0,
+      other_extral: otherNote,
+      ...(isManager
+        ? { approved_status: approvalStatus, approved_remark: approvalRemark }
+        : {}),
+      ...(canEdit
+        ? { created_by: createdBy, approved_by: approvedBy }
+        : {}),
+    };
+    updateReport(props.item.id, payload)
+      .then(() => {
+        setIsEditing(false);
+        // refresh snapshot so the save button disables again
+        if (props.item) setSavedSnapshot(buildInitialValues(props.item));
+        setSuccessTitle("อัปเดตรายงานสำเร็จ!");
+        setSuccessDescription("ระบบได้ทำการอัปเดตข้อมูลของคุณเรียบร้อยแล้ว");
+        setShowSuccess(true);
+      })
+      .catch((err: unknown) => {
+        alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err}`);
+      });
+  }
+
+  function cancelEdit() {
+    // revert all fields to initial values
+    const it = props.item;
+    if (it) {
+      setSickLeave(it.leave_sick_count != null ? String(it.leave_sick_count) : "");
+      setPersonalLeave(it.leave_business_count != null ? String(it.leave_business_count) : "");
+      setOtherLeaveType(it.leave_other_count != null ? String(it.leave_other_count) : "");
+      setAbsentCount(it.absent_count != null ? String(it.absent_count) : "");
+      setShift18(it.shift_18_count != null ? String(it.shift_18_count) : "");
+      setShift24(it.shift_24_count != null ? String(it.shift_24_count) : "");
+      setShift36(it.shift_36_count != null ? String(it.shift_36_count) : "");
+      setSleepCount(it.rule_sleep_count != null ? String(it.rule_sleep_count) : "");
+      setPhoneCount(it.rule_use_phone_count != null ? String(it.rule_use_phone_count) : "");
+      setBadgeCount(it.rule_no_card_count != null ? String(it.rule_no_card_count) : "");
+      setDisciplineNote(it.warning ?? "");
+      setHatCount(it.wear_hat_count != null ? String(it.wear_hat_count) : "");
+      setShirtCount(it.wear_shirt_count != null ? String(it.wear_shirt_count) : "");
+      setPantsCount(it.wear_pant_count != null ? String(it.wear_pant_count) : "");
+      setShoesCount(it.wear_shoe_count != null ? String(it.wear_shoe_count) : "");
+      setFoundCount(it.other_Job_count != null ? String(it.other_Job_count) : "");
+      setFoundNote(it.other_Job ?? "");
+      setTrainCount(it.other_training_count != null ? String(it.other_training_count) : "");
+      setTrainNote(it.other_training ?? "");
+      setOtherNote(it.other_extral ?? "");
+      setApprovalStatus(toApprovalStatus(it.approved_status));
+      setApprovalRemark(it.approved_remark ?? "");
+      setCreatedBy(it.created_by ?? "");
+      setApprovedBy(it.approved_by ?? "");
+    }
+    setIsEditing(false);
+  }
+
+  function confirmDelete() {
+    if (!props.item?.id) return;
+    setShowConfirmDelete(false);
+    deleteReport(props.item.id)
+      .then(() => {
+        setSuccessTitle("ลบรายการสำเร็จ!");
+        setSuccessDescription("ระบบได้ลบรายการนี้ออกจากระบบเรียบร้อยแล้ว");
+        setShowSuccess(true);
+      })
+      .catch((err: unknown) => {
+        alert(`เกิดข้อผิดพลาดในการลบ: ${err}`);
+      });
   }
 
   useEffect(() => {
@@ -142,7 +336,42 @@ export default function MoDetailPage(props: Props) {
     setOtherNote(it.other_extral ?? "");
     setApprovalStatus(toApprovalStatus(it.approved_status));
     setApprovalRemark(it.approved_remark ?? "");
-  }, [props.item]);
+    setCreatedBy(it.created_by ?? "");
+    setApprovedBy(it.approved_by ?? "");
+    // snapshot initial values into state so isDirty can compare during render
+    const base: Record<string, string | number> = {
+      leave_sick_count: normalizeNumber(it.leave_sick_count),
+      leave_business_count: normalizeNumber(it.leave_business_count),
+      leave_other_count: normalizeNumber(it.leave_other_count),
+      absent_count: normalizeNumber(it.absent_count),
+      shift_18_count: normalizeNumber(it.shift_18_count),
+      shift_24_count: normalizeNumber(it.shift_24_count),
+      shift_36_count: normalizeNumber(it.shift_36_count),
+      rule_sleep_count: normalizeNumber(it.rule_sleep_count),
+      rule_use_phone_count: normalizeNumber(it.rule_use_phone_count),
+      rule_no_card_count: normalizeNumber(it.rule_no_card_count),
+      wear_hat_count: normalizeNumber(it.wear_hat_count),
+      wear_shirt_count: normalizeNumber(it.wear_shirt_count),
+      wear_pant_count: normalizeNumber(it.wear_pant_count),
+      wear_shoe_count: normalizeNumber(it.wear_shoe_count),
+      warning: normalizeText(it.warning),
+      other_Job: normalizeText(it.other_Job),
+      other_Job_count: normalizeNumber(it.other_Job_count),
+      other_training: normalizeText(it.other_training),
+      other_training_count: normalizeNumber(it.other_training_count),
+      other_extral: normalizeText(it.other_extral),
+    };
+    if (isManager) {
+      base.approved_status = toApprovalStatus(it.approved_status);
+      base.approved_remark = normalizeText(it.approved_remark);
+    }
+    if (canEdit) {
+      base.created_by = normalizeText(it.created_by);
+      base.approved_by = normalizeText(it.approved_by);
+    }
+    initialValuesRef.current = base;
+    setSavedSnapshot(base);
+  }, [props.item, isManager]);
 
   if (showPdf && props.item) {
     return (
@@ -156,11 +385,32 @@ export default function MoDetailPage(props: Props) {
 
   return (
     <>
+      <ConfirmDeleteDialog
+        open={showConfirmDelete}
+        title="ยืนยันลบรายการนี้?"
+        description="รายการนี้จะถูกลบออกจากระบบ ไม่สามารถกู้คืนได้"
+        onCancel={() => setShowConfirmDelete(false)}
+        onConfirm={confirmDelete}
+      />
+      <InfoModel
+        open={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          if (successTitle.startsWith("ลบ")) {
+            if (props.onCancel) props.onCancel();
+            else window.history.back();
+          }
+        }}
+        variant="success"
+        title={successTitle}
+        description={successDescription}
+      />
       <div className={styles["gut-detail-btns-box"]} aria-hidden>
         <button
           type="button"
           className={styles["gut-back-icon"]}
           onClick={() => {
+            if (isEditing) { cancelEdit(); return; }
             if (props.onCancel) return props.onCancel();
             return window.history.back();
           }}
@@ -169,19 +419,83 @@ export default function MoDetailPage(props: Props) {
           <ArrowLeft size={18} />
         </button>
         <div className={styles["guts-action-icons"]} aria-hidden={false}>
-          <button
-            type="button"
-            className={styles["guts-icon-btn"]}
-            title="Preview PDF"
-            aria-label="Preview PDF"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShowPdf(true);
-            }}
-          >
-            <Eye size={18} />
-          </button>
+          {!isEditing ? (
+            <>
+              <button
+                type="button"
+                className={styles["guts-icon-btn"]}
+                title="Preview PDF"
+                aria-label="Preview PDF"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowPdf(true);
+                }}
+              >
+                <Eye size={18} />
+              </button>
+              {canEdit ? (
+                <button
+                  type="button"
+                  className={styles["guts-icon-btn"]}
+                  title="Edit"
+                  aria-label="Edit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }}
+                >
+                  <Edit3 size={18} />
+                </button>
+              ) : null}
+              {canEdit ? (
+                <button
+                  type="button"
+                  className={`${styles["guts-icon-btn"]} ${styles["guts-icon-delete"]}`}
+                  title="Delete"
+                  aria-label="Delete"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowConfirmDelete(true);
+                  }}
+                >
+                  <Trash2 size={18} />
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={styles["guts-icon-btn"]}
+                title="Cancel Edit"
+                aria-label="Cancel Edit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  cancelEdit();
+                }}
+              >
+                <X size={18} />
+              </button>
+              <button
+                type="button"
+                className={`${styles["guts-icon-btn"]} ${styles["guts-icon-save"]}`}
+                title="Save"
+                aria-label="Save"
+                disabled={!isDirtyState}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave();
+                }}
+              >
+                <Save size={18} />
+              </button>
+            </>
+          )}
         </div>
       </div>
       <div className={styles["guts-Mo-layout"]}>
@@ -264,7 +578,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={sickLeave}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setSickLeave(e.target.value.replace(/\D/g, ""))
                   }
@@ -290,7 +604,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={personalLeave}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setPersonalLeave(e.target.value.replace(/\D/g, ""))
                   }
@@ -316,7 +630,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={otherLeaveType}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setOtherLeaveType(e.target.value.replace(/\D/g, ""))
                   }
@@ -373,7 +687,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={absentCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setAbsentCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -423,7 +737,7 @@ export default function MoDetailPage(props: Props) {
                       min={0}
                       step={1}
                       value={shift18}
-                      disabled={true}
+                      disabled={!isEditing}
                       onChange={(e) =>
                         setShift18(e.target.value.replace(/\D/g, ""))
                       }
@@ -448,7 +762,7 @@ export default function MoDetailPage(props: Props) {
                       min={0}
                       step={1}
                       value={shift24}
-                      disabled={true}
+                      disabled={!isEditing}
                       onChange={(e) =>
                         setShift24(e.target.value.replace(/\D/g, ""))
                       }
@@ -473,7 +787,7 @@ export default function MoDetailPage(props: Props) {
                       min={0}
                       step={1}
                       value={shift36}
-                      disabled={true}
+                      disabled={!isEditing}
                       onChange={(e) =>
                         setShift36(e.target.value.replace(/\D/g, ""))
                       }
@@ -533,7 +847,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={sleepCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setSleepCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -558,7 +872,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={phoneCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setPhoneCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -583,7 +897,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={badgeCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setBadgeCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -608,7 +922,7 @@ export default function MoDetailPage(props: Props) {
                 className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
                 rows={2}
                 value={disciplineNote}
-                disabled={true}
+                disabled={!isEditing}
                 onChange={(e) => setDisciplineNote(e.target.value)}
                 placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
               />
@@ -659,7 +973,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={hatCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setHatCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -684,7 +998,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={shirtCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setShirtCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -709,7 +1023,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={pantsCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setPantsCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -734,7 +1048,7 @@ export default function MoDetailPage(props: Props) {
                   min={0}
                   step={1}
                   value={shoesCount}
-                  disabled={true}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setShoesCount(e.target.value.replace(/\D/g, ""))
                   }
@@ -787,7 +1101,7 @@ export default function MoDetailPage(props: Props) {
                 min={0}
                 step={1}
                 value={foundCount}
-                disabled={true}
+                disabled={!isEditing}
                 onChange={(e) =>
                   setFoundCount(e.target.value.replace(/\D/g, ""))
                 }
@@ -804,7 +1118,7 @@ export default function MoDetailPage(props: Props) {
               className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
               rows={2}
               value={foundNote}
-              disabled={true}
+              disabled={!isEditing}
               onChange={(e) => setFoundNote(e.target.value)}
               placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
             />
@@ -822,7 +1136,7 @@ export default function MoDetailPage(props: Props) {
                 min={0}
                 step={1}
                 value={trainCount}
-                disabled={true}
+                disabled={!isEditing}
                 onChange={(e) =>
                   setTrainCount(e.target.value.replace(/\D/g, ""))
                 }
@@ -839,7 +1153,7 @@ export default function MoDetailPage(props: Props) {
               className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
               rows={2}
               value={trainNote}
-              disabled={true}
+              disabled={!isEditing}
               onChange={(e) => setTrainNote(e.target.value)}
               placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
             />
@@ -856,7 +1170,7 @@ export default function MoDetailPage(props: Props) {
               className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
               rows={2}
               value={otherNote}
-              disabled={true}
+              disabled={!isEditing}
               onChange={(e) => setOtherNote(e.target.value)}
               placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
             />
@@ -875,12 +1189,38 @@ export default function MoDetailPage(props: Props) {
                   : styles["approval-remark-pending"],
             ].join(" ")}
           >
+            {isManager ? (
+              <div className={styles["approval-status-row"]}>
+                <label className={styles["approval-status-label"]}>
+                  การอนุมัติ:
+                </label>
+                <select
+                  className={[
+                    styles["approval-select"],
+                    approvalStatus === "APPROVED"
+                      ? styles["approval-select-approved"]
+                      : approvalStatus === "REJECT"
+                        ? styles["approval-select-reject"]
+                        : styles["approval-select-pending"],
+                  ].join(" ")}
+                  value={approvalStatus}
+                  disabled={!isEditing}
+                  onChange={(e) =>
+                    setApprovalStatus(toApprovalStatus(e.target.value))
+                  }
+                >
+                  <option value="PENDING">รออนุมัติ</option>
+                  <option value="APPROVED">อนุมัติแล้ว</option>
+                  <option value="REJECT">ไม่อนุมัติ</option>
+                </select>
+              </div>
+            ) : null}
             <div className={styles["approval-content"]}>
               <AutoResizeTextarea
                 className={styles["approval-textarea"]}
                 rows={3}
                 value={approvalRemark}
-                disabled={true}
+                disabled={!isEditing || !isManager}
                 onChange={(e) => setApprovalRemark(e.target.value)}
                 placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
               />
@@ -890,15 +1230,35 @@ export default function MoDetailPage(props: Props) {
           <div className={styles["signature-section"]}>
             <div className={styles["signature-slot"]}>
               <div className={styles["signature-title"]}>ผู้ บันทึก</div>
-              <div className={styles["signature-line"]}>
-                {props.item?.created_by || "ADMIN"}
-              </div>
+              {isEditing && canEdit ? (
+                <input
+                  className={styles["signature-input"]}
+                  type="text"
+                  value={createdBy}
+                  onChange={(e) => setCreatedBy(e.target.value)}
+                  placeholder="ชื่อผู้บันทึก"
+                />
+              ) : (
+                <div className={styles["signature-line"]}>
+                  {props.item?.created_by || "ADMIN"}
+                </div>
+              )}
             </div>
             <div className={styles["signature-slot"]}>
               <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
-              <div className={styles["signature-line"]}>
-                {props.item?.approved_by || "\u00A0"}
-              </div>
+              {isEditing && canEdit ? (
+                <input
+                  className={styles["signature-input"]}
+                  type="text"
+                  value={approvedBy}
+                  onChange={(e) => setApprovedBy(e.target.value)}
+                  placeholder="ชื่อผู้อำนวยงาน"
+                />
+              ) : (
+                <div className={styles["signature-line"]}>
+                  {props.item?.approved_by || "\u00A0"}
+                </div>
+              )}
             </div>
           </div>
         </div>

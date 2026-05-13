@@ -44,6 +44,7 @@ export default function MoHome(props: Props) {
   const fetchReports = useStore((state) => state.fetchReports);
   const fetchSectors = useStore((state) => state.fetchSectors);
   const fetchEmployeeByCode = useStore((state) => state.fetchEmployeeByCode);
+  const deleteReport = useStore((state) => state.deleteReport);
 
   useEffect(() => {
     console.log("MoHome: Fetching employee...", props.empCode);
@@ -251,9 +252,15 @@ export default function MoHome(props: Props) {
     );
   }
 
+  const isSuperAdmin = currentEmployee?.role_id === 1;
+
   if (subView === "detail" && selectedItem) {
     return (
-      <MoDetailPage item={selectedItem} onCancel={() => setSubView("main")} onShare={() => setSubView("pdfviewer")} />
+      <MoDetailPage
+        item={selectedItem}
+        onCancel={() => setSubView("main")}
+        onShare={() => setSubView("pdfviewer")}
+      />
     );
   }
 

@@ -41,16 +41,16 @@ export default function MoUpdatePage(props: Props) {
   // กำลังพล
   const [absentCount, setAbsentCount] = useState("");
   // breakdown for การควงกะ
-  const [workShiftOpen, setWorkShiftOpen] = useState(true);
+  const [workShiftOpen, setWorkShiftOpen] = useState(false);
   const [shift18, setShift18] = useState("");
   const [shift24, setShift24] = useState("");
   const [shift36, setShift36] = useState("");
   // collapse state for "กำลังพล" box
-  const [personnelOpen, setPersonnelOpen] = useState(true);
+  const [personnelOpen, setPersonnelOpen] = useState(false);
   // ผิดข้อปฏิบัติ / การตักเตือน
   const [disciplineNote, setDisciplineNote] = useState("");
   // collapse + numeric counts for ผิดข้อปฏิบัติ UI
-  const [disciplineOpen, setDisciplineOpen] = useState(true);
+  const [disciplineOpen, setDisciplineOpen] = useState(false);
   const [sleepCount, setSleepCount] = useState("");
   const [phoneCount, setPhoneCount] = useState("");
   const [badgeCount, setBadgeCount] = useState("");
@@ -61,7 +61,7 @@ export default function MoUpdatePage(props: Props) {
   const [pantsCount, setPantsCount] = useState("");
   const [shoesCount, setShoesCount] = useState("");
   // collapse state for เครื่องแต่งกาย
-  const [uniformOpen, setUniformOpen] = useState(true);
+  const [uniformOpen, setUniformOpen] = useState(false);
   // อื่น ๆ
   const [otherNote, setOtherNote] = useState("");
   // "อื่น ๆ" detailed rows
@@ -70,10 +70,10 @@ export default function MoUpdatePage(props: Props) {
   const [trainCount, setTrainCount] = useState("");
   const [trainNote, setTrainNote] = useState("");
   // collapse state for อื่น ๆ
-  const [otherOpen, setOtherOpen] = useState(true);
+  const [otherOpen, setOtherOpen] = useState(false);
 
   // new: collapse state for "ลา" card
-  const [leaveOpen, setLeaveOpen] = useState(true);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   // show the small action icons (Save/Delete) instead of the bottom full actions
   // Note: `true` means the *form actions* (bottom) are visible — keep icons hidden on open
@@ -90,7 +90,8 @@ export default function MoUpdatePage(props: Props) {
   const initialValuesRef = useRef<Record<string, string | number> | null>(null);
 
   const currentEmployee = useStore((state) => state.currentEmployee);
-  const isManager = currentEmployee?.role_id === 2;
+  // Super Admin (role_id 1) and Manager (role_id 2) can approve/update
+  const isManager = currentEmployee?.role_id === 1 || currentEmployee?.role_id === 2;
 
   function toApprovalStatus(value?: string): ApprovalStatus {
     if (value === "APPROVED" || value === "REJECT" || value === "PENDING") {
