@@ -20,6 +20,7 @@ export interface ForgotPasswordRequest {
 
 export interface ForgotPasswordResponse {
   message: string;
+  contacts?: Array<{ team?: string; email?: string }>;
 }
 
 export const authService = {
@@ -53,15 +54,27 @@ export const authService = {
         };
       }
 
-      // Handle error responses
-      const status = response.status;
-      
-      if (status === 404 || status === 400) {
-        return {
-          success: false,
-          message: "ไม่พบรหัสพนักงานในระบบ กรุณาติดต่อฝ่ายบุคคล",
-        };
-      } else if (status === 500) {
+      // Handle error responses by parsing backend detail (may include message and contacts)
+      const errorData = await response.json().catch(() => null);
+
+      if (errorData?.detail) {
+        // New format: detail is an object with message and contacts
+        if (typeof errorData.detail === "object") {
+          const msg = errorData.detail.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+          const contacts = Array.isArray(errorData.detail.contacts)
+            ? errorData.detail.contacts.map((c: any) => ({ team: c.team, email: c.email }))
+            : undefined;
+          return { success: false, message: msg, contacts };
+        }
+
+        // Old format: detail is a string message
+        if (typeof errorData.detail === "string") {
+          return { success: false, message: errorData.detail };
+        }
+      }
+
+      // Fallbacks based on status codes
+      if (response.status === 500) {
         return {
           success: false,
           message: "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง",
@@ -98,7 +111,7 @@ export const authService = {
   async login(
     employee_code: string,
     password: string
-  ): Promise<{ success: boolean; data?: any; message?: string }> {
+  ): Promise<{ success: boolean; data?: any; message?: string; contacts?: any[] }> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
@@ -120,10 +133,40 @@ export const authService = {
         };
       }
 
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = await response.json().catch(() => null);
+      console.log("Login error response:", errorData);
+      
+      // Handle error response from ERROR_REGISTRY
+      let message = "";
+      let contacts = undefined;
+      
+      if (errorData?.detail) {
+        if (typeof errorData.detail === "object") {
+          // New format with error object
+          message = errorData.detail.message || "เกิดข้อผิดพลาด";
+          
+          if (errorData.detail.contacts && errorData.detail.contacts.length > 0) {
+            contacts = errorData.detail.contacts;
+          }
+        } else if (typeof errorData.detail === "string") {
+          // Old format with string detail
+          message = errorData.detail;
+        }
+      }
+      
+      if (!message) {
+        message = response.status === 500 
+          ? "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาติดต่อทีมพัฒนา"
+          : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+        if (response.status === 500) {
+          contacts = [{ team: "BE_CORE", email: "be-core@gutsess.com" }];
+        }
+      }
+      
       return {
         success: false,
-        message: errorData?.detail || "เข้าสู่ระบบไม่สำเร็จ",
+        message,
+        contacts,
       };
     } catch (error: any) {
       console.error("Login error:", error);

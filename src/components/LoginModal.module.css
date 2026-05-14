@@ -1,0 +1,96 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 14px;
+}
+
+.modal {
+  width: min(420px, 100%);
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(229, 57, 53, 0.45);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(229, 57, 53, 0.28);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(229, 57, 53, 0.08);
+  border: 1px solid rgba(229, 57, 53, 0.5);
+  color: #b71c1c;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.title {
+  font-weight: 900;
+  color: #b71c1c;
+  flex: 1;
+}
+
+.body {
+  padding: 14px 16px 24px;
+  color: #9b1b1b;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.contacts {
+  margin-top: 12px;
+  text-align: left;
+  display: grid;
+  gap: 8px;
+}
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(229,57,53,0.04);
+  border: 1px solid rgba(229,57,53,0.08);
+}
+
+.contactLabel {
+  font-weight: 700;
+  color: #b71c1c;
+}
+
+.contactValue {
+  color: #a02a2a;
+}
+
+.contactEmail {
+  color: #6b1b1b;
+  font-size: 0.95rem;
+}
+
+.closeBtn {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.65);
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+.closeBtn:hover { background: rgba(0,0,0,0.06); }

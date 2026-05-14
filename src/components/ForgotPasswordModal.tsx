@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./ForgotPasswordModal.module.css";
+import EmailModal from "./EmailModal";
 
 type Props = {
   open: boolean;
@@ -19,15 +20,18 @@ export default function ForgotPasswordModal({
   const empValid = /^\d{6}$/.test(empCode);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState(false);
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailContacts, setEmailContacts] = useState<Array<{team?: string; email?: string}> | undefined>(undefined);
 
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 0);
       // Reset states when modal opens
-      setError(null);
-      setSuccess(false);
+      setShowEmailModal(false);
+      setEmailSuccess(false);
+      setEmailMessage("");
       setLoading(false);
     }
   }, [open]);
@@ -42,24 +46,21 @@ export default function ForgotPasswordModal({
   }, [open, onClose]);
 
   const handleSend = async () => {
-    setError(null);
     setLoading(true);
     try {
       const result = await onSend();
+      setEmailSuccess(result.success);
+        setEmailMessage(result.message || (result.success ? "ส่งรหัสผ่านสำเร็จ" : "เกิดข้อผิดพลาด"));
+        setEmailContacts((result as any).contacts);
+      setShowEmailModal(true);
+      
       if (result.success) {
-        setSuccess(true);
-        setError(null);
-        // Auto close after 3 seconds on success
-        setTimeout(() => {
-          onClose();
-        }, 3000);
-      } else {
-        setError(result.message || "ไม่พบรหัสพนักงานในระบบ กรุณาติดต่อฝ่ายบุคคล");
-        setSuccess(false);
+          // Do NOT auto-close the forgot-password modal; user will dismiss manually
       }
     } catch (err) {
-      setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งหรือติดต่อฝ่ายบุคคล");
-      setSuccess(false);
+      setEmailSuccess(false);
+      setEmailMessage("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งหรือติดต่อฝ่ายบุคคล");
+      setShowEmailModal(true);
     } finally {
       setLoading(false);
     }
@@ -92,72 +93,67 @@ export default function ForgotPasswordModal({
           </button>
         </div>
 
-        {success ? (
-          <div className={styles.successBox}>
-            <div className={styles.successIcon}>✓</div>
-            <p className={styles.successText}>
-              ส่งรหัสผ่านสำเร็จ!
-              <br />
-              กรุณาตรวจสอบอีเมลที่ลงทะเบียนไว้
-            </p>
+        <>
+          <p className={styles.desc}>
+            กรอกรหัสพนักงาน 6 หลัก แล้วกดส่งรหัส ระบบจะส่งรหัสไปยังอีเมลที่ลงทะเบียนไว้
+          </p>
+
+          <div className={styles.form}>
+            <div className={styles.label}>รหัสพนักงาน (6 หลัก)</div>
+            <input
+              ref={inputRef}
+              className={styles.input}
+              value={empCode}
+              onChange={(e) => {
+                onChangeEmp(e.target.value);
+              }}
+              inputMode="numeric"
+              autoComplete="off"
+              disabled={loading}
+            />
           </div>
-        ) : (
-          <>
-            <p className={styles.desc}>
-              กรอกรหัสพนักงาน 6 หลัก แล้วกดส่งรหัส ระบบจะส่งรหัสไปยังอีเมลที่ลงทะเบียนไว้
-            </p>
 
-            <div className={styles.form}>
-              <div className={styles.label}>รหัสพนักงาน (6 หลัก)</div>
-              <input
-                ref={inputRef}
-                className={styles.input}
-                value={empCode}
-                onChange={(e) => {
-                  onChangeEmp(e.target.value);
-                  setError(null); // Clear error when user types
-                }}
-                inputMode="numeric"
-                autoComplete="off"
-                disabled={loading}
-              />
-            </div>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              disabled={!empValid || loading}
+              onClick={handleSend}
+            >
+              {loading ? "กำลังส่ง..." : "กดส่งรหัสผ่าน"}
+            </button>
 
-            {error && (
-              <div className={styles.errorBox}>
-                <span className={styles.errorIcon}>⚠</span>
-                <span className={styles.errorText}>{error}</span>
-              </div>
-            )}
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={onClose}
+              disabled={loading}
+            >
+              ย้อนกลับ
+            </button>
+          </div>
 
-            <div className={styles.actions}>
-              <button
-                type="button"
-                className={styles.primaryBtn}
-                disabled={!empValid || loading}
-                onClick={handleSend}
-              >
-                {loading ? "กำลังส่ง..." : "กดส่งรหัสผ่าน"}
-              </button>
-
-              <button
-                type="button"
-                className={styles.backBtn}
-                onClick={onClose}
-                disabled={loading}
-              >
-                ย้อนกลับ
-              </button>
-            </div>
-
-            <div className={styles.warn} style={{ marginTop: 10 }}>
-              **ระบบจะส่งรหัสไปอีเมลที่ลงทะเบียนไว้
-              <br />
-              หากไม่ได้รับอีเมล กรุณาติดต่อฝ่ายบุคคล
-            </div>
-          </>
-        )}
+          <div className={styles.warn} style={{ marginTop: 10 }}>
+            **ระบบจะส่งรหัสไปอีเมลที่ลงทะเบียนไว้
+            <br />
+            หากไม่ได้รับอีเมล กรุณาติดต่อฝ่ายบุคคล
+          </div>
+        </>
       </div>
+      
+      {/* Email Result Modal */}
+      <EmailModal
+        open={showEmailModal}
+        success={emailSuccess}
+        message={emailMessage}
+        contacts={emailContacts}
+        closeOnBackdrop={false}
+        closeOnEsc={false}
+        onOk={() => {
+          setShowEmailModal(false);
+        }}
+        onClose={() => setShowEmailModal(false)}
+      />
     </div>
   );
 }

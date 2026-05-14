@@ -1,15 +1,15 @@
-// src/pages/Login/index.tsx
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "@/layout/Header";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
+import LoginModal from "@/components/LoginModal";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
-
 import styles from "./Login.module.css";
 
 type Props = {
   empCode: string;
   pin: string;
   loginError?: string | null;
+  loginContacts?: Array<{team?: string; email?: string}>;
   onChangeEmp: (v: string) => void;
   onChangePin: (v: string) => void;
   onSubmit: () => void;
@@ -20,6 +20,7 @@ export default function Login({
   empCode,
   pin,
   loginError,
+  loginContacts,
   onChangeEmp,
   onChangePin,
   onSubmit,
@@ -27,6 +28,14 @@ export default function Login({
 }: Props) {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [showPin, setShowPin] = useState(false);
+  const [showFailedModal, setShowFailedModal] = useState(false);
+
+  // Show modal when loginError is set
+  useEffect(() => {
+    if (loginError) {
+      setShowFailedModal(true);
+    }
+  }, [loginError]);
 
   const empValid = /^\d{6}$/.test(empCode);
   const pinValid = /^\d{6}$/.test(pin);
@@ -112,11 +121,15 @@ export default function Login({
               </div>
             </div>
 
-          {loginError && (
-            <p role="alert" style={{ color: "var(--color-error, #e53935)", margin: "0 0 8px", fontSize: "0.875rem", textAlign: "center" }}>
-              {loginError}
-            </p>
-          )}
+
+          {/* Remove inline error, use modal instead */}
+      {/* Login Failed Modal */}
+      <LoginModal
+        open={showFailedModal}
+        message={loginError || ""}
+        contacts={loginContacts}
+        onClose={() => setShowFailedModal(false)}
+      />
 
           <button
             className={styles["guts-btn"]}
