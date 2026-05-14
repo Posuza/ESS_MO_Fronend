@@ -1,11 +1,11 @@
 // src/App.tsx
-import { useMemo, useState } from "react";
-import Login from "./pages/Login";
-import Home from "./pages/Home";
-import Mo from "./pages/Mo/Mo";
-import Dashboard from "./pages/Dashboard";
-import CheckInOut from "./pages/Attendance/CheckInOut";
-import FaceVerify from "./pages/Attendance/FaceVerify";
+import { Suspense, lazy, useMemo, useState } from "react";
+const Login = lazy(() => import("./pages/Login"));
+const Home = lazy(() => import("./pages/Home"));
+const Mo = lazy(() => import("./pages/Mo/Mo"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CheckInOut = lazy(() => import("./pages/Attendance/CheckInOut"));
+const FaceVerify = lazy(() => import("./pages/Attendance/FaceVerify"));
 import FirstLoginModal from "./components/FirstLoginModal";
 import { authService } from "./services/auth.Service";
 
@@ -121,7 +121,8 @@ export default function App() {
   }
 
   return (
-    <>
+    <Suspense fallback={<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>กำลังโหลด...</div>}>
+      <>
       {route === "login" && (
         <>
           <Login
@@ -194,6 +195,7 @@ export default function App() {
       {route === "dashboard" && (
         <Dashboard empCode={empCode} onLogout={onLogout} />
       )}
-    </>
+      </>
+    </Suspense>
   );
 }
