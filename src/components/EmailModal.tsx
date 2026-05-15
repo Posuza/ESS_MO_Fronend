@@ -60,16 +60,15 @@ export default function EmailModal({
           >
             {success ? "ส่งอีเมลสำเร็จ" : "ส่งอีเมลไม่สำเร็จ"}
           </div>
-          {!success && (
-            <button
-              className={styles.closeBtn}
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-            >
-              ×
-            </button>
-          )}
+          {/* Always show close button in header */}
+          <button
+            className={styles.closeBtn}
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ×
+          </button>
         </div>
 
         <div
@@ -95,14 +94,6 @@ export default function EmailModal({
             </div>
           )}
         </div>
-
-        {success && (
-          <div className={styles.footer}>
-            <button type="button" className={styles.okBtn} onClick={onOk}>
-              ตกลง
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

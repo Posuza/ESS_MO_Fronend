@@ -9,17 +9,19 @@ type Props = {
   empCode: string;
   pin: string;
   loginError?: string | null;
+  loginErrorKey?: string | null;
   loginContacts?: Array<{team?: string; email?: string}>;
   onChangeEmp: (v: string) => void;
   onChangePin: (v: string) => void;
   onSubmit: () => void;
-  onSendForgot: () => Promise<{ success: boolean; message: string }>;
+  onSendForgot: () => Promise<{ success: boolean; message: string; error?: string; contacts?: Array<{team?: string; email?: string}> }>;
 };
 
 export default function Login({
   empCode,
   pin,
   loginError,
+  loginErrorKey,
   loginContacts,
   onChangeEmp,
   onChangePin,
@@ -127,6 +129,7 @@ export default function Login({
       <LoginModal
         open={showFailedModal}
         message={loginError || ""}
+        errorKey={loginErrorKey}
         contacts={loginContacts}
         onClose={() => setShowFailedModal(false)}
       />

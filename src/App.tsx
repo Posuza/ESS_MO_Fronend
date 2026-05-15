@@ -25,6 +25,7 @@ export default function App() {
   const [empCode, setEmpCode] = useState("");
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginErrorKey, setLoginErrorKey] = useState<string | null>(null);
   const [loginContacts, setLoginContacts] = useState<Array<{team?: string; email?: string}> | undefined>(undefined);
 
   const [firstLoginOpen, setFirstLoginOpen] = useState(false);
@@ -57,6 +58,7 @@ export default function App() {
   async function onLogin() {
     if (!canSubmit) return;
     setLoginError(null);
+    setLoginErrorKey(null);
     setLoginContacts(undefined);
 
     const result = await authService.login(empCode, pin);
@@ -73,11 +75,12 @@ export default function App() {
       reset("home");
     } else {
       setLoginError(result.message || "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง");
+      setLoginErrorKey(result.error || null);
       setLoginContacts(result.contacts);
     }
   }
 
-  async function onRequestPassword(): Promise<{ success: boolean; message: string; contacts?: Array<{team?: string; email?: string}> }> {
+  async function onRequestPassword(): Promise<{ success: boolean; message: string; error?: string; contacts?: Array<{team?: string; email?: string}> }> {
     if (!empValid) {
       return {
         success: false,
@@ -132,9 +135,10 @@ export default function App() {
             empCode={empCode}
             pin={pin}
             loginError={loginError}
+            loginErrorKey={loginErrorKey}
             loginContacts={loginContacts}
-            onChangeEmp={(v) => { setEmpCode(onlyDigits6(v)); setLoginError(null); setLoginContacts(undefined); }}
-            onChangePin={(v) => { setPin(onlyDigits6(v)); setLoginError(null); setLoginContacts(undefined); }}
+            onChangeEmp={(v) => { setEmpCode(onlyDigits6(v)); setLoginError(null); setLoginErrorKey(null); setLoginContacts(undefined); }}
+            onChangePin={(v) => { setPin(onlyDigits6(v)); setLoginError(null); setLoginErrorKey(null); setLoginContacts(undefined); }}
             onSubmit={onLogin}
             onSendForgot={onRequestPassword}
           />

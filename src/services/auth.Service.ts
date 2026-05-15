@@ -28,23 +28,20 @@ export const authService = {
    * Send forgot password request - sends password to employee's registered email
    */
   async forgotPassword(
-    employee_code: string
-  ): Promise<{ success: boolean; message: string }> {
+    employee_code: string,
+  ): Promise<{ success: boolean; message: string; error?: string; contacts?: any[] }> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/auth/forgot-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ..._geoHeaders(),
-          },
-          body: JSON.stringify({
-            employee_code,
-            send_plain_password: true,
-          } as ForgotPasswordRequest),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ..._geoHeaders(),
+        },
+        body: JSON.stringify({
+          employee_code,
+          send_plain_password: true,
+        } as ForgotPasswordRequest),
+      });
 
       if (response.ok) {
         const data: ForgotPasswordResponse = await response.json();
@@ -58,13 +55,18 @@ export const authService = {
       const errorData = await response.json().catch(() => null);
 
       if (errorData?.detail) {
-        // New format: detail is an object with message and contacts
+        // New format: detail is an object with error, message and contacts
         if (typeof errorData.detail === "object") {
-          const msg = errorData.detail.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+          const msg =
+            errorData.detail.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+          const error_key = errorData.detail.error;
           const contacts = Array.isArray(errorData.detail.contacts)
-            ? errorData.detail.contacts.map((c: any) => ({ team: c.team, email: c.email }))
+            ? errorData.detail.contacts.map((c: any) => ({
+                team: c.team,
+                email: c.email,
+              }))
             : undefined;
-          return { success: false, message: msg, contacts };
+          return { success: false, message: msg, error: error_key, contacts };
         }
 
         // Old format: detail is a string message
@@ -110,8 +112,14 @@ export const authService = {
    */
   async login(
     employee_code: string,
-    password: string
-  ): Promise<{ success: boolean; data?: any; message?: string; contacts?: any[] }> {
+    password: string,
+  ): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+    message?: string;
+    contacts?: any[];
+  }> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
@@ -134,18 +142,24 @@ export const authService = {
       }
 
       const errorData = await response.json().catch(() => null);
-      console.log("Login error response:", errorData);
-      
+      // removed noisy console.log to avoid red console spam
+      // console.log("Login error response:", errorData);
+
       // Handle error response from ERROR_REGISTRY
       let message = "";
+      let error_key = undefined;
       let contacts = undefined;
-      
+
       if (errorData?.detail) {
         if (typeof errorData.detail === "object") {
           // New format with error object
           message = errorData.detail.message || "เกิดข้อผิดพลาด";
-          
-          if (errorData.detail.contacts && errorData.detail.contacts.length > 0) {
+          error_key = errorData.detail.error;
+
+          if (
+            errorData.detail.contacts &&
+            errorData.detail.contacts.length > 0
+          ) {
             contacts = errorData.detail.contacts;
           }
         } else if (typeof errorData.detail === "string") {
@@ -153,18 +167,20 @@ export const authService = {
           message = errorData.detail;
         }
       }
-      
+
       if (!message) {
-        message = response.status === 500 
-          ? "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาติดต่อทีมพัฒนา"
-          : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+        message =
+          response.status === 500
+            ? "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาติดต่อทีมพัฒนา"
+            : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
         if (response.status === 500) {
           contacts = [{ team: "BE_CORE", email: "be-core@gutsess.com" }];
         }
       }
-      
+
       return {
         success: false,
+        error: error_key,
         message,
         contacts,
       };

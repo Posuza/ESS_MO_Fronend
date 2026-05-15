@@ -4,6 +4,7 @@ import styles from "./LoginModal.module.css";
 type Props = {
   open: boolean;
   message?: string;
+  errorKey?: string | null;
   contacts?: Array<{ team?: string; email?: string }>;
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
@@ -13,6 +14,7 @@ type Props = {
 export default function LoginModal({
   open,
   message = "",
+  errorKey,
   contacts,
   closeOnBackdrop = false,
   closeOnEsc = true,
@@ -28,6 +30,10 @@ export default function LoginModal({
   }, [open, closeOnEsc, onClose]);
 
   if (!open) return null;
+
+  // Do not show contact box if it's just a wrong password (INVALID_CREDENTIALS)
+  const showContacts =
+    contacts && contacts.length > 0 && errorKey !== "INVALID_CREDENTIALS";
 
   return (
     <div
@@ -56,17 +62,21 @@ export default function LoginModal({
           </button>
         </div>
         <div className={styles.body}>
-          {message.split('\n').map((line, i) => (
+          {message.split("\n").map((line, i) => (
             <div key={i}>{line}</div>
           ))}
 
-          {contacts && contacts.length > 0 && (
+          {showContacts && (
             <div className={styles.contacts}>
               {contacts.map((c, idx) => (
                 <div key={idx} className={styles.contact}>
                   <div className={styles.contactLabel}>ติดต่อ:</div>
-                  <div className={styles.contactValue}>{c.team || "ไม่ระบุ"}</div>
-                  <div className={styles.contactEmail}>{c.email || "ไม่ระบุ"}</div>
+                  <div className={styles.contactValue}>
+                    {c.team || "ไม่ระบุ"}
+                  </div>
+                  <div className={styles.contactEmail}>
+                    {c.email || "ไม่ระบุ"}
+                  </div>
                 </div>
               ))}
             </div>

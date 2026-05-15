@@ -7,7 +7,7 @@ type Props = {
   empCode: string;
   onChangeEmp: (v: string) => void;
   onClose: () => void;
-  onSend: () => Promise<{ success: boolean; message: string }>;
+  onSend: () => Promise<{ success: boolean; message: string; error?: string; contacts?: Array<{team?: string; email?: string}> }>;
 };
 
 export default function ForgotPasswordModal({
@@ -51,7 +51,7 @@ export default function ForgotPasswordModal({
       const result = await onSend();
       setEmailSuccess(result.success);
         setEmailMessage(result.message || (result.success ? "ส่งรหัสผ่านสำเร็จ" : "เกิดข้อผิดพลาด"));
-        setEmailContacts((result as any).contacts);
+        setEmailContacts(result.contacts);
       setShowEmailModal(true);
       
       if (result.success) {
