@@ -10,11 +10,16 @@ type Props = {
   pin: string;
   loginError?: string | null;
   loginErrorKey?: string | null;
-  loginContacts?: Array<{team?: string; email?: string}>;
+  loginContacts?: Array<{ team?: string; email?: string }>;
   onChangeEmp: (v: string) => void;
   onChangePin: (v: string) => void;
   onSubmit: () => void;
-  onSendForgot: () => Promise<{ success: boolean; message: string; error?: string; contacts?: Array<{team?: string; email?: string}> }>;
+  onSendForgot: () => Promise<{
+    success: boolean;
+    message: string;
+    error?: string;
+    contacts?: Array<{ team?: string; email?: string }>;
+  }>;
 };
 
 export default function Login({
@@ -31,13 +36,14 @@ export default function Login({
   const [forgotOpen, setForgotOpen] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [showFailedModal, setShowFailedModal] = useState(false);
+  const [localErrorMessage, setLocalErrorMessage] = useState<string | null>(
+    null,
+  );
 
-  // Show modal when loginError is set
+  // Open failed modal when server error or local validation error exists
   useEffect(() => {
-    if (loginError) {
-      setShowFailedModal(true);
-    }
-  }, [loginError]);
+    setShowFailedModal(!!loginError || !!localErrorMessage);
+  }, [loginError, localErrorMessage]);
 
   const empValid = /^\d{6}$/.test(empCode);
   const pinValid = /^\d{6}$/.test(pin);
@@ -60,7 +66,33 @@ export default function Login({
           className={styles["guts-form"]}
           onSubmit={(e) => {
             e.preventDefault();
-            if (canSubmit) onSubmit();
+
+            // Local validation: step-by-step behavior
+            const empValidNow = /^\d{6}$/.test(empCode);
+            const pinValidNow = /^\d{6}$/.test(pin);
+
+            // If both fields are empty, show both messages together
+            if (empCode.trim() === "" && pin.trim() === "") {
+              setLocalErrorMessage(
+                "กรุณากรอกรหัสพนักงาน 6 หลัก \n และ \n รหัสผ่าน 6 หลัก",
+              );
+              return;
+            }
+
+            // If employee is present but not valid, show emp message only
+            if (!empValidNow) {
+              setLocalErrorMessage("กรุณากรอกรหัสพนักงาน 6 หลัก");
+              return;
+            }
+
+            // Employee valid -> check pin
+            if (!pinValidNow) {
+              setLocalErrorMessage("กรุณากรอกรหัสผ่าน 6 หลัก");
+              return;
+            }
+
+            // All good
+            onSubmit();
           }}
         >
           {/* Employee */}
@@ -78,7 +110,10 @@ export default function Login({
                   styles["guts-input--with-left"],
                 ].join(" ")}
                 value={empCode}
-                onChange={(e) => onChangeEmp(e.target.value)}
+                onChange={(e) => {
+                  onChangeEmp(e.target.value);
+                  if (localErrorMessage) setLocalErrorMessage(null);
+                }}
                 inputMode="numeric"
                 autoComplete="off"
                 aria-label="Employee code 6 digits"
@@ -88,57 +123,45 @@ export default function Login({
 
           {/* PIN */}
           <div>
-              <div className={styles["guts-label"]}>
-                กรอกรหัส ( PIN 6 หลัก )
-              </div>
+            <div className={styles["guts-label"]}>กรอกรหัส ( PIN 6 หลัก )</div>
 
-              <div className={styles["guts-field"]}>
-                <span className={styles["guts-icon-left"]} aria-hidden="true">
-                  <Lock size={18} />
-                </span>
+            <div className={styles["guts-field"]}>
+              <span className={styles["guts-icon-left"]} aria-hidden="true">
+                <Lock size={18} />
+              </span>
 
-                <input
-                  className={[
-                    styles["guts-input"],
-                    styles["guts-input--with-left"],
-                    styles["guts-input--with-right"],
-                  ].join(" ")}
-                  value={pin}
-                  onChange={(e) => onChangePin(e.target.value)}
-                  inputMode="numeric"
-                  autoComplete="off"
-                  type={showPin ? "text" : "password"}
-                  aria-label="PIN 6 digits"
-                />
+              <input
+                className={[
+                  styles["guts-input"],
+                  styles["guts-input--with-left"],
+                  styles["guts-input--with-right"],
+                ].join(" ")}
+                value={pin}
+                onChange={(e) => {
+                  onChangePin(e.target.value);
+                  if (localErrorMessage) setLocalErrorMessage(null);
+                }}
+                inputMode="numeric"
+                autoComplete="off"
+                type={showPin ? "text" : "password"}
+                aria-label="PIN 6 digits"
+              />
 
-                <button
-                  type="button"
-                  className={styles["guts-icon-right-btn"]}
-                  onClick={() => setShowPin((v) => !v)}
-                  aria-label={showPin ? "ซ่อนรหัส PIN" : "แสดงรหัส PIN"}
-                  title={showPin ? "ซ่อนรหัส" : "แสดงรหัส"}
-                >
-                  {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <button
+                type="button"
+                className={styles["guts-icon-right-btn"]}
+                onClick={() => setShowPin((v) => !v)}
+                aria-label={showPin ? "ซ่อนรหัส PIN" : "แสดงรหัส PIN"}
+                title={showPin ? "ซ่อนรหัส" : "แสดงรหัส"}
+              >
+                {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
-
+          </div>
 
           {/* Remove inline error, use modal instead */}
-      {/* Login Failed Modal */}
-      <LoginModal
-        open={showFailedModal}
-        message={loginError || ""}
-        errorKey={loginErrorKey}
-        contacts={loginContacts}
-        onClose={() => setShowFailedModal(false)}
-      />
 
-          <button
-            className={styles["guts-btn"]}
-            type="submit"
-            disabled={!canSubmit}
-          >
+          <button className={styles["guts-btn"]} type="submit">
             กดเข้าสู่ระบบ
           </button>
 
@@ -161,6 +184,20 @@ export default function Login({
           </div>
         </form>
       </section>
+
+      {/* Login Failed Modal */}
+      <LoginModal
+        open={showFailedModal}
+        message={loginError || localErrorMessage || ""}
+        // Use server-provided loginErrorKey first. Avoid referencing localErrorKey here to prevent runtime ReferenceError from stale bundles.
+        errorKey={loginErrorKey || null}
+        contacts={loginContacts}
+        onClose={() => {
+          setShowFailedModal(false);
+          setLocalErrorMessage(null);
+          setLocalErrorKey(null);
+        }}
+      />
 
       <ForgotPasswordModal
         open={forgotOpen}

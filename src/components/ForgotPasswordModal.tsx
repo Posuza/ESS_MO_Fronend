@@ -7,7 +7,12 @@ type Props = {
   empCode: string;
   onChangeEmp: (v: string) => void;
   onClose: () => void;
-  onSend: () => Promise<{ success: boolean; message: string; error?: string; contacts?: Array<{team?: string; email?: string}> }>;
+  onSend: () => Promise<{
+    success: boolean;
+    message: string;
+    error?: string;
+    contacts?: Array<{ team?: string; email?: string }>;
+  }>;
 };
 
 export default function ForgotPasswordModal({
@@ -23,7 +28,9 @@ export default function ForgotPasswordModal({
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState(false);
   const [emailMessage, setEmailMessage] = useState("");
-  const [emailContacts, setEmailContacts] = useState<Array<{team?: string; email?: string}> | undefined>(undefined);
+  const [emailContacts, setEmailContacts] = useState<
+    Array<{ team?: string; email?: string }> | undefined
+  >(undefined);
 
   useEffect(() => {
     if (open) {
@@ -50,12 +57,15 @@ export default function ForgotPasswordModal({
     try {
       const result = await onSend();
       setEmailSuccess(result.success);
-        setEmailMessage(result.message || (result.success ? "ส่งรหัสผ่านสำเร็จ" : "เกิดข้อผิดพลาด"));
-        setEmailContacts(result.contacts);
+      setEmailMessage(
+        result.message ||
+          (result.success ? "ส่งรหัสผ่านสำเร็จ" : "เกิดข้อผิดพลาด"),
+      );
+      setEmailContacts(result.contacts);
       setShowEmailModal(true);
-      
+
       if (result.success) {
-          // Do NOT auto-close the forgot-password modal; user will dismiss manually
+        // Do NOT auto-close the forgot-password modal; user will dismiss manually
       }
     } catch (err) {
       setEmailSuccess(false);
@@ -95,7 +105,8 @@ export default function ForgotPasswordModal({
 
         <>
           <p className={styles.desc}>
-            กรอกรหัสพนักงาน 6 หลัก แล้วกดส่งรหัส ระบบจะส่งรหัสไปยังอีเมลที่ลงทะเบียนไว้
+            กรอกรหัสพนักงาน 6 หลัก แล้วกดส่งรหัส
+            ระบบจะส่งรหัสไปยังอีเมลที่ลงทะเบียนไว้
           </p>
 
           <div className={styles.form}>
@@ -117,7 +128,7 @@ export default function ForgotPasswordModal({
             <button
               type="button"
               className={styles.primaryBtn}
-              disabled={!empValid || loading}
+              disabled={loading}
               onClick={handleSend}
             >
               {loading ? "กำลังส่ง..." : "กดส่งรหัสผ่าน"}
@@ -140,7 +151,7 @@ export default function ForgotPasswordModal({
           </div>
         </>
       </div>
-      
+
       {/* Email Result Modal */}
       <EmailModal
         open={showEmailModal}

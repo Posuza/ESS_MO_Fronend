@@ -1,188 +1,120 @@
 .backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: rgba(0, 0, 0, 0.55);
-  display: grid;
-  place-items: center;
-  padding: 14px;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.55);
+    display: grid;
+    place-items: center;
 }
 
-/* Default modal base (neutral) */
 .modal {
-  width: min(520px, 100%);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.97);
-  border: 2px solid rgba(2, 75, 118, 0.18);
-  box-shadow: 0 24px 44px rgba(0, 0, 0, 0.28);
-  overflow: hidden;
-}
-
-/* Success variant (copied from SuccessModal) */
-.successModal {
-  width: min(420px, 100%);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.97);
-  border: 2px solid rgba(2, 75, 118, 0.18);
-  box-shadow: 0 24px 44px rgba(0, 0, 0, 0.28);
-}
-
-.successModal .header {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(2, 75, 118, 0.14);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Error variant (copied from LoginModal) */
-.errorModal {
-  width: min(420px, 100%);
-  border-radius: 18px;
-  background: #fff;
-  border: 1px solid rgba(229, 57, 53, 0.45);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-}
-
-.errorModal .header {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(229, 57, 53, 0.28);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    width: min(520px, 94vw);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--cardTop), var(--cardBottom));
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
 }
 
 .header {
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    position: relative;
+    padding: 15px 18px 9px 18px;
+    border-bottom: 0.5px solid var(--blueText);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-start; /* icon + title aligned to left */
 }
 
 .badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-/* success badge colors (match SuccessModal) */
-.success {
-  background: rgba(31, 191, 91, 0.12);
-  border: 1px solid rgba(31, 191, 91, 0.25);
-  color: #1fbf5b;
-}
-
-/* error badge colors (match LoginModal) */
-.error {
-  background: rgba(229, 57, 53, 0.08);
-  border: 1px solid rgba(229, 57, 53, 0.5);
-  color: #b71c1c;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    /* use theme blue for badge background and icon color (match ForgotPasswordModal.title) */
+    background: rgba(2, 75, 118, 0.08);
+    border: none;
+    color: var(--blueText);
+    font-size: 18px;
+    font-weight: 900;
 }
 
 .title {
-  font-weight: 900;
-  flex: 1;
-}
-
-/* title color variants */
-.successTitle {
-  color: rgba(27, 43, 74, 0.92);
-}
-
-.errorTitle {
-  color: #b71c1c;
-}
-
-.closeBtn {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  font-size: 22px;
-  font-weight: 900;
-  color: rgba(0, 0, 0, 0.65);
-  line-height: 1;
-  padding: 6px 10px;
-  border-radius: 10px;
-}
-.closeBtn:hover {
-  background: rgba(0, 0, 0, 0.06);
+    margin: 0;
+    font-weight: 900;
+    /* use the same theme title color as ForgotPasswordModal */
+    color: var(--blueText);
+    flex: 1; /* take remaining space */
+    text-align: left; /* align title to left */
+    font-size: clamp(18px, 2.5vw, 22px);
+    padding-right: 42px; /* avoid overlap with close button */
 }
 
 .body {
-  padding: 14px 16px;
-  line-height: 1.45;
-  text-align: center;
-  color: rgba(27, 43, 74, 0.88);
-}
-
-.successBody {
-  color: rgba(27, 43, 74, 0.88);
-  min-height: 100px;
-  padding: 24px 20px;
-  margin-left: 16px;
-  margin-right: 16px;
-}
-
-.errorBody {
-  color: #9b1b1b;
-  min-height: 100px;
-  padding: 24px 20px;
+    padding: 14px 16px 24px;
+    text-align: center;
+    color: var(--red);
+    font-weight: 900;
+    font-size: clamp(15px, 1.8vw, 18px);
+    line-height: 1.35;
 }
 
 .contacts {
-  margin-top: 12px;
-  text-align: left;
-  display: grid;
-  gap: 8px;
+    margin-top: 12px;
+    text-align: left;
+    display: grid;
+    gap: 8px;
 }
 
+/* Neutral contact card styling: no red background or red text */
 .contact {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  border-radius: 10px;
-  background: rgba(229, 57, 53, 0.04);
-  border: 1px solid rgba(229, 57, 53, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 10px;
+    /* subtle blue tint taken from the theme (fallback to hard-coded blue if variable missing) */
+    background: rgba(2, 75, 118, 0.04);
+    border: 1px solid rgba(2, 75, 118, 0.06);
 }
 
 .contactLabel {
-  font-weight: 700;
-  color: #b71c1c;
+    font-weight: 700;
+    color: var(--testblue, #024b76); /* use theme variable `--testblue` */
 }
 
 .contactValue {
-  color: #a02a2a;
+    color: var(--testblue, #024b76);
+    font-weight: 800;
 }
 
 .contactEmail {
-  color: #6b1b1b;
-  font-size: 0.95rem;
+    color: var(--testblue, #024b76);
+    font-size: 0.95rem;
 }
 
-.footer {
-  padding: 12px 16px 16px;
-  display: grid;
-  gap: 10px;
+.closeBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 22px;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.65);
+    line-height: 1;
+    padding: 6px 10px;
+    border-radius: 10px;
+}
+.closeBtn:hover {
+    background: rgba(0, 0, 0, 0.06);
 }
 
-/* success ok button matches SuccessModal */
-.okBtn {
-  width: 100%;
-  border: 0;
-  border-radius: 14px;
-  padding: 12px 14px;
-  font-weight: 900;
-  color: #fff;
-  background: linear-gradient(90deg, #1fbf5b, #12a84a);
-  cursor: pointer;
-}
-
-.okBtn:active {
-  transform: translateY(1px);
+/* Ensure the lucide svg inside the badge sizes correctly and uses the badge color */
+.badge svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+    stroke: currentColor;
 }

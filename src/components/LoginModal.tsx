@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { AlertCircle } from "lucide-react";
 import styles from "./LoginModal.module.css";
 
 type Props = {
@@ -49,7 +50,7 @@ export default function LoginModal({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.badge} aria-hidden="true">
-            !
+            <AlertCircle size={24} aria-hidden="true" />
           </div>
           <div className={styles.title}>เข้าสู่ระบบไม่สำเร็จ</div>
           <button

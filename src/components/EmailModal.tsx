@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Check, AlertCircle } from "lucide-react";
 import styles from "./EmailModal.module.css";
 
 type Props = {
@@ -44,23 +45,20 @@ export default function EmailModal({
         onClose?.();
       }}
     >
-      <div
-        className={`${styles.modal} ${success ? styles.successModal : styles.errorModal}`}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <div
-            className={`${styles.badge} ${success ? styles.success : styles.error}`}
-            aria-hidden="true"
-          >
-            {success ? "✓" : "!"}
+          <div className={styles.badge} aria-hidden="true">
+            {success ? (
+              <Check size={24} aria-hidden="true" />
+            ) : (
+              <AlertCircle size={24} aria-hidden="true" />
+            )}
           </div>
-          <div
-            className={`${styles.title} ${success ? styles.successTitle : styles.errorTitle}`}
-          >
+
+          <div className={styles.title}>
             {success ? "ส่งอีเมลสำเร็จ" : "ส่งอีเมลไม่สำเร็จ"}
           </div>
-          {/* Always show close button in header */}
+
           <button
             className={styles.closeBtn}
             type="button"
@@ -71,12 +69,9 @@ export default function EmailModal({
           </button>
         </div>
 
-        <div
-          className={`${styles.body} ${success ? styles.successBody : styles.errorBody}`}
-        >
-          {message.split("\n").map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
+        <div className={styles.body}>
+          {/* Render message as a single line like LoginModal */}
+          <div>{message ? message.replace(/\s*\n\s*/g, " ") : ""}</div>
 
           {!success && contacts && contacts.length > 0 && (
             <div className={styles.contacts}>
