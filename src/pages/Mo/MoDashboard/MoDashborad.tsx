@@ -42,12 +42,12 @@ export default function MoDashboard({ onCancel }: Props) {
             <LineChart />
           </section>
 
-          <section className="guts-home-card" aria-label="Mo - DualCharts">
-            <DualCharts />
-          </section>
-
           <section className="guts-home-card" aria-label="Mo - VerticalBar">
             <VerticalBar />
+          </section>
+
+          <section className="guts-home-card" aria-label="Mo - DualCharts">
+            <DualCharts />
           </section>
 
           <section className="guts-home-card" aria-label="Mo - TableSearch">

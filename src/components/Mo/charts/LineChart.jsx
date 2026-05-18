@@ -2,8 +2,8 @@ import React, { useState, useMemo } from "react";
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import "./LineChart.css";
 
-// Use a shared palette first (matches TotalsGridSection), fallback to generated HSL.
-const PALETTE = [
+// Default palette (matches TotalsGridSection). Can be overridden via `palette` prop.
+const DEFAULT_PALETTE = [
   '#1e6fb3', // blue
   '#2b9aa3', // teal
   '#3fb374', // green
@@ -11,15 +11,15 @@ const PALETTE = [
   '#e76b6b', // red
 ];
 
-function getColor(idx, baseHue = 220) {
-  if (Number.isInteger(idx) && idx >= 0 && idx < PALETTE.length) {
-    return PALETTE[idx];
+function getColorFromPalette(palette, idx, baseHue = 220) {
+  if (Array.isArray(palette) && Number.isInteger(idx) && idx >= 0 && idx < palette.length) {
+    return palette[idx];
   }
   const hue = (baseHue + idx * 47) % 360;
   return `hsl(${hue}, 70%, 50%)`;
 }
 
-const LineChart = ({ chartData, chartCategories, isDayView }) => {
+const LineChart = ({ chartData, chartCategories, isDayView, palette }) => {
   // using CSS variables in charts.css instead of theme hook
 
   const [windowWidth, setWindowWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
@@ -52,7 +52,7 @@ const LineChart = ({ chartData, chartCategories, isDayView }) => {
       return chartCategories.map((key, idx) => ({
         key,
         label: labelMap[key] ?? (key.charAt(0).toUpperCase() + key.slice(1)),
-        color: getColor(idx),
+        color: getColorFromPalette(palette || DEFAULT_PALETTE, idx),
       }));
     }
     if (!chartData || chartData.length === 0) return [];
@@ -69,7 +69,7 @@ const LineChart = ({ chartData, chartCategories, isDayView }) => {
         return {
           key,
           label: labelMap[key] ?? (key.charAt(0).toUpperCase() + key.slice(1)),
-          color: getColor(idx),
+          color: getColorFromPalette(palette || DEFAULT_PALETTE, idx),
         };
       });
   }, [chartCategories, chartData]);
@@ -122,7 +122,7 @@ const LineChart = ({ chartData, chartCategories, isDayView }) => {
         style={{ overflowX: isDayView ? 'auto' : 'visible', overflowY: 'hidden' }}
       >
         {/* Mobile chart: smaller axis text */}
-        <ResponsiveContainer width={isDayView ? chartData.length * 35 : "100%"} height={350} background={"red"}>
+          <ResponsiveContainer width={isDayView ? Math.max(600, chartData.length * 50) : "100%"} height={350}>
           <RechartsLineChart
             data={chartData}
             margin={{ top: 10, right: 5, left: -35, bottom: 55 }}

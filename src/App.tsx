@@ -1,5 +1,6 @@
 // src/App.tsx
 import { Suspense, lazy, useMemo, useState } from "react";
+import { useStore } from "./store/store";
 const Login = lazy(() => import("./pages/Login"));
 const Home = lazy(() => import("./pages/Home"));
 const Mo = lazy(() => import("./pages/Mo/Mo"));
@@ -26,7 +27,9 @@ export default function App() {
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginErrorKey, setLoginErrorKey] = useState<string | null>(null);
-  const [loginContacts, setLoginContacts] = useState<Array<{team?: string; email?: string}> | undefined>(undefined);
+  const [loginContacts, setLoginContacts] = useState<
+    Array<{ team?: string; email?: string }> | undefined
+  >(undefined);
 
   const [firstLoginOpen, setFirstLoginOpen] = useState(false);
 
@@ -65,10 +68,15 @@ export default function App() {
 
     if (result.success && result.data) {
       const emp = result.data.employee;
-      const nextDisplayName = `${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
+      const prefix = emp.name_prefix ? `${emp.name_prefix}` : "";
+      const nextDisplayName =
+        `${prefix}${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
 
       localStorage.setItem("emp_code", emp.employee_code);
       localStorage.setItem("display_name", nextDisplayName);
+
+      // ✅ Sync successfully logged-in employee to Zustand store
+      useStore.setState({ authEmployee: emp });
 
       setDisplayName(nextDisplayName);
       setPin("");
@@ -80,7 +88,12 @@ export default function App() {
     }
   }
 
-  async function onRequestPassword(): Promise<{ success: boolean; message: string; error?: string; contacts?: Array<{team?: string; email?: string}> }> {
+  async function onRequestPassword(): Promise<{
+    success: boolean;
+    message: string;
+    error?: string;
+    contacts?: Array<{ team?: string; email?: string }>;
+  }> {
     if (!empValid) {
       return {
         success: false,
@@ -99,6 +112,10 @@ export default function App() {
     setDisplayName("");
     localStorage.removeItem("emp_code");
     localStorage.removeItem("display_name");
+
+    // ✅ Clear employee in Zustand store on logout
+    useStore.setState({ authEmployee: null });
+
     reset("login");
   }
 
@@ -127,82 +144,110 @@ export default function App() {
   }
 
   return (
-    <Suspense fallback={<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>กำลังโหลด...</div>}>
+    //     <Mo
+    //   empCode={empCode}
+    //   displayName={displayName}
+    //   onBackHome={() => reset("home")}
+    // />
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          กำลังโหลด...
+        </div>
+      }
+    >
       <>
-      {route === "login" && (
-        <>
-          <Login
+        {route === "login" && (
+          <>
+            <Login
+              empCode={empCode}
+              pin={pin}
+              loginError={loginError}
+              loginErrorKey={loginErrorKey}
+              loginContacts={loginContacts}
+              onChangeEmp={(v) => {
+                setEmpCode(onlyDigits6(v));
+                setLoginError(null);
+                setLoginErrorKey(null);
+                setLoginContacts(undefined);
+              }}
+              onChangePin={(v) => {
+                setPin(onlyDigits6(v));
+                setLoginError(null);
+                setLoginErrorKey(null);
+                setLoginContacts(undefined);
+              }}
+              onSubmit={onLogin}
+              onSendForgot={onRequestPassword}
+            />
+
+            <FirstLoginModal
+              open={firstLoginOpen}
+              empCode={empCode}
+              onClose={() => {
+                setPin("");
+                setFirstLoginOpen(false);
+              }}
+              onRequestPassword={() => {
+                onRequestPassword();
+                setFirstLoginOpen(false);
+              }}
+            />
+          </>
+        )}
+
+        {route === "home" && (
+          <Home
             empCode={empCode}
-            pin={pin}
-            loginError={loginError}
-            loginErrorKey={loginErrorKey}
-            loginContacts={loginContacts}
-            onChangeEmp={(v) => { setEmpCode(onlyDigits6(v)); setLoginError(null); setLoginErrorKey(null); setLoginContacts(undefined); }}
-            onChangePin={(v) => { setPin(onlyDigits6(v)); setLoginError(null); setLoginErrorKey(null); setLoginContacts(undefined); }}
-            onSubmit={onLogin}
-            onSendForgot={onRequestPassword}
+            displayName={displayName}
+            onLogout={onLogout}
+            onGoCheckInOut={() => push("checkInOut")}
+            onGoLeaveOnline={() => alert("TODO: ไปหน้า ลาออนไลน์")}
+            onGoMo={() => push("mo")}
           />
+        )}
 
-          <FirstLoginModal
-            open={firstLoginOpen}
+        {route === "checkInOut" && (
+          <CheckInOut
             empCode={empCode}
-            onClose={() => {
-              setPin("");
-              setFirstLoginOpen(false);
-            }}
-            onRequestPassword={() => {
-              onRequestPassword();
-              setFirstLoginOpen(false);
-            }}
+            displayName={displayName}
+            lastInAt={lastInAt}
+            lastOutAt={lastOutAt}
+            onBack={back}
+            onCheckIn={() => goFaceVerify("in")}
+            onCheckOut={() => goFaceVerify("out")}
+            onViewHistory={() => alert("TODO: เปิดหน้าประวัติย้อนหลัง 1 เดือน")}
           />
-        </>
-      )}
+        )}
 
-      {route === "home" && (
-        <Home
-          empCode={empCode}
-          displayName={displayName}
-          onLogout={onLogout}
-          onGoCheckInOut={() => push("checkInOut")}
-          onGoLeaveOnline={() => alert("TODO: ไปหน้า ลาออนไลน์")}
-          onGoMo={() => push("mo")}
-        />
-      )}
-
-      {route === "checkInOut" && (
-        <CheckInOut
-          empCode={empCode}
-          displayName={displayName}
-          lastInAt={lastInAt}
-          lastOutAt={lastOutAt}
-          onBack={back}
-          onCheckIn={() => goFaceVerify("in")}
-          onCheckOut={() => goFaceVerify("out")}
-          onViewHistory={() => alert("TODO: เปิดหน้าประวัติย้อนหลัง 1 เดือน")}
-        />
-      )}
-
-      {route === "faceVerify" && (
-        <FaceVerify
-          empCode={empCode}
-          displayName={displayName}
-          punchType={punchType}
-          onBack={back}
-          onConfirm={onFaceConfirm} // ✅ save only
-          onGoCheckInOut={goCheckInOutFromFaceVerify} // ✅ ไปหน้า checkInOut ตอนกด OK
-          onViewHistory={() => alert("TODO: เปิดหน้าประวัติย้อนหลัง 1 เดือน")}
-        />
-      )}
-      {route === "mo" && (
-        <Mo
-          empCode={empCode}
-          displayName={displayName}
-          onBackHome={() => reset("home")}
-        />
-      )}
-      {route === "dashboard" && (
-        <Dashboard empCode={empCode} onLogout={onLogout} />
-      )}
+        {route === "faceVerify" && (
+          <FaceVerify
+            empCode={empCode}
+            displayName={displayName}
+            punchType={punchType}
+            onBack={back}
+            onConfirm={onFaceConfirm} // ✅ save only
+            onGoCheckInOut={goCheckInOutFromFaceVerify} // ✅ ไปหน้า checkInOut ตอนกด OK
+            onViewHistory={() => alert("TODO: เปิดหน้าประวัติย้อนหลัง 1 เดือน")}
+          />
+        )}
+        {route === "mo" && (
+          <Mo
+            empCode={empCode}
+            displayName={displayName}
+            onBackHome={() => reset("home")}
+          />
+        )}
+        {route === "dashboard" && (
+          <Dashboard empCode={empCode} onLogout={onLogout} />
+        )}
       </>
     </Suspense>
   );

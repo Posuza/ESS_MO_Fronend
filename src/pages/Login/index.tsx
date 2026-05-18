@@ -195,7 +195,6 @@ export default function Login({
         onClose={() => {
           setShowFailedModal(false);
           setLocalErrorMessage(null);
-          setLocalErrorKey(null);
         }}
       />
 

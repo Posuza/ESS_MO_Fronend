@@ -47,6 +47,7 @@ export default function Home({
           <h2 className={styles.title}>หน้าหลัก</h2>
 
           <div className={styles.menuStack}>
+            {/* 
             <button
               type="button"
               className={styles.menuBtn}
@@ -72,6 +73,7 @@ export default function Home({
                 <div className={styles.text}>ลาออนไลน์</div>
               </div>
             </button>
+            */}
 
             <button type="button" className={styles.menuBtn} onClick={onGoMo}>
               <div className={styles.menuBox}>
@@ -82,6 +84,7 @@ export default function Home({
               </div>
             </button>
 
+            {/* 
             <button
               type="button"
               className={styles.menuBtn}
@@ -120,6 +123,7 @@ export default function Home({
                 <div className={styles.text}>อื่นๆ</div>
               </div>
             </button>
+            */}
           </div>
 
           <div className={styles.actions}>

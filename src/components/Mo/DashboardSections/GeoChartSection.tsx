@@ -266,7 +266,7 @@ const COUNTRY_10M  = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.j
 // which conflict with react-simple-maps' own projection step.
 // All other countries fall back to world-atlas countries-10m.json, filtered to the country outline.
 const COUNTRY_TOPO: Record<string, string> = {
-  TH: "https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json",
+  TH: "https://cdn.jsdelivr.net/gh/cvibhagool/thailand-map/thailand-provinces.topojson",
 };
 
 // ISO-2 → ISO numeric (used to filter world-atlas features by country)

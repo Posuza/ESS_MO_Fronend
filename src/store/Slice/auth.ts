@@ -6,8 +6,10 @@ export interface AuthEmployee {
   email: string | null;
   first_name: string;
   last_name: string;
-  role_id: number;
-  is_active: boolean;
+  role_name: string;
+  name_prefix: string;
+  position_name: string;
+  sector_id?: number | null;
 }
 
 export interface AuthSlice {

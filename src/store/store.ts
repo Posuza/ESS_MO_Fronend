@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 import { createSectorReportSlice } from "./Slice/sectorReportSlice";
 import type { SectorReportSlice } from "./Slice/sectorReportSlice";
 import { createSectorSlice } from "./Slice/sectorSlice";
@@ -20,10 +21,12 @@ export * from "./Slice/auth";
 // Combine all slices into a single master store
 export const useStore = create<
   SectorReportSlice & SectorSlice & PositionSlice & EmployeeSlice & AuthSlice
->()((...a) => ({
-  ...createSectorReportSlice(...a),
-  ...createSectorSlice(...a),
-  ...createPositionSlice(...a),
-  ...createEmployeeSlice(...a),
-  ...createAuthSlice(...a),
-}));
+>()(
+  devtools((...a) => ({
+    ...createSectorReportSlice(...a),
+    ...createSectorSlice(...a),
+    ...createPositionSlice(...a),
+    ...createEmployeeSlice(...a),
+    ...createAuthSlice(...a),
+  }))
+);
