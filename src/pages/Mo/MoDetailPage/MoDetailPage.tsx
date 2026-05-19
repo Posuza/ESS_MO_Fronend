@@ -44,8 +44,8 @@ export default function MoDetailPage(props: Props) {
   const updateReport = useStore((state) => state.updateReport);
   const deleteReport = useStore((state) => state.deleteReport);
   // All authenticated users can edit/delete
-  const canEdit = currentEmployee?.role_id === 1;
-  const isManager = currentEmployee?.role_id === 1 || currentEmployee?.role_id === 2;
+  const canEdit = currentEmployee?.position_id === 1;
+  const isManager = currentEmployee?.position_id === 1 || currentEmployee?.position_id === 2;
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

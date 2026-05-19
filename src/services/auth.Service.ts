@@ -29,7 +29,12 @@ export const authService = {
    */
   async forgotPassword(
     employee_code: string,
-  ): Promise<{ success: boolean; message: string; error?: string; contacts?: any[] }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    error?: string;
+    contacts?: any[];
+  }> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: "POST",

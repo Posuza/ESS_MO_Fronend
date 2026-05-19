@@ -252,7 +252,7 @@ export default function MoHome(props: Props) {
     );
   }
 
-  const isSuperAdmin = currentEmployee?.role_id === 1;
+  const isSuperAdmin = currentEmployee?.position_id === 1;
 
   if (subView === "detail" && selectedItem) {
     return (

@@ -1,0 +1,76 @@
+{
+  "users": [
+    {
+      "employee_code": "036259",
+      "password": "036259",
+      "email": "admin@gutsess.com",
+      "first_name": "Admin",
+      "last_name": "036259",
+      "role_name": "ADMIN",
+      "name_prefix": "Mr.",
+      "position_name": "DefaultPos",
+      "sector_id": 1,
+      "is_active": true
+    },
+    {
+      "employee_code": "600001",
+      "password": "123456",
+      "email": "emp600001@gutsess.com",
+      "first_name": "สมชาย",
+      "last_name": "สายเสมอ",
+      "role_name": "EMPLOYEE",
+      "name_prefix": "นาย",
+      "position_name": "รปภ. ประจำภาค 1",
+      "sector_id": 1,
+      "is_active": true
+    },
+    {
+      "employee_code": "600002",
+      "password": "123456",
+      "email": "emp600002@gutsess.com",
+      "first_name": "สมหญิง",
+      "last_name": "จริงใจ",
+      "role_name": "EMPLOYEE",
+      "name_prefix": "นางสาว",
+      "position_name": "รปภ. ประจำภาค 4",
+      "sector_id": 4,
+      "is_active": true
+    },
+    {
+      "employee_code": "600003",
+      "password": "123456",
+      "email": "emp600003@gutsess.com",
+      "first_name": "วิชัย",
+      "last_name": "ใจงาม",
+      "role_name": "EMPLOYEE",
+      "name_prefix": "นาย",
+      "position_name": "รปภ. ประจำภาค 7",
+      "sector_id": 7,
+      "is_active": true
+    },
+    {
+      "employee_code": "600004",
+      "password": "123456",
+      "email": "emp600004@gutsess.com",
+      "first_name": "เกรียงไกร",
+      "last_name": "กล้าหาญ",
+      "role_name": "EMPLOYEE",
+      "name_prefix": "นาย",
+      "position_name": "รปภ. ประจำภาค 9",
+      "sector_id": 9,
+      "is_active": true
+    },
+    {
+      "employee_code": "999999",
+      "password": "123456",
+      "email": "locked@gutsess.com",
+      "first_name": "บัญชี",
+      "last_name": "โดนระงับ",
+      "role_name": "EMPLOYEE",
+      "name_prefix": "นาย",
+      "position_name": "รปภ. นอกเวร",
+      "sector_id": null,
+      "is_active": false
+    }
+  ]
+}

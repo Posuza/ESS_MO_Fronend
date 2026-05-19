@@ -90,8 +90,8 @@ export default function MoUpdatePage(props: Props) {
   const initialValuesRef = useRef<Record<string, string | number> | null>(null);
 
   const currentEmployee = useStore((state) => state.currentEmployee);
-  // Super Admin (role_id 1) and Manager (role_id 2) can approve/update
-  const isManager = currentEmployee?.role_id === 1 || currentEmployee?.role_id === 2;
+  // Super Admin (position_id 1) and Manager (position_id 2) can approve/update
+  const isManager = currentEmployee?.position_id === 1 || currentEmployee?.position_id === 2;
 
   function toApprovalStatus(value?: string): ApprovalStatus {
     if (value === "APPROVED" || value === "REJECT" || value === "PENDING") {

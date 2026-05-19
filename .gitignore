@@ -70,3 +70,7 @@ dist-ssr
 # Qodo workspace and generated tooling files
 .qodo/
 excel-pq-symbols/
+
+# Environment-specific folders
+*.dev/
+*.production/
