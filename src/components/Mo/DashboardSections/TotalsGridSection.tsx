@@ -8,7 +8,7 @@ const formatNum = (num: number) => num.toLocaleString();
 const agg = caseData.reduce(
   (acc: any, row: any) => {
     acc.reports += 1;
-    if (row.sector_id) acc.sectors.add(row.sector_id);
+    if (row.department_id) acc.sectors.add(row.department_id);
     if (row.approved_status === "pending") acc.pending += 1;
     if (row.approved_status === "approved") acc.approved += 1;
     if (row.approved_status === "rejected") acc.rejected += 1;
@@ -24,7 +24,7 @@ const agg = caseData.reduce(
 
     acc.uniform += (row.wear_hat_count || 0) + (row.wear_shirt_count || 0) + (row.wear_pant_count || 0) + (row.wear_shoe_count || 0);
     acc.rules += (row.rule_sleep_count || 0) + (row.rule_use_phone_count || 0) + (row.rule_no_card_count || 0);
-    acc.other += (row.other_Job_count || 0) + (row.other_training_count || 0) + absentCount;
+    acc.other += (row.other_job_count || 0) + (row.other_training_count || 0) + absentCount;
 
     return acc;
   },

@@ -498,10 +498,10 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
             <div className={styles["pdf-other-content"]}>
               <div className={styles["other-subsection"]}>
                 <div className={styles["subsection-title"]}>
-                  พบผู้ว่าจ้าง: <span>{data.other_Job_count || 0} จุด</span>
+                  พบผู้ว่าจ้าง: <span>{data.other_job_count || 0} จุด</span>
                 </div>
                 <p className={styles["subsection-desc"]}>
-                  {data.other_Job ? `• ${data.other_Job}` : "-"}
+                  {data.other_job ? `• ${data.other_job}` : "-"}
                 </p>
               </div>
 

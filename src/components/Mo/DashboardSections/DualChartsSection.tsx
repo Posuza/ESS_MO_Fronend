@@ -109,7 +109,7 @@ export default function DualCharts() {
   const barData = useMemo(() => {
     const map = new Map();
     filteredRecords.forEach((r) => {
-      const loc = r.sector_id || "Unknown";
+      const loc = r.department_id || "Unknown";
 
       const leave =
         (r.leave_sick_count || 0) +

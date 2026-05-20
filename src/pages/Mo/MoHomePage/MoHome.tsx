@@ -12,7 +12,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useStore } from "../../../store/store";
-import type { SectorReport, Sector } from "../../../store/store";
+import type { SectorReport } from "../../../store/store";
 
 import MoNewPage from "../MoNewPage/MoNewPage";
 import MoDetailPage from "../MoDetailPage/MoDetailPage";
@@ -39,40 +39,25 @@ export default function MoHome(props: Props) {
   const [isListOpen, setIsListOpen] = useState(false);
 
   const reports = useStore((state) => state.reports);
-  const sectors = useStore((state) => state.sectors);
-  const currentEmployee = useStore((state) => state.currentEmployee);
+  const currentEmployee = useStore((state) => state.authEmployee);
   const fetchReports = useStore((state) => state.fetchReports);
-  const fetchSectors = useStore((state) => state.fetchSectors);
-  const fetchEmployeeByCode = useStore((state) => state.fetchEmployeeByCode);
   const deleteReport = useStore((state) => state.deleteReport);
 
   useEffect(() => {
-    console.log("MoHome: Fetching employee...", props.empCode);
-    if (props.empCode) {
-      fetchEmployeeByCode(props.empCode).catch(err => {
-        console.error("MoHome: Error fetching employee:", err);
-      });
-    }
-  }, [props.empCode, fetchEmployeeByCode]);
-
-  useEffect(() => {
-    console.log("MoHome: currentEmployee changed! sector_id =", currentEmployee?.sector_id);
-    if (!currentEmployee?.sector_id) return;
-
-    // Fetch ONLY the specific sector the employee belongs to
-    console.log("MoHome: Fetching Sectors for sector_id", currentEmployee.sector_id);
-    fetchSectors({ sector_id: currentEmployee.sector_id }).catch(err => {
-        console.error("MoHome: Error fetching sectors:", err);
-    });
+    console.log(
+      "MoHome: currentEmployee changed! department_id =",
+      currentEmployee?.department_id,
+    );
+    if (!currentEmployee?.department_id) return;
 
     // Fetch reports for this sector specifically for TODAY
     const todayStr = new Date().toISOString().split("T")[0];
     fetchReports({
-      sector_id: currentEmployee.sector_id,
+      department_id: currentEmployee.department_id,
       start_date: todayStr,
       end_date: todayStr,
     });
-  }, [fetchReports, fetchSectors, currentEmployee?.sector_id]);
+  }, [fetchReports, currentEmployee?.department_id]);
 
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -135,15 +120,13 @@ export default function MoHome(props: Props) {
 
     // Fetch reports for the selected criteria from the backend
     if (selectedDate) {
-      // Find the sector ID for the selected location name if "all" is not selected
-      const targetSector = sectors.find(
-        (s) => s.sector_name === selectedLocation,
-      );
-      const targetSectorId =
-        targetSector?.sector_id || currentEmployee?.sector_id;
+      // Use department_id from auth employee if location matches, or all/none
+      const targetSectorId = selectedLocation
+        ? currentEmployee?.department_id
+        : undefined;
 
       fetchReports({
-        sector_id: targetSectorId ?? undefined,
+        department_id: targetSectorId ?? undefined,
         start_date: selectedDate,
         end_date: selectedDate,
       });
@@ -155,10 +138,10 @@ export default function MoHome(props: Props) {
       setSearchSection(false);
       setSearchSubmitted(false); // Reset search when going back
       // When going back to Home, restore TODAY's reports
-      if (currentEmployee?.sector_id) {
+      if (currentEmployee?.department_id) {
         const todayStr = new Date().toISOString().split("T")[0];
         fetchReports({
-          sector_id: currentEmployee.sector_id,
+          department_id: currentEmployee.department_id,
           start_date: todayStr,
           end_date: todayStr,
         });
@@ -180,18 +163,19 @@ export default function MoHome(props: Props) {
   // Get today's date in YYYY-MM-DD format
   const todayDate = new Date().toISOString().split("T")[0];
 
-  // Get allowed locations for the selected employee from sectors in the store
-  // Filter by sector_id to ensure only the user's area is shown
-  const employeeLocations = sectors
-    .filter((s: Sector) => s.sector_id === currentEmployee?.sector_id)
-    .map((s: Sector) => s.sector_name);
+  // Get allowed locations for the selected employee from their department name
+  const employeeLocations = currentEmployee?.department_name
+    ? [currentEmployee.department_name]
+    : [];
 
   // Map store reports to the format expected by the UI
   const mappedReports = reports.map((r: SectorReport) => ({
     ...r,
     location:
-      sectors.find((s) => s.sector_id === r.sector_id)?.sector_name ||
-      `Sector ${r.sector_id}`,
+      r.department_id === currentEmployee?.department_id &&
+      currentEmployee?.department_name
+        ? currentEmployee.department_name
+        : `Department ${r.department_id}`,
     create_at: r.created_at, // map backend created_at to UI create_at
     user_id: r.created_by,
   }));
@@ -229,7 +213,12 @@ export default function MoHome(props: Props) {
     employeeLocations.includes(r.location),
   );
   const locationsWithoutCases = employeeLocations.filter(
-    (loc: string) => !locationsWithCases.some((r: any) => r.location === loc),
+    (loc: string) =>
+      !locationsWithCases.some(
+        (r: any) =>
+          r.location === loc &&
+          String(r.user_id) === String(currentEmployee?.employee_code),
+      ),
   );
 
   // Debug logging
@@ -266,12 +255,18 @@ export default function MoHome(props: Props) {
 
   if (subView === "update" && selectedItem) {
     return (
-      <MoUpdatePage item={selectedItem} onCancel={() => setSubView("main")} onShare={() => setSubView("pdfviewer")} />
+      <MoUpdatePage
+        item={selectedItem}
+        onCancel={() => setSubView("main")}
+        onShare={() => setSubView("pdfviewer")}
+      />
     );
   }
 
-
-  if (subView === "dashboard") {
+  if (
+    subView === "dashboard" &&
+    currentEmployee?.position_name !== "สายตรวจและประสานงาน"
+  ) {
     return (
       <MoDashboard
         empCode={props.empCode || ""}
@@ -302,9 +297,12 @@ export default function MoHome(props: Props) {
                       </div>
                       <div className={styles["location-body-col"]}>
                         <div className={styles["location-top-row"]}>
-                          <div className={styles["location-title"]}>
-                            {location ?? "-"}
+                          <div className={styles["item-title-wrap"]}>
+                            <div className={styles["location-title"]}>
+                              {location ?? "-"}
+                            </div>
                           </div>
+
                           {/* this go to add MOnew */}
                           <button
                             className={styles["mo-item-open"]}
@@ -351,7 +349,7 @@ export default function MoHome(props: Props) {
                         <div className={styles["location-check-top-row"]}>
                           <div className={styles["item-title-wrap"]}>
                             <div className={styles["location-check-title"]}>
-                              {r.location ?? "-"}
+                              {r.location ?? "-"} | {r.created_by}
                             </div>
                             <span
                               className={[
@@ -368,7 +366,7 @@ export default function MoHome(props: Props) {
                               ? new Date(r.create_at).toLocaleDateString(
                                   "th-TH",
                                 )
-                              : "03/02/2569"}
+                              : "วันนี้"}
                           </p>
                         </div>
                         <div className={styles["location-check-bottom-row"]}>
@@ -415,7 +413,7 @@ export default function MoHome(props: Props) {
                 })}
               </div>
 
-              <div className={styles["guts-back-outer"]} aria-hidden>
+              <div className={styles["guts-back-outer"]}>
                 <button
                   type="button"
                   className={[styles["guts-btn"], styles["guts-back-btn"]].join(
@@ -430,7 +428,7 @@ export default function MoHome(props: Props) {
           ) : (
             // Home two bnt
             <>
-              <div className={styles["guts-mo-btn"]} aria-hidden>
+              <div className={styles["guts-mo-btn"]}>
                 <button
                   type="button"
                   className={styles["mo-home-addnew"]}
@@ -441,7 +439,7 @@ export default function MoHome(props: Props) {
                   เพิ่มใหม่
                 </button>
               </div>
-              <div className={styles["guts-mo-btn"]} aria-hidden>
+              <div className={styles["guts-mo-btn"]}>
                 <button
                   type="button"
                   className={styles["mo-home-search"]}
@@ -450,24 +448,25 @@ export default function MoHome(props: Props) {
                   รายการค้นหา
                 </button>
               </div>
-              <div className={styles["guts-mo-btn"]} aria-hidden>
-                <button
-                  type="button"
-                  className={styles["mo-home-addnew"]}
-                  onClick={() => {
-                    setSubView("dashboard");
-                  }}
-                >
-                  แดชบอร์ด
-                </button>
-              </div>
+              {currentEmployee?.position_name !== "สายตรวจและประสานงาน" && (
+                <div className={styles["guts-mo-btn"]}>
+                  <button
+                    type="button"
+                    className={styles["mo-home-addnew"]}
+                    onClick={() => {
+                      setSubView("dashboard");
+                    }}
+                  >
+                    แดชบอร์ด
+                  </button>
+                </div>
+              )}
               {/* Back button - visible only on home */}
               <div
                 className={[
                   styles["guts-back-outer"],
                   styles["mo-back-home"],
                 ].join(" ")}
-                aria-hidden
               >
                 <button
                   type="button"
@@ -578,7 +577,7 @@ export default function MoHome(props: Props) {
                       <p className={styles["result-date"]}>
                         {r.create_at
                           ? new Date(r.create_at).toLocaleDateString("th-TH")
-                          : "03/02/2569"}
+                          : "วันนี้"}
                       </p>
                     </div>
                     <div className={styles["result-bottom-row"]}>
@@ -625,7 +624,7 @@ export default function MoHome(props: Props) {
             })}
           </div>
 
-          <div className={styles["guts-back-outer"]} aria-hidden>
+          <div className={styles["guts-back-outer"]}>
             <button
               type="button"
               className={[styles["guts-btn"], styles["guts-back-btn"]].join(

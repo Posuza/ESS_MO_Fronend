@@ -151,7 +151,7 @@ export default function LineChartSection() {
       grouped.issues = (grouped.rule || 0) + (grouped.warning || 0);
       // track unique locations per group using a Set on the running totals
       if (!prev._locationsSet) prev._locationsSet = new Set();
-      if (entry.sector_id) prev._locationsSet.add(String(entry.sector_id));
+      if (entry.department_id) prev._locationsSet.add(String(entry.department_id));
 
       // ensure prev has numeric keys and add grouped values into totals (skip 'locations' placeholder)
       Object.keys(grouped).forEach((gk) => {

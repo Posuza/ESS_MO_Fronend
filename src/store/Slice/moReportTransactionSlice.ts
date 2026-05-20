@@ -1,9 +1,9 @@
 import type { StateCreator } from "zustand";
-import { sectorReportService } from "../../services/sectorReport.Service";
+import { sectorReportService } from "../../services/moReporTransaction.Service";
 
 export interface SectorReport {
   id: number;
-  sector_id: number;
+  department_id: number;
   report_date: string;
   status: string;
   approved_status?: "PENDING" | "APPROVED" | "REJECT";
@@ -27,8 +27,8 @@ export interface SectorReport {
   rule_sleep_count: number;
   rule_use_phone_count: number;
   rule_no_card_count: number;
-  other_Job?: string;
-  other_Job_count?: number;
+  other_job?: string;
+  other_job_count?: number;
   other_training?: string;
   other_training_count?: number;
   other_extral?: string;
@@ -37,7 +37,7 @@ export interface SectorReport {
 }
 
 export interface SectorReportFilters {
-  sector_id?: number;
+  department_id?: number;
   start_date?: string;
   end_date?: string;
   status?: string;

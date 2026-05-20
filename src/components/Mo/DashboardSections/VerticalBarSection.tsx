@@ -87,7 +87,7 @@ export default function VerticalBar() {
 
   const availableSectors = useMemo(() => {
     const sectors = new Set(
-      (caseData as any[]).map((r: any) => r.sector_id).filter(Boolean),
+      (caseData as any[]).map((r: any) => r.department_id).filter(Boolean),
     );
     return Array.from(sectors).sort() as string[];
   }, []);
@@ -101,7 +101,7 @@ export default function VerticalBar() {
       if (selectedMonth !== null && d.getMonth() !== selectedMonth)
         return false;
       if (selectedDay !== null && d.getDate() !== selectedDay) return false;
-      if (selectedSector !== "all" && r.sector_id !== selectedSector)
+      if (selectedSector !== "all" && r.department_id !== selectedSector)
         return false;
       return true;
     });

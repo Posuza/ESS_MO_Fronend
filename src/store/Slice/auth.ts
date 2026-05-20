@@ -9,7 +9,9 @@ export interface AuthEmployee {
   role_name: string;
   name_prefix: string;
   position_name: string;
-  sector_id?: number | null;
+  department_id?: number | null;
+  position_id?: number | null;
+  department_name?: string | null;
 }
 
 export interface AuthSlice {

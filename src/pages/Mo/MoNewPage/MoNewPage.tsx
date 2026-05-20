@@ -60,7 +60,7 @@ export default function MoNewPage(props: Props) {
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const { createReport, sectors } = useStore();
+  const { createReport, authEmployee } = useStore();
 
   const normalizeNumber = (value: string) => {
     const num = Number(value);
@@ -134,17 +134,14 @@ export default function MoNewPage(props: Props) {
     e.preventDefault();
     if (!hasAnyData()) return;
 
-    // Find sector_id from selectedLocation
-    const sector = sectors.find(
-      (s) => s.sector_name === props.selectedLocation,
-    );
-    if (!sector) {
+    const departmentId = authEmployee?.department_id;
+    if (!departmentId) {
       alert("ไม่พบข้อมูลภาค (Sector) กรุณาลองใหม่อีกครั้ง");
       return;
     }
 
     const payload = {
-      sector_id: sector.sector_id,
+      department_id: departmentId,
       leave_sick_count: Number(sickLeave) || 0,
       leave_business_count: Number(personalLeave) || 0,
       leave_other_count: Number(otherLeaveType) || 0,
@@ -160,12 +157,12 @@ export default function MoNewPage(props: Props) {
       wear_pant_count: Number(pantsCount) || 0,
       wear_shoe_count: Number(shoesCount) || 0,
       warning: disciplineNote,
-      other_Job: foundNote,
-      other_Job_count: Number(foundCount) || 0,
+      other_job: foundNote,
+      other_job_count: Number(foundCount) || 0,
       other_training: trainNote,
       other_training_count: Number(trainCount) || 0,
       other_extral: otherNote,
-      created_by: props.empCode || "ADMIN",
+      created_by: authEmployee?.employee_code || props.empCode || "ADMIN",
     };
 
     console.log("MO submit", payload);

@@ -89,9 +89,15 @@ export default function MoUpdatePage(props: Props) {
   const [approvalRemark, setApprovalRemark] = useState("");
   const initialValuesRef = useRef<Record<string, string | number> | null>(null);
 
-  const currentEmployee = useStore((state) => state.currentEmployee);
-  // Super Admin (position_id 1) and Manager (position_id 2) can approve/update
-  const isManager = currentEmployee?.position_id === 1 || currentEmployee?.position_id === 2;
+  const currentEmployee = useStore((state) => state.authEmployee);
+  // Only ผู้อำนวยการ can update status
+  const isManager = currentEmployee?.position_name === "ผู้อำนวยการ";
+  // Anyone who is not สายตรวจและประสานงาน can edit the report data, or the creator of the report
+  const canEditData =
+    currentEmployee?.position_name !== "สายตรวจและประสานงาน" ||
+    (props.item?.created_by !== undefined &&
+      currentEmployee?.employee_code !== undefined &&
+      props.item.created_by === currentEmployee.employee_code);
 
   function toApprovalStatus(value?: string): ApprovalStatus {
     if (value === "APPROVED" || value === "REJECT" || value === "PENDING") {
@@ -141,8 +147,8 @@ export default function MoUpdatePage(props: Props) {
       wear_pant_count: normalizeNumber(it.wear_pant_count),
       wear_shoe_count: normalizeNumber(it.wear_shoe_count),
       warning: normalizeText(it.warning),
-      other_Job: normalizeText(it.other_Job),
-      other_Job_count: normalizeNumber(it.other_Job_count),
+      other_job: normalizeText(it.other_job),
+      other_job_count: normalizeNumber(it.other_job_count),
       other_training: normalizeText(it.other_training),
       other_training_count: normalizeNumber(it.other_training_count),
       other_extral: normalizeText(it.other_extral),
@@ -173,8 +179,8 @@ export default function MoUpdatePage(props: Props) {
       wear_pant_count: normalizeNumber(pantsCount),
       wear_shoe_count: normalizeNumber(shoesCount),
       warning: normalizeText(disciplineNote),
-      other_Job: normalizeText(foundNote),
-      other_Job_count: normalizeNumber(foundCount),
+      other_job: normalizeText(foundNote),
+      other_job_count: normalizeNumber(foundCount),
       other_training: normalizeText(trainNote),
       other_training_count: normalizeNumber(trainCount),
       other_extral: normalizeText(otherNote),
@@ -261,8 +267,8 @@ export default function MoUpdatePage(props: Props) {
     setPantsCount(it.wear_pant_count != null ? String(it.wear_pant_count) : "");
     setShoesCount(it.wear_shoe_count != null ? String(it.wear_shoe_count) : "");
 
-    setFoundCount(it.other_Job_count != null ? String(it.other_Job_count) : "");
-    setFoundNote(it.other_Job ?? "");
+    setFoundCount(it.other_job_count != null ? String(it.other_job_count) : "");
+    setFoundNote(it.other_job ?? "");
     setTrainCount(
       it.other_training_count != null ? String(it.other_training_count) : "",
     );
@@ -296,8 +302,8 @@ export default function MoUpdatePage(props: Props) {
       wear_pant_count: Number(pantsCount) || 0,
       wear_shoe_count: Number(shoesCount) || 0,
       warning: disciplineNote,
-      other_Job: foundNote,
-      other_Job_count: Number(foundCount) || 0,
+      other_job: foundNote,
+      other_job_count: Number(foundCount) || 0,
       other_training: trainNote,
       other_training_count: Number(trainCount) || 0,
       other_extral: otherNote,
@@ -388,29 +394,33 @@ export default function MoUpdatePage(props: Props) {
               <Eye size={18} />
             </button>
 
-            <button
-              type="button"
-              className={styles["guts-icon-btn"]}
-              title="Save"
-              aria-label="Save"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowActionIcons((v) => !v);
-              }}
-            >
-              <Save size={18} />
-            </button>
+            {canEditData && (
+              <>
+                <button
+                  type="button"
+                  className={styles["guts-icon-btn"]}
+                  title="Save"
+                  aria-label="Save"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowActionIcons((v) => !v);
+                  }}
+                >
+                  <Save size={18} />
+                </button>
 
-            <button
-              type="button"
-              className={`${styles["guts-icon-btn"]} ${styles["guts-icon-delete"]}`}
-              onClick={handleDelete}
-              title="Delete"
-              aria-label="Delete"
-            >
-              <Trash2 size={18} />
-            </button>
+                <button
+                  type="button"
+                  className={`${styles["guts-icon-btn"]} ${styles["guts-icon-delete"]}`}
+                  onClick={handleDelete}
+                  title="Delete"
+                  aria-label="Delete"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
           </div>
         ) : null}
       </div>
