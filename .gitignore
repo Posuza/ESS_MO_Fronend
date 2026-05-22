@@ -1,3 +1,4 @@
+.gitignore
 # macOS
 .DS_Store
 
@@ -74,3 +75,6 @@ excel-pq-symbols/
 # Environment-specific folders
 *.dev/
 *.production/
+
+# Exclude all dev.* directories and files
+**/dev.*/
