@@ -1,0 +1,480 @@
+/* --- ACTION BAR (Now outside wrapper) --- */
+.btns-box {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 12px 0;
+  margin: 0 0 12px 0;
+  background: #ffffff;
+}
+
+/* Main Wrapper */
+.pdf-viewer-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 80px);
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.pdf-container {
+  display: block;
+  background: #f0f4f8;
+  width: 100%;
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  padding: 0;
+  margin: 0;
+}
+
+/* A4 dimensions approx setup for web */
+.pdf-page {
+  margin: 0;
+  width: 800px;
+  min-width: unset;
+  min-height: 1100px;
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid #c2ccda;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 35px;
+  box-sizing: border-box;
+  font-family: inherit;
+  color: #1b2b4a;
+  outline: 2px solid #1e3a8a;
+  outline-offset: -10px;
+}
+
+/* Base Print rule to strip everything outside the page */
+@media print {
+  .btns-box {
+    display: none !important;
+  }
+
+  .pdf-container {
+    padding: 0;
+    background-color: white;
+  }
+
+  .pdf-page {
+    border: none;
+    box-shadow: none;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+    height: 100%;
+    page-break-after: always;
+  }
+}
+
+.gut-back-icon {
+  height: 40px;
+  padding: 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brandDark, #024b76);
+  border: 1px solid rgba(2, 75, 118, 0.06);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1);
+  transition: all 0.12s ease;
+}
+
+.gut-back-icon:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
+  background: rgba(4, 110, 146, 0.9);
+  border-color: rgba(2, 75, 118, 0.18);
+}
+
+.gut-back-icon svg {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+.guts-action-icons {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.guts-icon-btn {
+  height: 38px;
+  width: 38px;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid rgba(2, 75, 118, 0.06);
+  color: var(--brandDark, #024b76);
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(2, 16, 43, 0.1);
+}
+
+.guts-icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
+}
+
+.guts-icon-btn[title="Share"]:hover {
+  background: rgba(16, 185, 129, 0.14);
+  color: rgb(16, 185, 129);
+  border-color: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
+  transform: translateY(-2px);
+}
+
+.guts-icon-btn[title="Share"]:hover svg {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+.guts-icon-btn svg {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+@media print {
+  .gut-detail-btns-box {
+    display: none !important;
+  }
+}
+
+/* --- LOGO AND HEADER --- */
+.pdf-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 24px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.logo-guts {
+  color: #0d2861;
+}
+
+.logo-ess {
+  color: #dc2626; /* red */
+}
+
+.header-divider {
+  width: 2px;
+  height: 60px;
+  background-color: #0d2861;
+  margin: 0 24px;
+}
+
+.header-text-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-text-en {
+  color: #dc2626;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.header-text-th {
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 2px 0;
+}
+
+.header-text-sub {
+  color: #3b82f6; /* bright blue */
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* --- TITLE BAR --- */
+.pdf-title-bar {
+  background-color: #4376c7;
+  color: white;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  padding: 8px 0;
+  border-radius: 4px; /* Slight roundness seen in mockup */
+  margin-bottom: 16px;
+}
+
+/* --- META ROW --- */
+.pdf-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1b2b4a;
+  font-weight: 700;
+  margin-bottom: 30px;
+  padding: 0 10px;
+}
+
+.meta-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1e40af;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.meta-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* --- TWO COLUMN GRID --- */
+.pdf-grid-body {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.pdf-grid-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px; /* space between blocks in a column */
+}
+
+.pdf-col-divider {
+  width: 2px;
+  background-color: #e2e8f0;
+  margin: 0 10px;
+}
+
+/* --- PDF SECTION BLOCKS --- */
+.pdf-section-block {
+  padding: 0 10px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.pdf-block-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.block-icon {
+  color: #475569; /* Greyish blue */
+}
+
+.block-icon-danger {
+  color: #dc2626; /* Red for alert */
+}
+
+.block-title {
+  color: #1e3a8a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.block-total {
+  color: #1e3a8a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.text-danger {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+/* Section Lists */
+.pdf-list {
+  padding-left: 45px; /* Indent to align with text */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pdf-list-item {
+  display: flex;
+  justify-content: space-between;
+  width: 180px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1b2b4a;
+}
+
+.pdf-list-item span:first-child {
+  opacity: 0.9;
+}
+
+/* --- BLUE BOXES (การตักเตือน & อื่นๆ) --- */
+.pdf-blue-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: -10px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.pdf-blue-heading {
+  background-color: #5c85d6;
+  color: white;
+  padding: 6px 16px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.pdf-blue-content {
+  padding: 12px 16px;
+  background-color: #fafbfc;
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.pdf-blue-content p {
+  margin: 0;
+}
+
+.empty-text {
+  font-style: italic;
+  opacity: 0.6;
+}
+
+/* Full Width Box (Bottom Section) */
+.pdf-blue-box-full {
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 24px;
+  border: none; /* In mockup, it just uses title bar, no clear box border */
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.pdf-blue-box-full .pdf-blue-heading {
+  text-align: center;
+  font-size: 18px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.pdf-other-content {
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.other-subsection {
+  color: #1e3a8a;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.subsection-title {
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.subsection-title span {
+  color: #0f172a;
+}
+
+.subsection-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+  padding-left: 10px;
+  line-height: 1.5;
+}
+
+/* --- APPROVAL REMARK SECTION --- */
+.approval-divider {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+  margin-bottom: 16px;
+  padding: 0 10px;
+}
+
+.approval-divider-line {
+  flex: 1;
+  height: 2px;
+  background-color: #5c85d6;
+}
+
+.approval-divider-text {
+  color: #5c85d6;
+  font-size: 18px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.approval-content {
+  padding: 0 10px;
+  margin-bottom: 24px;
+}
+
+.approval-text {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* --- SIGNATURE SECTION --- */
+.pdf-signatures {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 40px;
+  padding-bottom: 20px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.signature-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.signature-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1b2b4a;
+}
+
+.signature-line {
+  min-width: 200px;
+  border-bottom: 2px solid #1b2b4a;
+  text-align: center;
+  padding-bottom: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #475569;
+}

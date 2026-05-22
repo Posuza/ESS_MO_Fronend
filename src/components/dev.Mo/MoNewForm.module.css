@@ -1,0 +1,735 @@
+/* keep responsive layout (side-by-side on wide screens) */
+@media (min-width: 720px) {
+  .guts-Mo-actions {
+    flex-direction: row;
+    justify-content: center;
+    gap: 12px;
+  }
+}
+
+/* Back button (outside form) */
+/* Back button (outside form) */
+
+/* back button (outside form) — consolidated styles */
+.guts-back-outer {
+  /* container matching MoDetailPage layout */
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0 0 8px 0;
+  box-sizing: border-box;
+}
+
+.guts-back-outer .guts-back-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1) !important;
+  background: rgba(4, 110, 146, 0.9) !important;
+  border-color: rgba(2, 75, 118, 0.18) !important;
+}
+
+.guts-back-btn {
+  /* pill-style back icon matching MoDetailPage */
+  height: 40px !important;
+  padding: 10px !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--brandDark, rgba(2, 75, 118, 0.9)) !important;
+  border: 1px solid rgba(2, 75, 118, 0.06) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1) !important;
+  width: auto !important;
+  box-sizing: border-box;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease !important;
+}
+
+/* MO form shell */
+.guts-Mo-layout {
+  margin-top: 20px;
+  margin-bottom: 0;
+  border-radius: 10px;
+  border: 2px solid rgba(2, 75, 118, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.1);
+  padding: 14px 0 0;
+  display: grid;
+  grid-template-columns: 1fr; /* always single column (mobile-first) */
+  gap: 5px;
+  align-items: start;
+}
+
+.guts-box {
+  margin-bottom: 0; /* spacing handled by grid gap */
+  background: #ffffff;
+  margin-left: 3px;
+  margin-right: 3px;
+  border: 1px solid #d8e1ec;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.12);
+}
+
+/* collapsible box (used for "ลา") */
+.guts-box.collapsible .guts-box-title {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--blueText);
+  background: #f3f7fc;
+  margin: 0;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  padding: 7px 10px;
+}
+
+/* box title */
+.guts-box-title {
+  font-weight: 900;
+  color: var(--blueText);
+  font-size: 17px;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.region-card-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 4px 9px 6px;
+}
+
+.region-card-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.region-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  align-self: center;
+  gap: 4px;
+  min-width: fit-content;
+}
+
+.region-card-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--brandDark, #014f86);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.region-card-avatar svg {
+  stroke: currentColor;
+}
+
+.region-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.region-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.region-card-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.region-card-title {
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--blueText);
+  white-space: nowrap;
+}
+
+.region-card-meta-date {
+  display: block;
+  margin: 0;
+  color: var(--blueText);
+  text-align: right;
+  line-height: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.region-card-value {
+  width: 100%;
+  color: #334155;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.guts-box-body {
+  padding: 5px;
+}
+
+/* label + control row (default: horizontal — label left, control right) */
+.guts-field-row {
+  display: flex;
+  flex-direction: row; /* keep inline on mobile */
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.guts-field-row .guts-label {
+  max-width: 40%;
+  text-align: left;
+  font-weight: 700;
+  color: #334155;
+  font-size: 15px;
+  padding-left: 6px;
+}
+
+.guts-field-row .guts-mo-selection {
+  max-width: 40%;
+  text-align: left;
+  font-weight: 700;
+  color: var(--blueText);
+  font-size: 14px;
+  margin-left: 3px;
+}
+
+.guts-field-row .guts-mo-group-label {
+  flex: auto;
+  text-align: left;
+  font-weight: 700;
+  color: var(--blueText);
+  font-size: 15.5px;
+  padding-left: 5px;
+}
+
+.guts-field-row .guts-input,
+.guts-field-row select,
+.guts-field-row textarea {
+  max-width: 60%;
+  align-self: right;
+  height: 38px;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #334155;
+  border: 1.5px solid rgba(92, 133, 214, 0.18);
+  background: #fff;
+  box-shadow: none;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.guts-field-row .guts-input-full,
+.guts-field-row select,
+.guts-field-row textarea {
+  max-width: 100%;
+  align-self: right;
+  height: 38px;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #334155;
+  border: 1.5px solid rgba(92, 133, 214, 0.18);
+  background: #fff;
+  box-shadow: none;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.guts-field-row textarea.guts-input {
+  min-height: 88px;
+  height: auto;
+}
+
+.guts-field-row .guts-input:focus,
+.guts-field-row select:focus,
+.guts-field-row textarea:focus {
+  border-color: #5c85d6;
+  box-shadow: none;
+  outline: none;
+  background: #ffffff;
+}
+
+/* when a row should be full width (no left label) stack vertically */
+.guts-field-row.full-width {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* make inputs/selects/textarea fill available space in full-width rows */
+.guts-field-row.full-width .guts-input,
+.guts-field-row.full-width select,
+.guts-field-row.full-width textarea,
+.guts-field-row.full-width .guts-mo-selection {
+  max-width: 100%;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* two-column small-row: label left, input+suffix right (mobile inline) */
+.guts-field-row.two-col {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.guts-field-row.two-col .guts-label {
+  flex: 0 0 120px; /* fixed label column width */
+  max-width: 40%;
+  padding-left: 6px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.guts-field-row.two-col .guts-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}
+
+.guts-field-row.two-col .guts-input.small {
+  width: 60px;
+  height: 34px;
+  min-width: 60px;
+  max-width: 60px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.guts-field-row.two-col .guts-suffix {
+  font-weight: 700;
+  color: #334155;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+/* ensure full-width textarea uses guts-input styling and fills width */
+.guts-field-row.full-width .guts-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* small spacing tweak under section label */
+.guts-field-row + .guts-field-row.full-width {
+  margin-top: 6px;
+}
+
+/* make full-width textareas appear as real multi-line fields */
+.guts-field-row.full-width textarea,
+.guts-input-full {
+  min-height: 48px; /* shortened from 64px */
+  height: auto;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* override the generic 35px height so it doesn't shrink full-width textareas */
+.guts-field-row .guts-input-full,
+.guts-field-row.full-width textarea.guts-input-full {
+  height: auto !important;
+  min-height: 48px !important;
+}
+
+/* small numeric inputs used inside collapsed section */
+.guts-input.small {
+  width: 60px;
+  max-width: 60px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #334155;
+  border-radius: 6px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border: none !important;
+  background: rgba(243, 247, 255, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(92, 133, 214, 0.04);
+}
+
+.guts-field-row input.guts-input:not(:focus),
+.guts-field-row input.guts-input.small:not(:focus) {
+  background: #f3f6f9;
+  border: none;
+  box-shadow: none;
+}
+
+.guts-field-row input.guts-input:focus,
+.guts-field-row input.guts-input.small:focus {
+  background: #ffffff;
+  border: none;
+  box-shadow: 0 0 0 3px rgba(92, 133, 214, 0.12);
+}
+
+.guts-field-row input.guts-input:disabled,
+.guts-field-row input.guts-input.small:disabled {
+  background: #f3f6f9;
+  border: none;
+  box-shadow: none;
+  color: #334155;
+  opacity: 1;
+}
+
+.guts-collapse-toggle {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--blueText);
+}
+
+/* hide body when collapsed */
+.guts-box-body.collapsed {
+  display: none;
+}
+
+/* make the small section label match the box title visually */
+.guts-label.section-label {
+  font-weight: 900;
+  color: var(--blueText);
+  font-size: 18px;
+  margin: 0 0 6px;
+  padding-left: 6px; /* keep alignment with other labels */
+}
+
+.guts-field-row .guts-input,
+.guts-field-row .guts-input-full,
+.guts-field-row select,
+.guts-field-row textarea,
+.guts-detail-box .guts-input-full,
+.guts-detail-box .guts-detail-textarea,
+.approval-textarea {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: #334155;
+  background: rgba(243, 247, 255, 0.95);
+  border: none !important;
+  box-shadow: inset 0 0 0 1px rgba(92, 133, 214, 0.04);
+  padding: 10px 14px;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.guts-field-row .guts-input:focus,
+.guts-field-row select:focus,
+.guts-field-row textarea:focus,
+.approval-textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.guts-Mo-layout input,
+.guts-Mo-layout textarea,
+.guts-Mo-layout select {
+  border: none !important;
+  background: rgba(243, 247, 255, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(92, 133, 214, 0.04);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: #334155;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* subbox (inner panel used for การควงกะ) */
+.guts-subbox {
+  border: 1px solid #d8e1ec;
+  border-radius: 0;
+  background: #fafafa;
+  padding: 0;
+  margin-top: 8px;
+  box-sizing: border-box;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(2, 75, 118, 0.05);
+}
+
+/* ensure two-col rows inside subbox follow same layout */
+.guts-subbox .guts-field-row.two-col {
+  padding: 3px 2px;
+}
+
+.guts-subbox .guts-field-row.two-col .guts-label,
+.guts-subbox .guts-field-row.two-col .guts-suffix {
+  font-size: 14px;
+}
+
+.guts-subbox-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 6px 4px;
+  background: #f3f7fc;
+  color: var(--blueText);
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom: 1px solid #d8e1ec;
+}
+
+.guts-subbox-title .guts-label {
+  font-weight: 900;
+  font-size: 17px;
+  color: var(--blueText);
+  padding-left: 2px;
+}
+
+.guts-subbox-toggle {
+  font-weight: 700;
+  color: var(--blueText);
+  padding-right: 6px;
+}
+
+.guts-subbox-body.collapsed {
+  display: none;
+}
+
+.guts-subbox-body {
+  padding-top: 8px;
+}
+
+.guts-subbox.collapsed {
+  padding: 0;
+  margin-top: 0;
+}
+
+/* ensure full-width textarea always fills the available width */
+.guts-input-full {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* ensure detail-box textareas use the same full-width styling */
+.guts-detail-box .guts-input-full,
+.guts-detail-box .guts-detail-textarea {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  min-height: 52px;
+  height: auto;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #334155;
+  border-radius: 8px;
+  border: 1.5px solid rgba(92, 133, 214, 0.18);
+  background: #fff;
+  font-weight: 500;
+}
+
+.approval-textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+textarea.guts-detail-textarea,
+textarea.guts-input-full {
+  font-size: 13px;
+  padding: 8px 10px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+textarea.approval-textarea:not(:disabled) {
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+textarea.guts-input-full:not(:focus),
+textarea.guts-detail-textarea:not(:focus),
+textarea.approval-textarea:not(:focus) {
+  background: #f3f6f9;
+  border: none;
+  box-shadow: none;
+  padding: 8px 10px;
+  line-height: 1.4;
+}
+
+.guts-detail-box textarea.approval-textarea:focus,
+.guts-detail-box .guts-input-full.approval-textarea:focus {
+  background: #ffffff !important;
+  border: 1.5px solid #5c85d6 !important;
+  box-shadow: none !important;
+  padding: 8px 10px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  outline: none !important;
+}
+
+textarea.approval-textarea:focus,
+.guts-field-row textarea.approval-textarea:focus,
+.guts-box textarea.approval-textarea:focus,
+.guts-field-row .approval-textarea:focus,
+.guts-box .approval-textarea:focus {
+  background: #ffffff !important;
+  border: 1.5px solid #5c85d6 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.guts-input-full::placeholder,
+.guts-detail-textarea::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 13px;
+}
+
+/* actions (submit) */
+.guts-Mo-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  padding: 8px 10px 12px;
+  grid-column: 1 / -1;
+  flex-direction: column; /* stack submit + back on mobile */
+  align-items: stretch; /* allow children to be full-width */
+  box-sizing: border-box;
+}
+
+/* --- REPLACED: remove old mixed selectors and conflicting max-width --- */
+/* Separate submit vs back button styles (do NOT mix) */
+
+/* submit button (full-width, brand gradient) */
+.guts-Mo-actions .guts-submit-btn {
+  width: 100% !important;
+  max-width: none !important;
+  padding: 0 !important;
+  height: 52px;
+  border-radius: 999px;
+  font-size: 16px;
+  letter-spacing: 0.4px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(90deg, var(--brand), var(--brandDark)) !important;
+  color: #fff !important;
+  border: 0;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    filter 0.12s ease;
+  cursor: pointer;
+}
+
+.guts-Mo-actions .guts-submit-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(1, 58, 88, 0.2);
+}
+
+.guts-Mo-actions .guts-btn {
+  min-width: 240px;
+  width: 100%;
+  max-width: 420px; /* limit max width for large viewports */
+  height: 52px;
+  border-radius: 999px; /* fully rounded pill */
+  font-size: 16px;
+  letter-spacing: 0.4px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(90deg, var(--brand), var(--brandDark));
+  color: #fff;
+  border: 0;
+  box-shadow: 0 10px 22px rgba(226, 227, 227, 0.18);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    filter 0.12s ease;
+  cursor: pointer;
+}
+
+.guts-Mo-actions .guts-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(1, 58, 88, 0.2);
+}
+
+.guts-Mo-actions .guts-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.guts-Mo-actions .guts-btn:focus-visible {
+  outline: 3px solid rgba(2, 75, 118, 0.18);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.guts-Mo-actions .guts-btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}

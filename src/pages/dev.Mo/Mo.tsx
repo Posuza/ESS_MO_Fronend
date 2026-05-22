@@ -1,7 +1,7 @@
 // src/pages/Mo/Mo.tsx
 import Header from "../../layout/Header";
 import styles from "./Mo.module.css";
-import MoHome from "./MoHomePage/MoHome";
+import MoHome from "./MoHome";
 
 type Props = {
   empCode: string;
@@ -36,9 +36,8 @@ export default function Mo({ empCode, displayName, onBackHome }: Props) {
           </div>
 
           <h3 className={styles["guts-att-title"]}>
-            MO - รายงานประจำวันฝ่ายปฏิบัติการ  heiii
+            MO - รายงานประจำวันฝ่ายปฏิบัติการ
           </h3>
-
           <MoHome
             empCode={empCode}
             displayName={displayName}

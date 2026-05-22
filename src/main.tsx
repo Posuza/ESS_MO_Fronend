@@ -32,3 +32,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 );
+
+// Register service worker to make the app installable (PWA) on supported browsers
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => console.log("Service worker registered:", reg.scope))
+      .catch((err) => console.warn("SW registration failed:", err));
+  });
+}

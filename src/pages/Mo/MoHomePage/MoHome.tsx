@@ -221,16 +221,6 @@ export default function MoHome(props: Props) {
       ),
   );
 
-  // Debug logging
-  console.log("empCode:", props.empCode);
-  console.log("employeeLocations:", employeeLocations);
-  console.log("todayDate:", todayDate);
-  console.log(
-    "locationsWithCases:",
-    locationsWithCases.map((r: any) => r.location),
-  );
-  console.log("locationsWithoutCases:", locationsWithoutCases);
-
   if (subView === "new") {
     return (
       <MoNewPage
