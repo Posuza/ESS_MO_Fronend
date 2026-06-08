@@ -12,6 +12,7 @@ import {
   XCircle,
   Eye,
   MapPinCheck,
+  PlusIcon,
 } from "lucide-react";
 import ConfirmDeleteDialog from "../../../components/Mo/ConfirmDeleteDialog";
 import InfoModel from "../../../components/Mo/InfoModel";
@@ -51,9 +52,10 @@ export default function MoUpdatePage(props: Props) {
   const [disciplineNote, setDisciplineNote] = useState("");
   // collapse + numeric counts for ผิดข้อปฏิบัติ UI
   const [disciplineOpen, setDisciplineOpen] = useState(false);
-  const [sleepCount, setSleepCount] = useState("");
-  const [phoneCount, setPhoneCount] = useState("");
-  const [badgeCount, setBadgeCount] = useState("");
+  // Dynamic discipline items — loaded from report flat fields + disciplines[] array
+  const [disciplineItems, setDisciplineItems] = useState<
+    { key: string; label: string; unit: string; count: string }[]
+  >([]);
   // เครื่องแต่งกาย
   // เครื่องแต่งกาย - counts
   const [hatCount, setHatCount] = useState("");
@@ -90,6 +92,23 @@ export default function MoUpdatePage(props: Props) {
   const initialValuesRef = useRef<Record<string, string | number> | null>(null);
 
   const currentEmployee = useStore((state) => state.authEmployee);
+  const fetchDistinctDisciplineTypes = useStore(
+    (state) => state.fetchDistinctDisciplineTypes,
+  );
+  // Store distinct discipline types from API for the add-modal
+  const [distinctDisciplineTypes, setDistinctDisciplineTypes] = useState<
+    { key: string; label: string }[]
+  >([]);
+  // Modal state for adding a new discipline item
+  const [showAddDiscipline, setShowAddDiscipline] = useState(false);
+  const [selectedDisciplineKey, setSelectedDisciplineKey] = useState("");
+
+  useEffect(() => {
+    fetchDistinctDisciplineTypes().then((types) => {
+      console.log("[MoUpdatePage] Distinct discipline types:", types);
+      setDistinctDisciplineTypes(types);
+    });
+  }, [fetchDistinctDisciplineTypes]);
   // Only ผู้อำนวยการ can update status
   const isManager = currentEmployee?.position_name === "ผู้อำนวยการ";
   // Anyone who is not สายตรวจและประสานงาน can edit the report data, or the creator of the report
@@ -139,9 +158,6 @@ export default function MoUpdatePage(props: Props) {
       shift_18_count: normalizeNumber(it.shift_18_count),
       shift_24_count: normalizeNumber(it.shift_24_count),
       shift_36_count: normalizeNumber(it.shift_36_count),
-      rule_sleep_count: normalizeNumber(it.rule_sleep_count),
-      rule_use_phone_count: normalizeNumber(it.rule_use_phone_count),
-      rule_no_card_count: normalizeNumber(it.rule_no_card_count),
       wear_hat_count: normalizeNumber(it.wear_hat_count),
       wear_shirt_count: normalizeNumber(it.wear_shirt_count),
       wear_pant_count: normalizeNumber(it.wear_pant_count),
@@ -153,6 +169,20 @@ export default function MoUpdatePage(props: Props) {
       other_training_count: normalizeNumber(it.other_training_count),
       other_extral: normalizeText(it.other_extral),
     };
+    // Discipline items — keyed by their key
+    for (const d of it.disciplines ?? []) {
+      base[d.key] = d.value;
+    }
+    if (it.discipline_belt_count != null)
+      base.discipline_belt_count = it.discipline_belt_count;
+    if (it.discipline_phone_count != null)
+      base.discipline_phone_count = it.discipline_phone_count;
+    if (it.discipline_badge_count != null)
+      base.discipline_badge_count = it.discipline_badge_count;
+    if (it.discipline_uniform_count != null)
+      base.discipline_uniform_count = it.discipline_uniform_count;
+    if (it.discipline_custom_1 != null)
+      base.discipline_custom_1 = it.discipline_custom_1;
 
     if (isManager) {
       base.approved_status = toApprovalStatus(it.approved_status);
@@ -171,9 +201,6 @@ export default function MoUpdatePage(props: Props) {
       shift_18_count: normalizeNumber(shift18),
       shift_24_count: normalizeNumber(shift24),
       shift_36_count: normalizeNumber(shift36),
-      rule_sleep_count: normalizeNumber(sleepCount),
-      rule_use_phone_count: normalizeNumber(phoneCount),
-      rule_no_card_count: normalizeNumber(badgeCount),
       wear_hat_count: normalizeNumber(hatCount),
       wear_shirt_count: normalizeNumber(shirtCount),
       wear_pant_count: normalizeNumber(pantsCount),
@@ -185,6 +212,10 @@ export default function MoUpdatePage(props: Props) {
       other_training_count: normalizeNumber(trainCount),
       other_extral: normalizeText(otherNote),
     };
+    // Discipline items
+    for (const d of disciplineItems) {
+      base[d.key] = normalizeNumber(d.count);
+    }
 
     if (isManager) {
       base.approved_status = approvalStatus;
@@ -203,9 +234,7 @@ export default function MoUpdatePage(props: Props) {
       normalizeNumber(shift18) > 0 ||
       normalizeNumber(shift24) > 0 ||
       normalizeNumber(shift36) > 0 ||
-      normalizeNumber(sleepCount) > 0 ||
-      normalizeNumber(phoneCount) > 0 ||
-      normalizeNumber(badgeCount) > 0 ||
+      disciplineItems.some((d) => normalizeNumber(d.count) > 0) ||
       normalizeNumber(hatCount) > 0 ||
       normalizeNumber(shirtCount) > 0 ||
       normalizeNumber(pantsCount) > 0 ||
@@ -249,15 +278,43 @@ export default function MoUpdatePage(props: Props) {
     setShift24(it.shift_24_count != null ? String(it.shift_24_count) : "");
     setShift36(it.shift_36_count != null ? String(it.shift_36_count) : "");
 
-    setSleepCount(
-      it.rule_sleep_count != null ? String(it.rule_sleep_count) : "",
-    );
-    setPhoneCount(
-      it.rule_use_phone_count != null ? String(it.rule_use_phone_count) : "",
-    );
-    setBadgeCount(
-      it.rule_no_card_count != null ? String(it.rule_no_card_count) : "",
-    );
+    // Build dynamic discipline items from flat fields + disciplines[] array
+    const built: { key: string; label: string; unit: string; count: string }[] =
+      [];
+    // Standard predefined disciplines
+    const standardLabels: Record<string, string> = {
+      discipline_belt_count: "ไม่มีเข็มขัด",
+      discipline_phone_count: "เล่นโทรศัพท์มือถือ",
+      discipline_badge_count: "ไม่แขวนบัตร",
+      discipline_uniform_count: "ชุดชำรุดเก่า",
+    };
+    for (const [key, label] of Object.entries(standardLabels)) {
+      const val = (it as any)[key];
+      if (val != null && Number(val) > 0) {
+        built.push({ key, label, unit: "คน", count: String(val) });
+      }
+    }
+    // Custom flat field
+    if (it.discipline_custom_1 != null && Number(it.discipline_custom_1) > 0) {
+      built.push({
+        key: "discipline_custom_1",
+        label: "อื่นๆ",
+        unit: "คน",
+        count: String(it.discipline_custom_1),
+      });
+    }
+    // Dynamic disciplines from the array
+    for (const d of it.disciplines ?? []) {
+      if (d.value > 0) {
+        built.push({
+          key: d.key,
+          label: d.label,
+          unit: "คน",
+          count: String(d.value),
+        });
+      }
+    }
+    setDisciplineItems(built);
     setDisciplineNote(it.warning ?? "");
 
     setHatCount(it.wear_hat_count != null ? String(it.wear_hat_count) : "");
@@ -286,7 +343,7 @@ export default function MoUpdatePage(props: Props) {
     if (!props.item?.id) return;
     if (!hasAnyData() || !isDirty()) return;
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       leave_sick_count: Number(sickLeave) || 0,
       leave_business_count: Number(personalLeave) || 0,
       leave_other_count: Number(otherLeaveType) || 0,
@@ -294,9 +351,6 @@ export default function MoUpdatePage(props: Props) {
       shift_18_count: Number(shift18) || 0,
       shift_24_count: Number(shift24) || 0,
       shift_36_count: Number(shift36) || 0,
-      rule_sleep_count: Number(sleepCount) || 0,
-      rule_use_phone_count: Number(phoneCount) || 0,
-      rule_no_card_count: Number(badgeCount) || 0,
       wear_hat_count: Number(hatCount) || 0,
       wear_shirt_count: Number(shirtCount) || 0,
       wear_pant_count: Number(pantsCount) || 0,
@@ -314,6 +368,21 @@ export default function MoUpdatePage(props: Props) {
           }
         : {}),
     };
+
+    // Build disciplines array from dynamic items
+    const disciplines: { key: string; label: string; value: number }[] = [];
+    for (const d of disciplineItems) {
+      const val = Number(d.count) || 0;
+      if (val > 0) {
+        disciplines.push({ key: d.key, label: d.label, value: val });
+      }
+    }
+    if (disciplines.length > 0) payload.disciplines = disciplines;
+
+    console.log(
+      "[MoUpdatePage] Submit payload:",
+      JSON.stringify(payload, null, 2),
+    );
 
     updateReport(props.item.id, payload)
       .then(() => {
@@ -446,8 +515,7 @@ export default function MoUpdatePage(props: Props) {
         className={`${styles["guts-Mo-layout"]} ${showActionIcons ? styles["icons-visible"] : styles["icons-hidden"]}`}
         onSubmit={onSubmit}
       >
-     
-      <div className={styles["region-card-header"]}>
+        <div className={styles["region-card-header"]}>
           <div className={styles["region-card-left"]}>
             <div className={styles["region-card-avatar"]}>
               <MapPinCheck size={20} />
@@ -477,7 +545,9 @@ export default function MoUpdatePage(props: Props) {
           </div>
 
           <div className={styles["region-card-right"]}>
-            <p className={styles["region-card-meta-id"]}>#{props.item?.id ?? ""}</p>
+            <p className={styles["region-card-meta-id"]}>
+              #{props.item?.id ?? ""}
+            </p>
             <p className={styles["region-card-meta-date"]}>
               {props.item?.created_at
                 ? new Date(props.item.created_at).toLocaleDateString("th-TH")
@@ -485,8 +555,6 @@ export default function MoUpdatePage(props: Props) {
             </p>
           </div>
         </div>
-  
-  
 
         <div
           className={[
@@ -789,107 +857,226 @@ export default function MoUpdatePage(props: Props) {
             }}
           >
             ผิดข้อปฏิบัติ / การตักเตือน
-            <button
-              type="button"
-              className={styles["guts-collapse-toggle"]}
-              aria-label={
-                disciplineOpen ? "ย่อ ผิดข้อปฏิบัติ" : "ขยาย ผิดข้อปฏิบัติ"
-              }
-            >
-              {disciplineOpen ? (
-                <ChevronDown size={18} />
-              ) : (
-                <ChevronRight size={18} />
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {showActionIcons && (
+                <button
+                  type="button"
+                  className={styles["guts-collapse-toggle"]}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedDisciplineKey("");
+                    setShowAddDiscipline(true);
+                  }}
+                  title="เพิ่มรายการ"
+                >
+                  <PlusIcon size={16} />
+                </button>
               )}
-            </button>
+              <button
+                type="button"
+                className={styles["guts-collapse-toggle"]}
+                aria-label={
+                  disciplineOpen ? "ย่อ ผิดข้อปฏิบัติ" : "ขยาย ผิดข้อปฏิบัติ"
+                }
+              >
+                {disciplineOpen ? (
+                  <ChevronDown size={18} />
+                ) : (
+                  <ChevronRight size={18} />
+                )}
+              </button>
+            </div>
           </div>
 
           <div
             className={`${styles["guts-box-body"]} ${disciplineOpen ? "" : styles["collapsed"]}`}
           >
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>หลับเวร</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={sleepCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setSleepCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>เล่นโทรศัพท์</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={phoneCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setPhoneCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>ไม่แขวนบัตร</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={badgeCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setBadgeCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-            <div className={styles["guts-field-row"]}>
-              <label
-                className={[styles["guts-label"], styles["section-label"]].join(
+            {disciplineItems.map((item) => (
+              <div
+                key={item.key}
+                className={[styles["guts-field-row"], styles["two-col"]].join(
                   " ",
                 )}
               >
-                การตักเตือน
-              </label>
-            </div>
+                <label className={styles["guts-label"]}>{item.label}</label>
+                <div className={styles["guts-input-group"]}>
+                  <input
+                    className={`${styles["guts-input"]} ${styles["small"]}`}
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={item.count}
+                    disabled={!showActionIcons}
+                    onChange={(e) =>
+                      setDisciplineItems((prev) =>
+                        prev.map((d) =>
+                          d.key === item.key
+                            ? { ...d, count: e.target.value.replace(/\D/g, "") }
+                            : d,
+                        ),
+                      )
+                    }
+                    onWheel={(e) => e.currentTarget.blur()}
+                    placeholder="0"
+                    inputMode="numeric"
+                  />
+                  <span className={styles["guts-suffix"]}>{item.unit}</span>
+                </div>
+              </div>
+            ))}
+
+            {/* Add discipline modal */}
+            {showAddDiscipline && (
+              <div
+                className={styles["modal-overlay"]}
+                role="dialog"
+                aria-modal="true"
+                onMouseDown={(e) => {
+                  if (e.target === e.currentTarget) setShowAddDiscipline(false);
+                }}
+              >
+                <div className={styles["modal"]} onMouseDown={(e) => e.stopPropagation()}>
+                  <div className={styles["modal-header"]}>
+                    <h3>เพิ่มข้อมูลวินัยและการลงโทษ</h3>
+                  </div>
+                  <div className={styles["modal-body"]}>
+                    <div className={styles["mo-table-wrapper"]}>
+                      <table className={styles["mo-table"]}>
+                        <thead>
+                          <tr>
+                            <th
+                              colSpan={1}
+                              className={`${styles["first-column-cell"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
+                            >
+                              5.
+                            </th>
+                            <th
+                              colSpan={4}
+                              className={`${styles["mo-table-header"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
+                            >
+                              <div
+                                className={styles["mo-header"]}
+                                style={{
+                                  padding: "6px 8px",
+                                  justifyContent: "flex-start",
+                                }}
+                              >
+                                <p className={styles["mo-header-red-text"]}>
+                                  วินัยและการลงโทษ
+                                </p>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            // Get keys already active in the current form
+                            const activeKeys = new Set(
+                              disciplineItems.map((d) => d.key),
+                            );
+
+                            // Available options: from API distinct types, minus already-active ones
+                            const availableOptions =
+                              distinctDisciplineTypes.length > 0
+                                ? distinctDisciplineTypes.filter(
+                                    (d) => !activeKeys.has(d.key),
+                                  )
+                                : []; // If API not loaded yet, show nothing
+
+                            if (availableOptions.length === 0) return null;
+                            const selected =
+                              availableOptions.find((r) =>
+                                selectedDisciplineKey === r.key,
+                              ) ?? null;
+                            return (
+                              <tr>
+                                <td className={styles["first-column-cell"]}>
+                                  1
+                                </td>
+                                <td
+                                  className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                                  colSpan={2}
+                                >
+                                  <select
+                                    className={styles["sector-cell-select"]}
+                                    style={{
+                                      width: "100%",
+                                      background: "transparent",
+                                      color: "inherit",
+                                      border: "1px solid #ccc",
+                                      padding: "4px 8px",
+                                      fontSize: 14,
+                                    }}
+                                    value={selectedDisciplineKey}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setSelectedDisciplineKey(val);
+                                    }}
+                                  >
+                                    <option value="">-- เลือกรายการ --</option>
+                                    {availableOptions.map((r) => (
+                                      <option key={r.key} value={r.key}>
+                                        {r.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className={styles["third-column-cell"]}>
+                                  <textarea
+                                    className={`${styles["third-column-textarea"]} ${styles["third-column-textarea-danger"]}`}
+                                    rows={1}
+                                    onChange={(e) => {
+                                      // Store raw value for potential use
+                                    }}
+                                  />
+                                </td>
+                                <td className={styles["fourth-column-cell"]}>คน</td>
+                              </tr>
+                            );
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className={styles["modal-footer"]}>
+                    <button
+                      type="button"
+                      className={styles["btn-secondary"]}
+                      onClick={() => setShowAddDiscipline(false)}
+                    >
+                      ปิดหน้าจอ
+                    </button>
+                    <button
+                      type="button"
+                      className={styles["btn-primary"]}
+                      onClick={() => {
+                        if (!selectedDisciplineKey) return;
+                        // Find the label from distinctDisciplineTypes
+                        const disc = distinctDisciplineTypes.find(
+                          (d) => d.key === selectedDisciplineKey,
+                        );
+                        if (disc) {
+                          // Add to disciplineItems with count "0" (will be edited in inline textarea)
+                          setDisciplineItems((prev) => [
+                            ...prev,
+                            {
+                              key: selectedDisciplineKey,
+                              label: disc.label,
+                              unit: "คน",
+                              count: "0",
+                            },
+                          ]);
+                          setSelectedDisciplineKey("");
+                          setShowAddDiscipline(false);
+                        }
+                      }}
+                    >
+                      บันทึก
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <AutoResizeTextarea
               className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}

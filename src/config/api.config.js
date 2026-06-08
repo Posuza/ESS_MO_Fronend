@@ -1,12 +1,13 @@
 // API Configuration
-export const API_URL = import.meta.env.VITE_API_URL;
+export const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
-if (!API_URL && import.meta.env.MODE === 'production') {
-  throw new Error('VITE_API_URL must be set in production');
+if (!API_URL && import.meta.env.MODE === "production") {
+  throw new Error("VITE_API_URL must be set in production");
 }
 
-if (import.meta.env.MODE !== 'production') {
-  console.log("API URL:", API_URL || 'not set (development)');
+if (import.meta.env.MODE !== "production") {
+  console.log("API URL:", API_URL || "not set (development)");
 }
 
 export const API_CONFIG = {

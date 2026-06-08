@@ -1,5 +1,5 @@
 // src/services/auth.Service.ts
-import { API_URL, API_CONFIG } from "@/config/api.config";
+import { API_URL } from "@/config/api.config";
 
 const API_BASE_URL = API_URL;
 
@@ -33,7 +33,7 @@ export const authService = {
     success: boolean;
     message: string;
     error?: string;
-    contacts?: any[];
+    contacts?: Array<{ team?: string; email?: string }>;
   }> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
@@ -66,7 +66,7 @@ export const authService = {
             errorData.detail.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
           const error_key = errorData.detail.error;
           const contacts = Array.isArray(errorData.detail.contacts)
-            ? errorData.detail.contacts.map((c: any) => ({
+            ? errorData.detail.contacts.map((c: { team?: string; email?: string }) => ({
                 team: c.team,
                 email: c.email,
               }))
@@ -92,7 +92,7 @@ export const authService = {
         success: false,
         message: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
       };
-    } catch (error: any) {
+    } catch (error) {
       // Network or other errors
       console.error("Forgot password error:", error);
       return {
@@ -120,10 +120,10 @@ export const authService = {
     password: string,
   ): Promise<{
     success: boolean;
-    data?: any;
+    data?: unknown;
     error?: string;
     message?: string;
-    contacts?: any[];
+    contacts?: Array<{ team?: string; email?: string }>;
   }> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -140,6 +140,7 @@ export const authService = {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("auth.login response:", data);
         return {
           success: true,
           data,
@@ -147,8 +148,6 @@ export const authService = {
       }
 
       const errorData = await response.json().catch(() => null);
-      // removed noisy console.log to avoid red console spam
-      // console.log("Login error response:", errorData);
 
       // Handle error response from ERROR_REGISTRY
       let message = "";
@@ -189,8 +188,83 @@ export const authService = {
         message,
         contacts,
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error:", error);
+      return {
+        success: false,
+        message: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์",
+      };
+    }
+  },
+
+  /**
+   * Change password — production mode
+   */
+  async changePassword(
+    employee_code: string,
+    oldPin: string,
+    newPin: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    error?: string;
+    contacts?: Array<{ team?: string; email?: string }>;
+  }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ..._geoHeaders(),
+        },
+        body: JSON.stringify({
+          employee_code,
+          old_password: oldPin,
+          new_password: newPin,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          success: true,
+          message: data.message || "เปลี่ยนรหัสผ่านสำเร็จ",
+        };
+      }
+
+      const errorData = await response.json().catch(() => null);
+      let message = "";
+      let error_key = undefined;
+      let contacts = undefined;
+
+      if (errorData?.detail) {
+        if (typeof errorData.detail === "object") {
+          message = errorData.detail.message || "เกิดข้อผิดพลาด";
+          error_key = errorData.detail.error;
+          contacts = errorData.detail.contacts;
+        } else if (typeof errorData.detail === "string") {
+          message = errorData.detail;
+        }
+      }
+
+      if (!message) {
+        message =
+          response.status === 500
+            ? "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาติดต่อทีมพัฒนา"
+            : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+        if (response.status === 500) {
+          contacts = [{ team: "BE_CORE", email: "be-core@gutsess.com" }];
+        }
+      }
+
+      return {
+        success: false,
+        error: error_key,
+        message,
+        contacts,
+      };
+    } catch (error) {
+      console.error("Change password error:", error);
       return {
         success: false,
         message: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์",

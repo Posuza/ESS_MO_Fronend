@@ -1,6 +1,11 @@
 // src/pages/Home.tsx
 import { useState } from "react";
-import { ChevronDown, ChevronRight, ArrowLeft, MapPinCheck } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  ArrowLeft,
+  MapPinCheck,
+} from "lucide-react";
 import styles from "./MoNewPage.module.css";
 import { useStore } from "../../../store/store";
 import ConfirmCancelDialog from "../../../components/Mo/ConfirmCancelDialog";
@@ -36,6 +41,8 @@ export default function MoNewPage(props: Props) {
   const [sleepCount, setSleepCount] = useState("");
   const [phoneCount, setPhoneCount] = useState("");
   const [badgeCount, setBadgeCount] = useState("");
+  // วินัยและการลงโทษ (custom)
+  const [disciplineCustom1, setDisciplineCustom1] = useState("");
   // เครื่องแต่งกาย
   // เครื่องแต่งกาย - counts
   const [hatCount, setHatCount] = useState("");
@@ -83,6 +90,7 @@ export default function MoNewPage(props: Props) {
       sleepCount !== "" ||
       phoneCount !== "" ||
       badgeCount !== "" ||
+      disciplineCustom1 !== "" ||
       hatCount !== "" ||
       shirtCount !== "" ||
       pantsCount !== "" ||
@@ -108,6 +116,7 @@ export default function MoNewPage(props: Props) {
       normalizeNumber(sleepCount) > 0 ||
       normalizeNumber(phoneCount) > 0 ||
       normalizeNumber(badgeCount) > 0 ||
+      normalizeNumber(disciplineCustom1) > 0 ||
       normalizeNumber(hatCount) > 0 ||
       normalizeNumber(shirtCount) > 0 ||
       normalizeNumber(pantsCount) > 0 ||
@@ -140,6 +149,41 @@ export default function MoNewPage(props: Props) {
       return;
     }
 
+    // Build disciplines array from discipline form fields
+    const disciplines: Array<{
+      key: string;
+      label: string;
+      value: number;
+    }> = [];
+    const beltVal = Number(sleepCount) || 0;
+    if (beltVal > 0)
+      disciplines.push({
+        key: "discipline_belt_count",
+        label: "หลับเวร",
+        value: beltVal,
+      });
+    const phoneVal = Number(phoneCount) || 0;
+    if (phoneVal > 0)
+      disciplines.push({
+        key: "discipline_phone_count",
+        label: "เล่นโทรศัพท์",
+        value: phoneVal,
+      });
+    const badgeVal = Number(badgeCount) || 0;
+    if (badgeVal > 0)
+      disciplines.push({
+        key: "discipline_badge_count",
+        label: "ไม่แขวนบัตร",
+        value: badgeVal,
+      });
+    const customVal = Number(disciplineCustom1) || 0;
+    if (customVal > 0)
+      disciplines.push({
+        key: "discipline_custom_1",
+        label: "อื่นๆ",
+        value: customVal,
+      });
+
     const payload = {
       department_id: departmentId,
       leave_sick_count: Number(sickLeave) || 0,
@@ -149,20 +193,13 @@ export default function MoNewPage(props: Props) {
       shift_18_count: Number(shift18) || 0,
       shift_24_count: Number(shift24) || 0,
       shift_36_count: Number(shift36) || 0,
-      rule_sleep_count: Number(sleepCount) || 0,
-      rule_use_phone_count: Number(phoneCount) || 0,
-      rule_no_card_count: Number(badgeCount) || 0,
-      wear_hat_count: Number(hatCount) || 0,
-      wear_shirt_count: Number(shirtCount) || 0,
-      wear_pant_count: Number(pantsCount) || 0,
-      wear_shoe_count: Number(shoesCount) || 0,
+      discipline_belt_count: Number(sleepCount) || 0,
+      discipline_phone_count: Number(phoneCount) || 0,
+      discipline_badge_count: Number(badgeCount) || 0,
+      discipline_custom_1: Number(disciplineCustom1) || 0,
       warning: disciplineNote,
-      other_job: foundNote,
-      other_job_count: Number(foundCount) || 0,
-      other_training: trainNote,
-      other_training_count: Number(trainCount) || 0,
-      other_extral: otherNote,
       created_by: authEmployee?.employee_code || props.empCode || "ADMIN",
+      disciplines,
     };
 
     console.log("MO submit", payload);
@@ -197,7 +234,7 @@ export default function MoNewPage(props: Props) {
           else window.history.back();
         }}
       />
-      
+
       <InfoModel
         open={showSuccess}
         onClose={() => {
@@ -620,6 +657,31 @@ export default function MoNewPage(props: Props) {
                 <span className={styles["guts-suffix"]}>คน</span>
               </div>
             </div>
+
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+            >
+              <label className={styles["guts-label"]}>อื่นๆ</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={[styles["guts-input"], styles["small"]].join(" ")}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={disciplineCustom1}
+                  onChange={(e) =>
+                    setDisciplineCustom1(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>คน</span>
+              </div>
+            </div>
+
             <div className={styles["guts-field-row"]}>
               <label
                 className={[styles["guts-label"], styles["section-label"]].join(
@@ -630,16 +692,14 @@ export default function MoNewPage(props: Props) {
               </label>
             </div>
 
-
-              <AutoResizeTextarea
-                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-                rows={2}
-                value={disciplineNote}
-                onChange={(e) => setDisciplineNote(e.target.value)}
-                placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
-              />
-            </div>
-          
+            <AutoResizeTextarea
+              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+              rows={2}
+              value={disciplineNote}
+              onChange={(e) => setDisciplineNote(e.target.value)}
+              placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
+            />
+          </div>
         </div>
 
         <div className={[styles["guts-box"], styles["collapsible"]].join(" ")}>
@@ -804,7 +864,9 @@ export default function MoNewPage(props: Props) {
               .join(" ")}
           >
             <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
             >
               <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
               <div className={styles["guts-input-group"]}>
@@ -836,7 +898,9 @@ export default function MoNewPage(props: Props) {
             </div>
 
             <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
               style={{ marginTop: 8 }}
             >
               <label className={styles["guts-label"]}>อบรม:</label>
@@ -869,7 +933,9 @@ export default function MoNewPage(props: Props) {
             </div>
 
             <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
               style={{ marginTop: 8 }}
             >
               <label className={styles["guts-label"]}>เพิ่มเติม:</label>

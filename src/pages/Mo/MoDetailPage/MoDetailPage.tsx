@@ -56,7 +56,10 @@ export default function MoDetailPage(props: Props) {
   const [successTitle, setSuccessTitle] = useState("");
   const [successDescription, setSuccessDescription] = useState("");
   const initialValuesRef = useRef<Record<string, string | number> | null>(null);
-  const [savedSnapshot, setSavedSnapshot] = useState<Record<string, string | number> | null>(null);
+  const [savedSnapshot, setSavedSnapshot] = useState<Record<
+    string,
+    string | number
+  > | null>(null);
   const [showPdf, setShowPdf] = useState(false);
   const [date] = useState(() => new Date().toLocaleDateString("th-TH"));
   const [region, setRegion] = useState("");
@@ -81,6 +84,8 @@ export default function MoDetailPage(props: Props) {
   const [sleepCount, setSleepCount] = useState("");
   const [phoneCount, setPhoneCount] = useState("");
   const [badgeCount, setBadgeCount] = useState("");
+  // วินัยและการลงโทษ (custom)
+  const [disciplineCustom1, setDisciplineCustom1] = useState("");
   // เครื่องแต่งกาย - counts
   const [hatCount, setHatCount] = useState("");
   const [shirtCount, setShirtCount] = useState("");
@@ -100,7 +105,8 @@ export default function MoDetailPage(props: Props) {
 
   // new: collapse state for "ลา" card
   const [leaveOpen, setLeaveOpen] = useState(false);
-  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>("PENDING");
+  const [approvalStatus, setApprovalStatus] =
+    useState<ApprovalStatus>("PENDING");
   const [approvalRemark, setApprovalRemark] = useState("");
   const [createdBy, setCreatedBy] = useState("");
   const [approvedBy, setApprovedBy] = useState("");
@@ -134,9 +140,9 @@ export default function MoDetailPage(props: Props) {
       shift_18_count: normalizeNumber(it.shift_18_count),
       shift_24_count: normalizeNumber(it.shift_24_count),
       shift_36_count: normalizeNumber(it.shift_36_count),
-      rule_sleep_count: normalizeNumber(it.rule_sleep_count),
-      rule_use_phone_count: normalizeNumber(it.rule_use_phone_count),
-      rule_no_card_count: normalizeNumber(it.rule_no_card_count),
+      discipline_belt_count: normalizeNumber(it.discipline_belt_count),
+      discipline_phone_count: normalizeNumber(it.discipline_phone_count),
+      discipline_badge_count: normalizeNumber(it.discipline_badge_count),
       wear_hat_count: normalizeNumber(it.wear_hat_count),
       wear_shirt_count: normalizeNumber(it.wear_shirt_count),
       wear_pant_count: normalizeNumber(it.wear_pant_count),
@@ -168,9 +174,10 @@ export default function MoDetailPage(props: Props) {
       shift_18_count: normalizeNumber(shift18),
       shift_24_count: normalizeNumber(shift24),
       shift_36_count: normalizeNumber(shift36),
-      rule_sleep_count: normalizeNumber(sleepCount),
-      rule_use_phone_count: normalizeNumber(phoneCount),
-      rule_no_card_count: normalizeNumber(badgeCount),
+      discipline_belt_count: normalizeNumber(sleepCount),
+      discipline_phone_count: normalizeNumber(phoneCount),
+      discipline_badge_count: normalizeNumber(badgeCount),
+      discipline_custom_1: normalizeNumber(disciplineCustom1),
       wear_hat_count: normalizeNumber(hatCount),
       wear_shirt_count: normalizeNumber(shirtCount),
       wear_pant_count: normalizeNumber(pantsCount),
@@ -195,10 +202,15 @@ export default function MoDetailPage(props: Props) {
 
   // isDirty: compare current field values against the last saved snapshot
   // (reads only state — no ref access during render)
-  const isDirtyState = isEditing && savedSnapshot !== null && (() => {
-    const current = currentValues();
-    return Object.keys(current).some((key) => current[key] !== savedSnapshot[key]);
-  })();
+  const isDirtyState =
+    isEditing &&
+    savedSnapshot !== null &&
+    (() => {
+      const current = currentValues();
+      return Object.keys(current).some(
+        (key) => current[key] !== savedSnapshot[key],
+      );
+    })();
 
   function handleSave() {
     if (!props.item?.id) return;
@@ -210,9 +222,9 @@ export default function MoDetailPage(props: Props) {
       shift_18_count: Number(shift18) || 0,
       shift_24_count: Number(shift24) || 0,
       shift_36_count: Number(shift36) || 0,
-      rule_sleep_count: Number(sleepCount) || 0,
-      rule_use_phone_count: Number(phoneCount) || 0,
-      rule_no_card_count: Number(badgeCount) || 0,
+      discipline_belt_count: Number(sleepCount) || 0,
+      discipline_phone_count: Number(phoneCount) || 0,
+      discipline_badge_count: Number(badgeCount) || 0,
       wear_hat_count: Number(hatCount) || 0,
       wear_shirt_count: Number(shirtCount) || 0,
       wear_pant_count: Number(pantsCount) || 0,
@@ -226,9 +238,7 @@ export default function MoDetailPage(props: Props) {
       ...(isManager
         ? { approved_status: approvalStatus, approved_remark: approvalRemark }
         : {}),
-      ...(canEdit
-        ? { created_by: createdBy, approved_by: approvedBy }
-        : {}),
+      ...(canEdit ? { created_by: createdBy, approved_by: approvedBy } : {}),
     };
     updateReport(props.item.id, payload)
       .then(() => {
@@ -248,24 +258,55 @@ export default function MoDetailPage(props: Props) {
     // revert all fields to initial values
     const it = props.item;
     if (it) {
-      setSickLeave(it.leave_sick_count != null ? String(it.leave_sick_count) : "");
-      setPersonalLeave(it.leave_business_count != null ? String(it.leave_business_count) : "");
-      setOtherLeaveType(it.leave_other_count != null ? String(it.leave_other_count) : "");
+      setSickLeave(
+        it.leave_sick_count != null ? String(it.leave_sick_count) : "",
+      );
+      setPersonalLeave(
+        it.leave_business_count != null ? String(it.leave_business_count) : "",
+      );
+      setOtherLeaveType(
+        it.leave_other_count != null ? String(it.leave_other_count) : "",
+      );
       setAbsentCount(it.absent_count != null ? String(it.absent_count) : "");
       setShift18(it.shift_18_count != null ? String(it.shift_18_count) : "");
       setShift24(it.shift_24_count != null ? String(it.shift_24_count) : "");
       setShift36(it.shift_36_count != null ? String(it.shift_36_count) : "");
-      setSleepCount(it.rule_sleep_count != null ? String(it.rule_sleep_count) : "");
-      setPhoneCount(it.rule_use_phone_count != null ? String(it.rule_use_phone_count) : "");
-      setBadgeCount(it.rule_no_card_count != null ? String(it.rule_no_card_count) : "");
+      setSleepCount(
+        it.discipline_belt_count != null
+          ? String(it.discipline_belt_count)
+          : "",
+      );
+      setPhoneCount(
+        it.discipline_phone_count != null
+          ? String(it.discipline_phone_count)
+          : "",
+      );
+      setBadgeCount(
+        it.discipline_badge_count != null
+          ? String(it.discipline_badge_count)
+          : "",
+      );
+      setDisciplineCustom1(
+        it.discipline_custom_1 != null ? String(it.discipline_custom_1) : "",
+      );
       setDisciplineNote(it.warning ?? "");
       setHatCount(it.wear_hat_count != null ? String(it.wear_hat_count) : "");
-      setShirtCount(it.wear_shirt_count != null ? String(it.wear_shirt_count) : "");
-      setPantsCount(it.wear_pant_count != null ? String(it.wear_pant_count) : "");
-      setShoesCount(it.wear_shoe_count != null ? String(it.wear_shoe_count) : "");
-      setFoundCount(it.other_job_count != null ? String(it.other_job_count) : "");
+      setShirtCount(
+        it.wear_shirt_count != null ? String(it.wear_shirt_count) : "",
+      );
+      setPantsCount(
+        it.wear_pant_count != null ? String(it.wear_pant_count) : "",
+      );
+      setShoesCount(
+        it.wear_shoe_count != null ? String(it.wear_shoe_count) : "",
+      );
+      setFoundCount(
+        it.other_job_count != null ? String(it.other_job_count) : "",
+      );
       setFoundNote(it.other_job ?? "");
-      setTrainCount(it.other_training_count != null ? String(it.other_training_count) : "");
+      setTrainCount(
+        it.other_training_count != null ? String(it.other_training_count) : "",
+      );
       setTrainNote(it.other_training ?? "");
       setOtherNote(it.other_extral ?? "");
       setApprovalStatus(toApprovalStatus(it.approved_status));
@@ -314,13 +355,20 @@ export default function MoDetailPage(props: Props) {
     setShift36(it.shift_36_count != null ? String(it.shift_36_count) : "");
 
     setSleepCount(
-      it.rule_sleep_count != null ? String(it.rule_sleep_count) : "",
+      it.discipline_belt_count != null ? String(it.discipline_belt_count) : "",
     );
     setPhoneCount(
-      it.rule_use_phone_count != null ? String(it.rule_use_phone_count) : "",
+      it.discipline_phone_count != null
+        ? String(it.discipline_phone_count)
+        : "",
     );
     setBadgeCount(
-      it.rule_no_card_count != null ? String(it.rule_no_card_count) : "",
+      it.discipline_badge_count != null
+        ? String(it.discipline_badge_count)
+        : "",
+    );
+    setDisciplineCustom1(
+      it.discipline_custom_1 != null ? String(it.discipline_custom_1) : "",
     );
     setDisciplineNote(it.warning ?? "");
 
@@ -351,9 +399,10 @@ export default function MoDetailPage(props: Props) {
       shift_18_count: normalizeNumber(it.shift_18_count),
       shift_24_count: normalizeNumber(it.shift_24_count),
       shift_36_count: normalizeNumber(it.shift_36_count),
-      rule_sleep_count: normalizeNumber(it.rule_sleep_count),
-      rule_use_phone_count: normalizeNumber(it.rule_use_phone_count),
-      rule_no_card_count: normalizeNumber(it.rule_no_card_count),
+      discipline_belt_count: normalizeNumber(it.discipline_belt_count),
+      discipline_phone_count: normalizeNumber(it.discipline_phone_count),
+      discipline_badge_count: normalizeNumber(it.discipline_badge_count),
+      discipline_custom_1: normalizeNumber(it.discipline_custom_1),
       wear_hat_count: normalizeNumber(it.wear_hat_count),
       wear_shirt_count: normalizeNumber(it.wear_shirt_count),
       wear_pant_count: normalizeNumber(it.wear_pant_count),
@@ -414,7 +463,10 @@ export default function MoDetailPage(props: Props) {
           type="button"
           className={styles["gut-back-icon"]}
           onClick={() => {
-            if (isEditing) { cancelEdit(); return; }
+            if (isEditing) {
+              cancelEdit();
+              return;
+            }
             if (props.onCancel) return props.onCancel();
             return window.history.back();
           }}
@@ -538,7 +590,9 @@ export default function MoDetailPage(props: Props) {
                 ? new Date(props.item.created_at).toLocaleDateString("th-TH")
                 : date}
             </p>
-            <p className={styles["region-card-meta-id"]}>#{props.item?.id ?? ""}</p>
+            <p className={styles["region-card-meta-id"]}>
+              #{props.item?.id ?? ""}
+            </p>
           </div>
         </div>
 
@@ -912,6 +966,32 @@ export default function MoDetailPage(props: Props) {
                 <span className={styles["guts-suffix"]}>คน</span>
               </div>
             </div>
+
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+            >
+              <label className={styles["guts-label"]}>อื่นๆ</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={`${styles["guts-input"]} ${styles["small"]}`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={disciplineCustom1}
+                  disabled={!isEditing}
+                  onChange={(e) =>
+                    setDisciplineCustom1(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>คน</span>
+              </div>
+            </div>
+
             <div className={styles["guts-field-row"]}>
               <label
                 className={[styles["guts-label"], styles["section-label"]].join(
@@ -922,15 +1002,14 @@ export default function MoDetailPage(props: Props) {
               </label>
             </div>
 
-              <AutoResizeTextarea
-                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-                rows={2}
-                value={disciplineNote}
-                disabled={!isEditing}
-                onChange={(e) => setDisciplineNote(e.target.value)}
-                placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
-              />
-        
+            <AutoResizeTextarea
+              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+              rows={2}
+              value={disciplineNote}
+              disabled={!isEditing}
+              onChange={(e) => setDisciplineNote(e.target.value)}
+              placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
+            />
           </div>
         </div>
 
@@ -1094,91 +1173,97 @@ export default function MoDetailPage(props: Props) {
           <div
             className={`${styles["guts-box-body"]} ${otherOpen ? "" : styles["collapsed"]}`}
           >
-          <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
-          >
-            <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
-            <div className={styles["guts-input-group"]}>
-              <input
-                className={`${styles["guts-input"]} ${styles["small"]}`}
-                type="number"
-                min={0}
-                step={1}
-                value={foundCount}
-                disabled={!isEditing}
-                onChange={(e) =>
-                  setFoundCount(e.target.value.replace(/\D/g, ""))
-                }
-                onWheel={(e) => e.currentTarget.blur()}
-                placeholder="0"
-                inputMode="numeric"
-              />
-              <span className={styles["guts-suffix"]}>จุด</span>
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+            >
+              <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={`${styles["guts-input"]} ${styles["small"]}`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={foundCount}
+                  disabled={!isEditing}
+                  onChange={(e) =>
+                    setFoundCount(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>จุด</span>
+              </div>
             </div>
-          </div>
 
-          <div className={styles["guts-detail-box"]}>
-            <AutoResizeTextarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-              rows={2}
-              value={foundNote}
-              disabled={!isEditing}
-              onChange={(e) => setFoundNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
-          </div>
-
-          <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
-            style={{ marginTop: 8 }}
-          >
-            <label className={styles["guts-label"]}>อบรม:</label>
-            <div className={styles["guts-input-group"]}>
-              <input
-                className={`${styles["guts-input"]} ${styles["small"]}`}
-                type="number"
-                min={0}
-                step={1}
-                value={trainCount}
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={foundNote}
                 disabled={!isEditing}
-                onChange={(e) =>
-                  setTrainCount(e.target.value.replace(/\D/g, ""))
-                }
-                onWheel={(e) => e.currentTarget.blur()}
-                placeholder="0"
-                inputMode="numeric"
+                onChange={(e) => setFoundNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
               />
-              <span className={styles["guts-suffix"]}>จุด:</span>
             </div>
-          </div>
 
-          <div className={styles["guts-detail-box"]}>
-            <AutoResizeTextarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-              rows={2}
-              value={trainNote}
-              disabled={!isEditing}
-              onChange={(e) => setTrainNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
-          </div>
-          <div
-            className={[styles["guts-field-row"], styles["two-col"]].join(" ")}
-            style={{ marginTop: 8 }}
-          >
-            <label className={styles["guts-label"]}>เพิ่มเติม:</label>
-          </div>
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+              style={{ marginTop: 8 }}
+            >
+              <label className={styles["guts-label"]}>อบรม:</label>
+              <div className={styles["guts-input-group"]}>
+                <input
+                  className={`${styles["guts-input"]} ${styles["small"]}`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={trainCount}
+                  disabled={!isEditing}
+                  onChange={(e) =>
+                    setTrainCount(e.target.value.replace(/\D/g, ""))
+                  }
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="0"
+                  inputMode="numeric"
+                />
+                <span className={styles["guts-suffix"]}>จุด:</span>
+              </div>
+            </div>
 
-          <div className={styles["guts-detail-box"]}>
-            <AutoResizeTextarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-              rows={2}
-              value={otherNote}
-              disabled={!isEditing}
-              onChange={(e) => setOtherNote(e.target.value)}
-              placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-            />
-          </div>
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={trainNote}
+                disabled={!isEditing}
+                onChange={(e) => setTrainNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
+              />
+            </div>
+            <div
+              className={[styles["guts-field-row"], styles["two-col"]].join(
+                " ",
+              )}
+              style={{ marginTop: 8 }}
+            >
+              <label className={styles["guts-label"]}>เพิ่มเติม:</label>
+            </div>
+
+            <div className={styles["guts-detail-box"]}>
+              <AutoResizeTextarea
+                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
+                rows={2}
+                value={otherNote}
+                disabled={!isEditing}
+                onChange={(e) => setOtherNote(e.target.value)}
+                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
+              />
+            </div>
           </div>
         </div>
 

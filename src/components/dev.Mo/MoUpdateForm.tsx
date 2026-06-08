@@ -1,436 +1,2359 @@
-// src/components/dev.Mo/MoUpdateForm.tsx
-import { useState, useEffect, useRef } from "react";
-import AutoResizeTextarea from "./AutoResizeTextarea"; // Updated import path
-import {
-  ChevronDown,
-  ChevronRight,
-  ArrowLeft,
-  Save,
-  Trash2,
-  CheckCircle2,
-  Clock3,
-  XCircle,
-  Eye,
-  MapPinCheck,
-} from "lucide-react";
-import ConfirmDeleteDialog from "../Mo/ConfirmDeleteDialog";
-import InfoModel from "../Mo/InfoModel";
+import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown, ChevronRight, PinIcon, PlusIcon, X } from "lucide-react";
 import styles from "./MoUpdateForm.module.css";
 import { useStore } from "../../store/store";
+import ConfirmCancelDialog from "../dev.Mo/model/ConfirmCancelDialog";
+import ConfirmSubmitDialog from "../dev.Mo/model/ConfirmSubmitDialog";
+import InfoModel from "../Mo/InfoModel";
+import AutoResizeTextarea from "../AutoResizeTextarea";
 
-import MoPdfViewer from "./MoPdfViewerForm";
+export type EmployeeLocation = {
+  id: number;
+  location: string;
+  sub_locations?: string[];
+};
 
 type Props = {
   onCancel?: () => void;
-  onShare?: () => void;
-  item?: SectorReport;
+  selectedLocation?: string;
+  locations?: EmployeeLocation[];
+  reportData?: Record<string, unknown>;
+  submitRef?: React.MutableRefObject<(() => Promise<void>) | null>;
+  isEditing?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
+  isDirty?: boolean;
+  onRequestSave?: () => void;
 };
 
-type ApprovalStatus = "PENDING" | "APPROVED" | "REJECT";
+export default function MoUpdateForm(props: Props) {
+  console.log("[MoUpdateForm] RENDERED", { reportData: props.reportData });
+  const {
+    createReport,
+    updateReport,
+    authEmployee,
+    fetchDistinctDisciplineTypes,
+  } = useStore();
+  const reportItem = props.reportData as Record<string, any> | undefined;
 
-export default function MoUpdatePage(props: Props) {
-  const [showPdf, setShowPdf] = useState(false);
-  console.log(props);
-  const [date] = useState(() => new Date().toLocaleDateString("th-TH"));
-  const [region, setRegion] = useState("");
-  // ลา
-  const [sickLeave, setSickLeave] = useState("");
-  const [personalLeave, setPersonalLeave] = useState("");
-  const [otherLeaveType, setOtherLeaveType] = useState("");
+  const [distinctDisciplineTypes, setDistinctDisciplineTypes] = useState<
+    { key: string; label: string }[]
+  >([]);
+  useEffect(() => {
+    fetchDistinctDisciplineTypes().then((types) =>
+      setDistinctDisciplineTypes(types),
+    );
+  }, [fetchDistinctDisciplineTypes]);
 
-  // กำลังพล
-  const [absentCount, setAbsentCount] = useState("");
-  // breakdown for การควงกะ
-  const [workShiftOpen, setWorkShiftOpen] = useState(false);
-  const [shift18, setShift18] = useState("");
-  const [shift24, setShift24] = useState("");
-  const [shift36, setShift36] = useState("");
-  // collapse state for "กำลังพล" box
-  const [personnelOpen, setPersonnelOpen] = useState(false);
-  // ผิดข้อปฏิบัติ / การตักเตือน
-  const [disciplineNote, setDisciplineNote] = useState("");
-  // collapse + numeric counts for ผิดข้อปฏิบัติ UI
-  const [disciplineOpen, setDisciplineOpen] = useState(false);
-  const [sleepCount, setSleepCount] = useState("");
-  const [phoneCount, setPhoneCount] = useState("");
-  const [badgeCount, setBadgeCount] = useState("");
-  // เครื่องแต่งกาย
-  // เครื่องแต่งกาย - counts
-  const [hatCount, setHatCount] = useState("");
-  const [shirtCount, setShirtCount] = useState("");
-  const [pantsCount, setPantsCount] = useState("");
-  const [shoesCount, setShoesCount] = useState("");
-  // collapse state for เครื่องแต่งกาย
-  const [uniformOpen, setUniformOpen] = useState(false);
-  // อื่น ๆ
-  const [otherNote, setOtherNote] = useState("");
-  // "อื่น ๆ" detailed rows
-  const [foundCount, setFoundCount] = useState("");
-  const [foundNote, setFoundNote] = useState("");
-  const [trainCount, setTrainCount] = useState("");
-  const [trainNote, setTrainNote] = useState("");
-  // collapse state for อื่น ๆ
-  const [otherOpen, setOtherOpen] = useState(false);
-
-  // new: collapse state for "ลา" card
-  const [leaveOpen, setLeaveOpen] = useState(false);
-
-  // show the small action icons (Save/Delete) instead of the bottom full actions
-  // Note: `true` means the *form actions* (bottom) are visible — keep icons hidden on open
-  const [showActionIcons, setShowActionIcons] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successTitle, setSuccessTitle] = useState("อัปเดตรายงานสำเร็จ!");
-  const [successDescription, setSuccessDescription] = useState(
-    "ระบบได้ทำการอัปเดตข้อมูลของคุณเรียบร้อยแล้ว",
+  // sector / department selection from auth store
+  const locations: EmployeeLocation[] = authEmployee?.department_name
+    ? [
+      {
+        id: authEmployee.department_id ?? 1,
+        location: authEmployee.department_name,
+        sub_locations: [],
+      },
+    ]
+    : [];
+  const [selectedSector, setSelectedSector] = useState<number>(
+    authEmployee?.department_id ?? locations[0]?.id ?? 1,
   );
-  const [approvalStatus, setApprovalStatus] =
-    useState<ApprovalStatus>("PENDING");
-  const [approvalRemark, setApprovalRemark] = useState("");
-  const initialValuesRef = useRef<Record<string, string | number> | null>(null);
+  const selectedSectorName =
+    locations.find((loc) => loc.id === selectedSector)?.location ?? "";
+  const selectedLocation = locations.find((loc) => loc.id === selectedSector);
+  const [selectedSubLocation, setSelectedSubLocation] = useState<string>("");
 
-  const currentEmployee = useStore((state) => state.authEmployee);
-  // Only ผู้อำนวยการ can update status
-  const isManager = currentEmployee?.position_name === "ผู้อำนวยการ";
-  // Anyone who is not สายตรวจและประสานงาน can edit the report data, or the creator of the report
-  const canEditData =
-    currentEmployee?.position_name !== "สายตรวจและประสานงาน" ||
-    (props.item?.created_by !== undefined &&
-      currentEmployee?.employee_code !== undefined &&
-      props.item.created_by === currentEmployee.employee_code);
+  // reset sub-location when sector changes
+  useEffect(() => {
+    const nextSubLocation =
+      props.selectedLocation ||
+      String(props.reportData?.sub_location ?? "") ||
+      `เขต ${selectedSector}.1`;
+    setSelectedSubLocation(nextSubLocation);
+  }, [props.reportData, props.selectedLocation, selectedSector]);
 
-  function toApprovalStatus(value?: string): ApprovalStatus {
-    if (value === "APPROVED" || value === "REJECT" || value === "PENDING") {
-      return value;
-    }
-    return "PENDING";
-  }
+  // confirmation dialog state
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  function approvalStatusLabel(value: ApprovalStatus): string {
-    if (value === "APPROVED") return "อนุมัติแล้ว";
-    if (value === "REJECT") return "ไม่อนุมัติ";
-    return "รออนุมัติ";
-  }
+  // status options for group3 rows (cycle on click)
+  const statusOptions = [
+    { label: "ปกติ", key: "normal" },
+    { label: "ผิดปกติ", key: "warning" },
+    { label: "จุดเด่น", key: "danger" },
+  ];
 
-  function ApprovalStatusIcon({ value }: { value: ApprovalStatus }) {
-    if (value === "APPROVED") {
-      return <CheckCircle2 size={16} strokeWidth={2.2} />;
-    }
-    if (value === "REJECT") {
-      return <XCircle size={16} strokeWidth={2.2} />;
-    }
-    return <Clock3 size={16} strokeWidth={2.2} />;
-  }
-
-  const normalizeNumber = (value: string | number | null | undefined) => {
-    const num = Number(value);
-    return Number.isNaN(num) ? 0 : num;
+  // Report approval status labels (from MoHome pattern)
+  const approvalStatusLabels = [
+    { status: "done", label: "ดำเนินการแล้ว", cssClass: styles["status-done"] },
+    {
+      status: "undergo",
+      label: "อยู่ระหว่างดำเนินการ",
+      cssClass: styles["status-undergo"],
+    },
+    {
+      status: "waited",
+      label: "รอการดำเนินการ",
+      cssClass: styles["status-waited"],
+    },
+    {
+      status: "rejected",
+      label: "ถูกปฏิเสธ",
+      cssClass: styles["status-rejected"],
+    },
+    {
+      status: "undone",
+      label: "ยังไม่ได้ดำเนินการ",
+      cssClass: styles["status-undone"],
+    },
+  ];
+  const getApprovalStatusClass = (status: string) => {
+    const found = approvalStatusLabels.find((s) => s.status === status);
+    return found ? found.cssClass : styles["status-undone"];
+  };
+  const getApprovalStatusLabel = (status: string) => {
+    const found = approvalStatusLabels.find((s) => s.status === status);
+    return found ? found.label : status;
   };
 
-  const normalizeText = (value: string | null | undefined) =>
-    (value ?? "").trim();
+  // status state per-row (initialized after groups mount)
+  const [rowStatus, setRowStatus] = useState<Record<string, number>>({});
+  // dynamicGroup3 must exist before this effect runs, declare it here (hydrated later)
+  const [dynamicGroup3, setDynamicGroup3] = useState(() => [] as any[]);
+  useEffect(() => {
+    const init: Record<string, number> = {};
+    // initialize only for group3 items (index-based)
+    dynamicGroup3.forEach((g) => {
+      g.items.forEach((it, i) => {
+        const idx = statusOptions.findIndex(
+          (s) => s.key === (it as any).status,
+        );
+        init[String(i)] = idx >= 0 ? idx : 0;
+      });
+    });
+    setRowStatus(init);
+  }, [dynamicGroup3]);
 
-  const buildInitialValues = (it: SectorReport) => {
-    const base: Record<string, string | number> = {
-      leave_sick_count: normalizeNumber(it.leave_sick_count),
-      leave_business_count: normalizeNumber(it.leave_business_count),
-      leave_other_count: normalizeNumber(it.leave_other_count),
-      absent_count: normalizeNumber(it.absent_count),
-      shift_18_count: normalizeNumber(it.shift_18_count),
-      shift_24_count: normalizeNumber(it.shift_24_count),
-      shift_36_count: normalizeNumber(it.shift_36_count),
-      rule_sleep_count: normalizeNumber(it.rule_sleep_count),
-      rule_use_phone_count: normalizeNumber(it.rule_use_phone_count),
-      rule_no_card_count: normalizeNumber(it.rule_no_card_count),
-      wear_hat_count: normalizeNumber(it.wear_hat_count),
-      wear_shirt_count: normalizeNumber(it.wear_shirt_count),
-      wear_pant_count: normalizeNumber(it.wear_pant_count),
-      wear_shoe_count: normalizeNumber(it.wear_shoe_count),
-      warning: normalizeText(it.warning),
-      other_job: normalizeText(it.other_job),
-      other_job_count: normalizeNumber(it.other_job_count),
-      other_training: normalizeText(it.other_training),
-      other_training_count: normalizeNumber(it.other_training_count),
-      other_extral: normalizeText(it.other_extral),
+  const cycleStatus = (idx: number) => {
+    setRowStatus((prev) => ({
+      ...prev,
+      [String(idx)]: ((prev[String(idx)] ?? 0) + 1) % statusOptions.length,
+    }));
+  };
+
+  // Approval state variables
+  const [approvalStatus, setApprovalStatus] = useState<"PENDING" | "APPROVED" | "REJECT">(
+    (props.reportData?.approved_status as "PENDING" | "APPROVED" | "REJECT") || "PENDING"
+  );
+  const [approvalRemark, setApprovalRemark] = useState<string>(
+    (props.reportData?.approved_remark as string) || ""
+  );
+
+  // Check if current user is manager for approval permissions
+  const isManager =
+    authEmployee?.position_name?.includes("หัวหน้า") ||
+    authEmployee?.position_name?.includes("manager") ||
+    authEmployee?.role_name === "admin";
+
+  // Initialize approval data from reportData when it changes
+  useEffect(() => {
+    setApprovalStatus((props.reportData?.approved_status as "PENDING" | "APPROVED" | "REJECT") || "PENDING");
+    setApprovalRemark((props.reportData?.approved_remark as string) || "");
+  }, [props.reportData]);
+
+  // grouped rows config under the main personnel header
+  const group1 = [
+    {
+      key: "dept",
+      title: "หน่วยงานที่รับผิดชอบ",
+      items: [
+        {
+          key: "dept_guard_post_count",
+          label: "จุดรักษาการณ์ :",
+          unit: "หน่วยงาน",
+          value: "0",
+        },
+        {
+          key: "dept_current_personnel_count",
+          label: "กำลังพลปัจจุบัน :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "dept_missing_regular_count",
+          label: "ขาดตัวประจำ :",
+          unit: "หน่วยงาน",
+          value: "0",
+        },
+        {
+          key: "dept_missing_personnel_count",
+          label: "ขาดกำลังพล :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "dept_supplement_count",
+          label: "จัดกำลังพลเสริมพิเศษ :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "dept_recruitment_count",
+          label: "สรรหาผู้สมัครงานใหม่ :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "dept_reserve_units_count",
+          label: "จำนวนหน่วยงานสำรองเวร :",
+          unit: "หน่วย",
+          value: "0",
+        },
+        {
+          key: "dept_reserve_personnel_count",
+          label: "จำนวนกำลังพลสำรองเวร :",
+          unit: "นาย",
+          value: "0",
+        },
+      ],
+    },
+    {
+      key: "leave",
+      title: "การลา",
+      items: [
+        {
+          key: "leave_personal_count",
+          label: "ลากิจ :",
+          unit: "คน",
+          value: "0",
+        },
+        { key: "leave_sick_count", label: "ลาป่วย :", unit: "คน", value: "0" },
+        {
+          key: "leave_absent_count",
+          label: "ขาดงาน :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "leave_deserted_count",
+          label: "หนีหาย :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "leave_resigned_count",
+          label: "ลาออก :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "leave_terminated_count",
+          label: "ไล่ออก :",
+          unit: "คน",
+          value: "0",
+        },
+      ],
+    },
+    {
+      key: "shift",
+      title: "การบริหารการควงเวร",
+      items: [
+        {
+          key: "shift_18_count",
+          label: "18 ชั่วโมง :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "shift_24_count",
+          label: "24 ชั่วโมง :",
+          unit: "คน",
+          value: "0",
+        },
+        {
+          key: "shift_36_count",
+          label: "36 ชั่วโมง :",
+          unit: "คน",
+          value: "0",
+        },
+      ],
+    },
+    {
+      key: "training",
+      title: "อบรมและควบคุมหน้าที่งาน",
+      items: [
+        {
+          key: "training_shift_change_count",
+          label: "อบรมเปลี่ยนผลัด :",
+          unit: "หน่วยงาน",
+          value: "0",
+        },
+        {
+          key: "training_planned_count",
+          label: "อบรมตามแผนงานที่กำหนด :",
+          unit: "หน่วยงาน",
+          value: "0",
+        },
+        {
+          key: "training_duty_control_count",
+          label: "ควบคุมหน้าที่งาน :",
+          unit: "หน่วยงาน",
+          value: "0",
+        },
+      ],
+    },
+  ];
+
+  const group2 = [
+    {
+      key: "discipline",
+      title: "วินัยและการลงโทษ",
+      items: [
+        {
+          key: "discipline_phone_count",
+          label: "เล่นโทรศัพท์มือถือ :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_belt_count",
+          label: "ไม่มีเข็มขัด :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_badge_count",
+          label: "ไม่แขวนบัตร :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_uniform_count",
+          label: "ชุดชำรุดเก่า :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+      ],
+    },
+  ];
+
+  // make group2 editable at runtime (so the plus button can add rows)
+  const [dynamicGroup2, setDynamicGroup2] = useState(() => {
+    // Build discipline map from reportData.disciplines[] array
+    const discMap = new Map<string, number>();
+    if (props.reportData) {
+      const arr = (props.reportData as any).disciplines;
+      if (Array.isArray(arr)) {
+        arr.forEach((d: any) => discMap.set(d.key, d.value));
+      }
+    }
+
+    return group2.map((g) => ({
+      ...g,
+      items: g.items.map((item) => {
+        // 1) try disciplines[] array first
+        let val = discMap.get(item.key);
+        // 2) fallback to flat field
+        if (val == null && props.reportData) {
+          const flat = (props.reportData as any)[item.key];
+          val = flat != null ? Number(flat) : undefined;
+        }
+        return {
+          ...item,
+          isActive: val != null && val > 0,
+        };
+      }),
+    }));
+  });
+
+  // modal state for adding a row into group2
+  const [showAddGroup2, setShowAddGroup2] = useState(false);
+  const [newGroup2Label, setNewGroup2Label] = useState("");
+  const [newGroup2Unit, setNewGroup2Unit] = useState("คน");
+  // track which inactive items are checked in the modal
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [isOtherMode, setIsOtherMode] = useState(false);
+
+  const openAddGroup2 = () => {
+    setNewGroup2Label("");
+    setNewGroup2Unit("คน");
+    setCheckedItems(new Set());
+    setIsOtherMode(false);
+    setShowAddGroup2(true);
+  };
+
+  const addItemToGroup2 = () => {
+    // compute new key before mutating state so we can also initialize counts with any edited value
+    const g = dynamicGroup2.find((x) => x.key === "discipline");
+    const indices = g
+      ? g.items.map((it) => Number(String(it.key).split(".")[1]) || 0)
+      : [];
+    const next = Math.max(0, ...indices) + 1;
+    const newKey = `5.${next}`;
+    const newItem = {
+      key: newKey,
+      label: newGroup2Label || "รายการใหม่",
+      unit: newGroup2Unit || "คน",
+      value: "0",
+      isActive: true,
     };
 
-    if (isManager) {
-      base.approved_status = toApprovalStatus(it.approved_status);
-      base.approved_remark = normalizeText(it.approved_remark);
-    }
+    setDynamicGroup2((prev) =>
+      prev.map((pg) =>
+        pg.key === "discipline" ? { ...pg, items: [...pg.items, newItem] } : pg,
+      ),
+    );
 
-    return base;
+    // initialize count for the new item using any currently edited value in the modal
+    setCounts((prev) => ({
+      ...prev,
+      [newKey]:
+        editingKey === newKey ? editingRaw || "0" : (prev[newKey] ?? "0"),
+    }));
+
+    setShowAddGroup2(false);
   };
 
-  const currentValues = () => {
-    const base: Record<string, string | number> = {
-      leave_sick_count: normalizeNumber(sickLeave),
-      leave_business_count: normalizeNumber(personalLeave),
-      leave_other_count: normalizeNumber(otherLeaveType),
-      absent_count: normalizeNumber(absentCount),
-      shift_18_count: normalizeNumber(shift18),
-      shift_24_count: normalizeNumber(shift24),
-      shift_36_count: normalizeNumber(shift36),
-      rule_sleep_count: normalizeNumber(sleepCount),
-      rule_use_phone_count: normalizeNumber(phoneCount),
-      rule_no_card_count: normalizeNumber(badgeCount),
-      wear_hat_count: normalizeNumber(hatCount),
-      wear_shirt_count: normalizeNumber(shirtCount),
-      wear_pant_count: normalizeNumber(pantsCount),
-      wear_shoe_count: normalizeNumber(shoesCount),
-      warning: normalizeText(disciplineNote),
-      other_job: normalizeText(foundNote),
-      other_job_count: normalizeNumber(foundCount),
-      other_training: normalizeText(trainNote),
-      other_training_count: normalizeNumber(trainCount),
-      other_extral: normalizeText(otherNote),
-    };
-
-    if (isManager) {
-      base.approved_status = approvalStatus;
-      base.approved_remark = normalizeText(approvalRemark);
-    }
-
-    return base;
-  };
-
-  const hasAnyData = () => {
-    return (
-      normalizeNumber(sickLeave) > 0 ||
-      normalizeNumber(personalLeave) > 0 ||
-      normalizeNumber(otherLeaveType) > 0 ||
-      normalizeNumber(absentCount) > 0 ||
-      normalizeNumber(shift18) > 0 ||
-      normalizeNumber(shift24) > 0 ||
-      normalizeNumber(shift36) > 0 ||
-      normalizeNumber(sleepCount) > 0 ||
-      normalizeNumber(phoneCount) > 0 ||
-      normalizeNumber(badgeCount) > 0 ||
-      normalizeNumber(hatCount) > 0 ||
-      normalizeNumber(shirtCount) > 0 ||
-      normalizeNumber(pantsCount) > 0 ||
-      normalizeNumber(shoesCount) > 0 ||
-      normalizeNumber(foundCount) > 0 ||
-      normalizeNumber(trainCount) > 0 ||
-      normalizeText(disciplineNote) !== "" ||
-      normalizeText(foundNote) !== "" ||
-      normalizeText(trainNote) !== "" ||
-      normalizeText(otherNote) !== ""
+  const handleRemoveGroup3Item = (groupKey: string, itemIdx: number) => {
+    setDynamicGroup3((prev) =>
+      prev.map((pg) =>
+        pg.key === groupKey
+          ? { ...pg, items: pg.items.filter((_, i) => i !== itemIdx) }
+          : pg,
+      ),
     );
   };
 
-  const isDirty = () => {
-    const initial = initialValuesRef.current;
-    if (!initial) return false;
-    const current = currentValues();
-    return Object.keys(current).some((key) => current[key] !== initial[key]);
+  const handleDeactivate = (key: string) => {
+    setDynamicGroup2((prev) =>
+      prev.map((pg) => ({
+        ...pg,
+        items: pg.items.map((item) =>
+          item.key === key ? { ...item, isActive: false } : item,
+        ),
+      })),
+    );
+    // reset the count so it's not included in the payload
+    setCounts((prev) => ({ ...prev, [key]: "0" }));
   };
+
+  const handleSaveModal = () => {
+    if (checkedItems.size > 0) {
+      const selectedKey = Array.from(checkedItems)[0];
+
+      setDynamicGroup2((prev) => {
+        const discGroup = prev.find((g) => g.key === "discipline");
+        if (!discGroup) return prev;
+
+        const exists = discGroup.items.some((it) => it.key === selectedKey);
+
+        return prev.map((pg) => {
+          if (pg.key !== "discipline") return pg;
+
+          let items = pg.items;
+
+          // Add item from API if it doesn't exist yet
+          if (!exists) {
+            const disc = distinctDisciplineTypes.find(
+              (d) => d.key === selectedKey,
+            );
+            items = [
+              ...items,
+              {
+                key: selectedKey,
+                label: disc?.label ?? "รายการใหม่",
+                unit: "คน",
+                value: "0",
+                isActive: false,
+              },
+            ];
+          }
+
+          // Activate the checked item if value > 0
+          items = items.map((item) => {
+            if (item.key !== selectedKey) return item;
+            const val =
+              editingKey === item.key ? editingRaw : (counts[item.key] ?? "0");
+            return Number(val) > 0 ? { ...item, isActive: true } : item;
+          });
+
+          return { ...pg, items };
+        });
+      });
+    }
+
+    if (newGroup2Label.trim() !== "") {
+      addItemToGroup2();
+    } else {
+      setShowAddGroup2(false);
+    }
+  };
+
+  const toggleChecked = (key: string) => {
+    setCheckedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  // modal state for adding a row into group3
+  const [showAddGroup3, setShowAddGroup3] = useState(false);
+  const [newGroup3Label, setNewGroup3Label] = useState("");
+  const [newGroup3Detail, setNewGroup3Detail] = useState("");
+  const [newGroup3Status, setNewGroup3Status] = useState("normal");
+  const [newGroup3Note, setNewGroup3Note] = useState("");
+  const [editingGroup3Index, setEditingGroup3Index] = useState<number | null>(
+    null,
+  );
+
+  const closeGroup3Modal = () => {
+    setShowAddGroup3(false);
+    setEditingGroup3Index(null);
+    setNewGroup3Label("");
+    setNewGroup3Detail("");
+    setNewGroup3Status("normal");
+    setNewGroup3Note("");
+  };
+
+  const openAddGroup3 = () => {
+    setEditingGroup3Index(null);
+    setNewGroup3Label("");
+    setNewGroup3Detail("");
+    setNewGroup3Status("normal");
+    setNewGroup3Note("");
+    setShowAddGroup3(true);
+  };
+
+  const handleOpenRow = (idx: number) => {
+    const meetingGroup = dynamicGroup3.find((group) => group.key === "meeting");
+    const item = meetingGroup?.items[idx];
+    if (!item) return;
+
+    setEditingGroup3Index(idx);
+    setNewGroup3Label(item.label ?? "");
+    setNewGroup3Detail(item.detail ?? "");
+    setNewGroup3Status(item.status ?? "normal");
+    setNewGroup3Note(item.note ?? "");
+    setShowAddGroup3(true);
+  };
+
+  const saveGroup3Modal = () => {
+    const nextItem = {
+      label: newGroup3Label || "รายการใหม่",
+      detail: newGroup3Detail,
+      status: newGroup3Status,
+      note: newGroup3Note,
+    };
+
+    setDynamicGroup3((prev) =>
+      prev.map((pg) =>
+        pg.key === "meeting"
+          ? {
+              ...pg,
+              items:
+                editingGroup3Index === null
+                  ? [...pg.items, nextItem]
+                  : pg.items.map((item, index) =>
+                      index === editingGroup3Index ? nextItem : item,
+                    ),
+            }
+          : pg,
+      ),
+    );
+
+    closeGroup3Modal();
+  };
+
+  const handleGroup3DetailChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup3Detail(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleGroup3NoteChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup3Note(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleGroup3StatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewGroup3Status(e.target.value);
+  };
+
+  // ensure counts contain any newly added keys from dynamicGroup2 and dynamicGroup3
+  useEffect(() => {
+    setCounts((prev) => {
+      const next = { ...prev };
+      dynamicGroup2.forEach((g) => {
+        g.items.forEach((it) => {
+          if (!(it.key in next)) next[it.key] = "0";
+        });
+      });
+      // group3 items have inline note — skip counts
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dynamicGroup2, dynamicGroup3]);
+
+  // sync isActive from reportData when it arrives (handles async load after mount)
+  useEffect(() => {
+    if (!props.reportData) {
+      console.log("[MoUpdateForm] no reportData");
+      return;
+    }
+    console.log("[MoUpdateForm] syncing from reportData", props.reportData);
+
+    const discMap = new Map<string, number>();
+    const arr = (props.reportData as any).disciplines;
+    if (Array.isArray(arr)) {
+      arr.forEach((d: any) => discMap.set(d.key, d.value));
+    }
+
+    setDynamicGroup2((prev) =>
+      prev.map((g) => {
+        if (g.key !== "discipline") return g;
+
+        let items = g.items.map((item) => {
+          let val = discMap.get(item.key);
+          if (val == null) {
+            const flat = (props.reportData as any)[item.key];
+            val = flat != null ? Number(flat) : undefined;
+          }
+          return {
+            ...item,
+            isActive: val != null && val > 0,
+          };
+        });
+
+        if (Array.isArray(arr)) {
+          arr.forEach((d: any) => {
+            if (!items.find((it) => it.key === d.key)) {
+              items.push({
+                key: d.key,
+                label: d.label,
+                unit: "คน",
+                value: String(d.value),
+                isActive: d.value > 0,
+              });
+            }
+          });
+        }
+
+        return { ...g, items };
+      }),
+    );
+    // also re-sync counts from reportData (both disciplines[] array and flat fields)
+    setCounts((prev) => {
+      const next = { ...prev };
+      // from flat fields (group1 items)
+      group1.forEach((g) =>
+        g.items.forEach((it) => {
+          const rdVal = props.reportData![it.key];
+          if (rdVal !== undefined && rdVal !== null) {
+            next[it.key] = String(rdVal);
+          }
+        }),
+      );
+      // from disciplines[] array (group2 items)
+      if (Array.isArray(arr)) {
+        arr.forEach((d: any) => {
+          next[d.key] = String(d.value);
+        });
+      }
+      // from flat fields as fallback for group2
+      group2.forEach((g) =>
+        g.items.forEach((it) => {
+          if (!(it.key in next)) {
+            const rdVal = props.reportData![it.key];
+            if (rdVal !== undefined && rdVal !== null) {
+              next[it.key] = String(rdVal);
+            }
+          }
+        }),
+      );
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.reportData]);
+
+  const group3 = [
+    {
+      key: "meeting",
+      title: "เข้าพบผู้ว่าจ้าง",
+      items: [] as {
+        label: string;
+        detail: string;
+        status: string;
+        note: string;
+      }[],
+    },
+  ];
+
+  // hydrate dynamicGroup3 from reportData.projects on mount, fall back to empty
+  useEffect(() => {
+    const projects = Array.isArray(props.reportData?.projects)
+      ? (props.reportData!.projects as {
+          label: string;
+          detail: string;
+          status: string;
+          note: string;
+        }[])
+      : [];
+    setDynamicGroup3([
+      { key: "meeting", title: "เข้าพบผู้ว่าจ้าง", items: projects },
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.reportData]);
+
+  // inline-edit counts for third-column cells (initialized from groups)
+  const [counts, setCounts] = useState<Record<string, string>>(() => {
+    const acc: Record<string, string> = {};
+    group1.forEach((g) =>
+      g.items.forEach((it) => {
+        const rdVal = props.reportData?.[it.key];
+        acc[it.key] =
+          rdVal !== undefined
+            ? String(rdVal)
+            : ((it as { value: string }).value ?? "0");
+      }),
+    );
+    group2.forEach((g) =>
+      g.items.forEach((it) => {
+        const rdVal = props.reportData?.[it.key];
+        acc[it.key] =
+          rdVal !== undefined
+            ? String(rdVal)
+            : ((it as { value: string }).value ?? "0");
+      }),
+    );
+    // group3 items have inline note — skip counts
+    return acc;
+  });
+
+  // Snapshot of initial form state for dirty detection
+  const initialSnapshotRef = useRef<{
+    counts: Record<string, string>;
+    projectsJson: string;
+  } | null>(null);
 
   useEffect(() => {
-    const it = props.item;
-    if (!it) return;
-
-    // populate fields from the incoming case record
-    setRegion(it.location ?? "");
-
-    setSickLeave(
-      it.leave_sick_count != null ? String(it.leave_sick_count) : "",
+    if (!props.reportData) return;
+    const snapCounts: Record<string, string> = {};
+    group1.forEach((g) =>
+      g.items.forEach((it) => {
+        const rdVal = props.reportData![it.key];
+        snapCounts[it.key] =
+          rdVal !== undefined
+            ? toDigitString(String(rdVal))
+            : ((it as { value: string }).value ?? "0");
+      }),
     );
-    setPersonalLeave(
-      it.leave_business_count != null ? String(it.leave_business_count) : "",
+    group2.forEach((g) =>
+      g.items.forEach((it) => {
+        const rdVal = props.reportData![it.key];
+        snapCounts[it.key] =
+          rdVal !== undefined
+            ? toDigitString(String(rdVal))
+            : ((it as { value: string }).value ?? "0");
+      }),
     );
-    setOtherLeaveType(
-      it.leave_other_count != null ? String(it.leave_other_count) : "",
+    const discArr = (props.reportData as any).disciplines;
+    if (Array.isArray(discArr)) {
+      discArr.forEach((d: any) => {
+        snapCounts[d.key] = toDigitString(String(d.value));
+      });
+    }
+    initialSnapshotRef.current = {
+      counts: snapCounts,
+      projectsJson: JSON.stringify(
+        Array.isArray(props.reportData?.projects)
+          ? (props.reportData!.projects as any[]).map((p: any) => ({
+              label: p.label,
+              detail: p.detail,
+              status: p.status,
+              note: p.note,
+            }))
+          : [],
+      ),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.reportData]);
+
+  // Compute whether the form has been modified from the initial snapshot
+  const isDirty = (() => {
+    const snap = initialSnapshotRef.current;
+    if (!snap) return false;
+
+    // Compare counts (including any new keys added dynamically)
+    for (const key of Object.keys(snap.counts)) {
+      if ((counts[key] ?? "0") !== snap.counts[key]) return true;
+    }
+    for (const key of Object.keys(counts)) {
+      if (!(key in snap.counts) && counts[key] !== "0") return true;
+    }
+
+    // Compare projects (group3 items)
+    const currentProjects =
+      dynamicGroup3.find((g) => g.key === "meeting")?.items ?? [];
+    const currentJson = JSON.stringify(
+      currentProjects.map((p: any) => ({
+        label: p.label,
+        detail: p.detail,
+        status: p.status,
+        note: p.note,
+      })),
+    );
+    if (currentJson !== snap.projectsJson) return true;
+
+    return false;
+  })();
+
+  // Notify parent of dirty state
+  useEffect(() => {
+    if (props.onDirtyChange) {
+      props.onDirtyChange(isDirty);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDirty]);
+
+  // Reset form to original values from reportData
+  const handleReset = () => {
+    const snap = initialSnapshotRef.current;
+    if (!snap) {
+      if (props.onCancel) props.onCancel();
+      else window.history.back();
+      return;
+    }
+
+    // 1. Reset counts to snapshot
+    setCounts({ ...snap.counts });
+
+    // 2. Reset dynamicGroup2 isActive states from snapshot values
+    setDynamicGroup2((prev) =>
+      prev.map((g) => ({
+        ...g,
+        items: g.items.map((item) => {
+          const val = snap.counts[item.key];
+          return {
+            ...item,
+            isActive: val != null && val !== "0",
+          };
+        }),
+      })),
     );
 
-    setAbsentCount(it.absent_count != null ? String(it.absent_count) : "");
+    // 3. Reset dynamicGroup3 from snapshot projects
+    try {
+      const originalProjects = JSON.parse(snap.projectsJson) as Array<{
+        label: string;
+        detail: string;
+        status: string;
+        note: string;
+      }>;
+      setDynamicGroup3([
+        { key: "meeting", title: "เข้าพบผู้ว่าจ้าง", items: originalProjects },
+      ]);
+      setRowStatus({});
+    } catch {
+      setDynamicGroup3([
+        { key: "meeting", title: "เข้าพบผู้ว่าจ้าง", items: [] },
+      ]);
+      setRowStatus({});
+    }
 
-    setShift18(it.shift_18_count != null ? String(it.shift_18_count) : "");
-    setShift24(it.shift_24_count != null ? String(it.shift_24_count) : "");
-    setShift36(it.shift_36_count != null ? String(it.shift_36_count) : "");
+    // 4. Reset sub-location to original
+    if (props.reportData) {
+      const origSub = String(props.reportData.sub_location ?? "");
+      if (origSub) setSelectedSubLocation(origSub);
+    }
 
-    setSleepCount(
-      it.rule_sleep_count != null ? String(it.rule_sleep_count) : "",
-    );
-    setPhoneCount(
-      it.rule_use_phone_count != null ? String(it.rule_use_phone_count) : "",
-    );
-    setBadgeCount(
-      it.rule_no_card_count != null ? String(it.rule_no_card_count) : "",
-    );
-    setDisciplineNote(it.warning ?? "");
+    // 5. Clear editing state
+    setEditingKey(null);
+    setEditingRaw("0");
 
-    setHatCount(it.wear_hat_count != null ? String(it.wear_hat_count) : "");
-    setShirtCount(
-      it.wear_shirt_count != null ? String(it.wear_shirt_count) : "",
-    );
-    setPantsCount(it.wear_pant_count != null ? String(it.wear_pant_count) : "");
-    setShoesCount(it.wear_shoe_count != null ? String(it.wear_shoe_count) : "");
+    // 6. Exit edit mode (parent sets isEditing=false)
+    if (props.onCancel) props.onCancel();
+  };
 
-    setFoundCount(it.other_job_count != null ? String(it.other_job_count) : "");
-    setFoundNote(it.other_job ?? "");
-    setTrainCount(
-      it.other_training_count != null ? String(it.other_training_count) : "",
-    );
-    setTrainNote(it.other_training ?? "");
-    setOtherNote(it.other_extral ?? "");
-    setApprovalStatus(toApprovalStatus(it.approved_status));
-    setApprovalRemark(it.approved_remark ?? "");
-    initialValuesRef.current = buildInitialValues(it);
-  }, [props.item]);
+  // open/closed state per group to render sections dynamically
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    [...group1, ...dynamicGroup2, ...group3].reduce(
+      (acc, g, i) => {
+        acc[g.key] = i === 0; // open first group by default
+        return acc;
+      },
+      {} as Record<string, boolean>,
+    ),
+  );
 
-  const { updateReport, deleteReport } = useStore();
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingRaw, setEditingRaw] = useState<string>("0");
 
-  function onSubmit(e: React.FormEvent) {
+  const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+  const labelInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  // track warning flags per-row to show brief validation hint
+  const [warnings, setWarnings] = useState<Record<string, boolean>>({});
+  const warningTimersRef = useRef<Record<string, number | null>>({});
+
+  const triggerWarning = (key: string) => {
+    // clear any existing timer
+    const existing = warningTimersRef.current[key];
+    if (existing) window.clearTimeout(existing);
+    setWarnings((s) => ({ ...s, [key]: true }));
+    const t = window.setTimeout(() => {
+      setWarnings((s) => ({ ...s, [key]: false }));
+      warningTimersRef.current[key] = null;
+    }, 1200);
+    warningTimersRef.current[key] = t as unknown as number;
+  };
+
+  const handleLabelChangeGroup3 = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup3Label(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleLabelFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    adjustTextareaHeight(e.target as HTMLTextAreaElement);
+    // focus the inputRef so keyboard behavior stays consistent
+    labelInputRef.current = e.target as HTMLTextAreaElement;
+  };
+
+  const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      (e.target as HTMLTextAreaElement).blur();
+      return;
+    }
+  };
+
+  // helper to auto-resize textarea when editing
+  const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    // add 2px to avoid scrollbar in some browsers
+    el.style.height = `${el.scrollHeight + 2}px`;
+  };
+
+  // sanitize any pre-existing counts on mount (in case invalid values were stored before)
+  useEffect(() => {
+    setCounts((prev) => {
+      const next: Record<string, string> = {};
+      Object.keys(prev).forEach((k) => {
+        next[k] = toDigitString(prev[k]);
+      });
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // helper: normalize a value to clean digit string
+  const toDigitString = (v: string) => {
+    const digits = String(v || "").replace(/\D/g, "");
+    if (digits === "") return "0";
+    const n = digits.replace(/^0+/, "");
+    return n === "" ? "0" : n;
+  };
+
+  // --- textarea handlers moved out of JSX for clarity ---
+  const handleTextareaChange = (
+    key: string,
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    const raw = el.value;
+    const sanitized = raw.replace(/\s/g, "");
+
+    // allow empty / minus prefix for entering negative
+    if (sanitized === "" || sanitized === "-") {
+      setEditingRaw(sanitized);
+      adjustTextareaHeight(el);
+      return;
+    }
+
+    // if everything is non-digit, warn and reject (don't update state)
+    if (!/\d/.test(sanitized)) {
+      triggerWarning(key);
+      adjustTextareaHeight(el);
+      return;
+    }
+
+    const clean = toDigitString(sanitized);
+    setEditingRaw(clean);
+    adjustTextareaHeight(el);
+  };
+
+  const handleTextareaPaste = (
+    key: string,
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+  ) => {
+    const paste =
+      (e.clipboardData || (window as any).clipboardData).getData("text") || "";
+    const digitsOnly = paste.replace(/\D/g, "");
+    if (digitsOnly === "") {
+      e.preventDefault();
+      triggerWarning(key);
+      return;
+    }
+
+    const normalized = toDigitString(digitsOnly);
     e.preventDefault();
-    if (!props.item?.id) return;
-    if (!hasAnyData() || !isDirty()) return;
 
-    const payload = {
-      leave_sick_count: Number(sickLeave) || 0,
-      leave_business_count: Number(personalLeave) || 0,
-      leave_other_count: Number(otherLeaveType) || 0,
-      absent_count: Number(absentCount) || 0,
-      shift_18_count: Number(shift18) || 0,
-      shift_24_count: Number(shift24) || 0,
-      shift_36_count: Number(shift36) || 0,
-      rule_sleep_count: Number(sleepCount) || 0,
-      rule_use_phone_count: Number(phoneCount) || 0,
-      rule_no_card_count: Number(badgeCount) || 0,
-      wear_hat_count: Number(hatCount) || 0,
-      wear_shirt_count: Number(shirtCount) || 0,
-      wear_pant_count: Number(pantsCount) || 0,
-      wear_shoe_count: Number(shoesCount) || 0,
-      warning: disciplineNote,
-      other_job: foundNote,
-      other_job_count: Number(foundCount) || 0,
-      other_training: trainNote,
-      other_training_count: Number(trainCount) || 0,
-      other_extral: otherNote,
-      ...(isManager
-        ? {
-            approved_status: approvalStatus,
-            approved_remark: approvalRemark,
-          }
-        : {}),
+    const el = e.target as HTMLTextAreaElement;
+    el.value = normalized;
+    setEditingRaw(normalized);
+    adjustTextareaHeight(el);
+  };
+
+  const handleTextareaFocus = (
+    key: string,
+    e: React.FocusEvent<HTMLTextAreaElement>,
+  ) => {
+    setEditingKey(key);
+    const clean = toDigitString(counts[key] ?? "0");
+    setEditingRaw(clean);
+    adjustTextareaHeight(e.target as HTMLTextAreaElement);
+  };
+
+  const handleTextareaKeyDown = (
+    key: string,
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      (e.target as HTMLTextAreaElement).blur();
+      return;
+    }
+    if (e.key === "Escape") {
+      setEditingKey(null);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const valStr = editingRaw || "0";
+      try {
+        setEditingRaw(String(BigInt(valStr) + 1n));
+      } catch {
+        setEditingRaw(String(Number(valStr) + 1));
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const valStr = editingRaw || "0";
+      try {
+        const base = BigInt(valStr);
+        setEditingRaw(base > 0n ? String(base - 1n) : "0");
+      } catch {
+        setEditingRaw(String(Math.max(0, Number(valStr) - 1)));
+      }
+    }
+  };
+
+  const handleTextareaBlur = (key: string) => {
+    const final = toDigitString(editingRaw);
+    setCounts((s) => ({ ...s, [key]: final }));
+    setEditingRaw(final);
+    setEditingKey(null);
+  };
+
+  // helper to get display value for a key when NOT editing: expand scientific notation if needed
+  const getDisplayValue = (key: string) => {
+    return toDigitString(counts[key] ?? "0");
+  };
+
+  // ensure textarea heights match their content for both editing and non-editing states
+  useEffect(() => {
+    // find all textareas inside any mo-table-wrapper. We avoid relying on a single ref
+    // because the section can be mounted/unmounted and refs may change.
+    const selector = `.${styles["mo-table-wrapper"]} textarea`;
+    const nodes = Array.from(
+      document.querySelectorAll(selector),
+    ) as HTMLTextAreaElement[];
+    if (nodes.length === 0) return;
+
+    // run adjustment on the next animation frame so layout has settled after collapse/expand
+    let rafId = 0;
+    const adjustAll = () => {
+      nodes.forEach((ta) => adjustTextareaHeight(ta));
+    };
+    rafId = requestAnimationFrame(adjustAll);
+    return () => cancelAnimationFrame(rafId);
+  }, [counts, editingKey, openGroups]);
+
+  // when an "add" modal opens (group2 or group3), ensure the label textarea gets an initial height
+  useEffect(() => {
+    if (!showAddGroup2 && !showAddGroup3) return;
+    // wait until the modal has rendered and layout is stable
+    const id = requestAnimationFrame(() => {
+      try {
+        adjustTextareaHeight(labelInputRef.current);
+      } catch (e) {
+        // swallow errors — adjustment is best-effort
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showAddGroup2, showAddGroup3]);
+
+  // notify parent when counts change (dirty tracking)
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    props.onDirtyChange?.(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [counts, dynamicGroup2, dynamicGroup3]);
+
+  // expose submit to parent via ref
+  useEffect(() => {
+    if (!props.submitRef) return;
+    props.submitRef.current = async () => {
+      await doSave();
+    };
+    return () => {
+      if (props.submitRef) props.submitRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    counts,
+    dynamicGroup2,
+    dynamicGroup3,
+    selectedSector,
+    selectedSubLocation,
+    approvalStatus,  // Add approval status to the dependency array
+    approvalRemark,  // Add approval remark to the dependency array
+  ]);
+
+  const hasAnyData = () => {
+    const hasCounts = Object.values(counts).some((v) => Number(v) > 0);
+    const hasGroup3Items = dynamicGroup3.some((g) => g.items.length > 0);
+    return hasCounts || hasGroup3Items;
+  };
+
+  const doSave = async (opts?: { approve?: boolean }) => {
+    const payload: Record<string, any> = {
+      department_id: Number(selectedSector),
+      sub_location: selectedSubLocation,
     };
 
-    updateReport(props.item.id, payload)
-      .then(() => {
-        setShowActionIcons(false);
-        setSuccessTitle("อัปเดตรายงานสำเร็จ!");
-        setSuccessDescription("ระบบได้ทำการอัปเดตข้อมูลของคุณเรียบร้อยแล้ว");
-        setShowSuccess(true);
-      })
-      .catch((err) => {
-        alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err}`);
+    // Build flat count fields from group1
+    for (const g of group1) {
+      for (const item of g.items) {
+        payload[item.key] = Number(counts[item.key]) || 0;
+      }
+    }
+
+    const disciplines: Array<{ key: string; label: string; value: number }> = [];
+    for (const g of dynamicGroup2) {
+      for (const item of g.items) {
+        if (item.isActive) {
+          const val = Number(counts[item.key]) || 0;
+          if (val > 0) {
+            disciplines.push({
+              key: item.key,
+              label: item.label.replace(/:$/, "").trim(),
+              value: val,
+            });
+          }
+        }
+      }
+    }
+    payload.disciplines = disciplines;
+
+    // Build projects array from dynamicGroup3
+    const projects: Array<{
+      key: string;
+      label: string;
+      detail: string;
+      status: string;
+      note: string;
+    }> = [];
+    for (const g of dynamicGroup3) {
+      g.items.forEach((it, i) => {
+        projects.push({
+          key: String(i + 1),
+          label: it.label,
+          detail: it.detail ?? "",
+          status: it.status ?? "normal",
+          note: it.note ?? "",
+        });
       });
-  }
+    }
+    payload.projects = projects;
 
-  // show modal first, perform delete only if confirmed
-  function handleDelete(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowConfirmDelete(true);
-  }
+    if (opts?.approve) {
+      payload.approved_status = "APPROVED";
+      payload.approved_by = authEmployee?.employee_code || "ADMIN";
+      payload.approved_at = new Date().toISOString();
+    } else {
+      // Include approval status and remark when saving without approval
+      payload.approved_status = approvalStatus;
+      payload.approved_remark = approvalRemark;
+      if (approvalStatus === "APPROVED") {
+        payload.approved_by = authEmployee?.employee_code || "ADMIN";
+        payload.approved_at = new Date().toISOString();
+      }
+    }
 
-  function confirmDelete() {
-    if (!props.item?.id) return;
-    setShowConfirmDelete(false);
+    try {
+      const reportId = props.reportData?.id as number | undefined;
+      if (reportId) {
+        await updateReport(reportId, payload as any);
+      } else {
+        await createReport(payload as any);
+      }
+      setShowSuccess(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`เกิดข้อผิดพลาดในการบันทึก: ${msg}`);
+    }
+  };
 
-    deleteReport(props.item.id)
-      .then(() => {
-        setSuccessTitle("ลบรายการสำเร็จ!");
-        setSuccessDescription("ระบบได้ลบรายการนี้ออกจากระบบเรียบร้อยแล้ว");
-        setShowSuccess(true);
-      })
-      .catch((err) => {
-        alert(`เกิดข้อผิดพลาดในการลบ: ${err}`);
-      });
-  }
+  const onSubmit = async (
+    e?: React.FormEvent,
+    opts?: { approve?: boolean },
+  ) => {
+    e?.preventDefault();
+    if (!hasAnyData() && !opts?.approve) return;
 
-  function cancelDelete() {
-    setShowConfirmDelete(false);
-  }
+    // If triggered by a submit event (not programmatic), show confirm dialog first
+    if (e && !opts?.approve) {
+      setShowConfirmSubmit(true);
+      return;
+    }
 
-  if (showPdf && props.item) {
-    return (
-      <MoPdfViewer
-        item={props.item}
-        sectorName={props.item.location || ""}
-        onCancel={() => setShowPdf(false)}
-      />
-    );
-  }
+    await doSave(opts);
+  };
+
+  const onSubmitWithApproval = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    // Check if there are changes to either form data or approval data
+    const hasFormDataChanges = hasAnyData();
+    const originalApprovalStatus = (props.reportData?.approved_status as "PENDING" | "APPROVED" | "REJECT") || "PENDING";
+    const originalApprovalRemark = (props.reportData?.approved_remark as string) || "";
+    const hasApprovalChanges = approvalStatus !== originalApprovalStatus || approvalRemark !== originalApprovalRemark;
+    
+    if (!hasFormDataChanges && !hasApprovalChanges) return;
+
+    // Show confirm dialog if there are form data changes
+    if (hasFormDataChanges) {
+      setShowConfirmSubmit(true);
+    } else {
+      // If only approval data changed, save directly
+      await doSave();
+    }
+  };
 
   return (
     <>
-      <div className={styles["gut-detail-btns-box"]} aria-hidden>
-        <button
-          type="button"
-          className={styles["gut-back-icon"]}
-          onClick={() => {
-            if (props.onCancel) return props.onCancel();
-            return window.history.back();
-          }}
-          aria-label="Back"
-        >
-          <ArrowLeft size={18} />
-        </button>
-
-        {!showActionIcons ? (
-          <div className={styles["guts-action-icons"]} aria-hidden={false}>
-            <button
-              type="button"
-              className={styles["guts-icon-btn"]}
-              title="Preview PDF"
-              aria-label="Preview PDF"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowPdf(true);
-              }}
-            >
-              <Eye size={18} />
-            </button>
-
-            {canEditData && (
-              <>
-                <button
-                  type="button"
-                  className={styles["guts-icon-btn"]}
-                  title="Save"
-                  aria-label="Save"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowActionIcons((v) => !v);
+      <form className={styles["guts-Mo-layout"]} onSubmit={(e) => onSubmitWithApproval(e)}>
+        {/* หน่วยงาน / Sector row */}
+        <div className={styles["sector-table-wrapper"]}>
+          <table className={styles["mo-table"]}>
+            <thead>
+              <tr>
+                <th
+                  colSpan={4}
+                  className={`${styles["location-table-header"]} ${styles["no-border"]}`}
+                >
+                  <div className={styles["sector-header-fullwidth"]}>
+                    {selectedSectorName}
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan={1} className={`${styles["first-column-cell"]} `}>
+                  <PinIcon className={styles["pin-icon"]} />
+                </td>
+                <td
+                  colSpan={3}
+                  className={styles["sector-cell-bodytext"]}
+                  style={{
+                    gap: 8,
                   }}
                 >
-                  <Save size={18} />
-                </button>
+                  <div className={styles["sector-cell-bodytext-inner"]}>
+                    <span style={{ color: "var(--brandDark, #2d6a4f)" }}>
+                      {selectedSubLocation}
+                    </span>
+                    {props.reportData?.approved_status && (
+                      <span
+                        className={`${styles["status-pill"]} ${getApprovalStatusClass(
+                          props.reportData.approved_status as string,
+                        )}`}
+                      >
+                        {getApprovalStatusLabel(
+                          props.reportData.approved_status as string,
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
+        {/* dynamic sections rendered from group1 */}
+        {group1.map((g, idx) => (
+          <div
+            key={g.key}
+            ref={wrapperRef}
+            className={styles["mo-table-wrapper"]}
+          >
+            <table className={styles["mo-table"]}>
+              <thead>
+                <tr>
+                  <th
+                    colSpan={1}
+                    className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
+                  >
+                    {idx + 1}.
+                  </th>
+                  <th
+                    colSpan={3}
+                    className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                  >
+                    <div
+                      className={`${styles["mo-header"]}`}
+                      onClick={() =>
+                        setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      <p>{g.title}</p>
+                      <div>
+                        {openGroups[g.key] ? (
+                          <ChevronDown size={18} />
+                        ) : (
+                          <ChevronRight size={18} />
+                        )}
+                      </div>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              {openGroups[g.key] && (
+                <tbody>
+                  {g.items.map((r, itemIdx) => (
+                    <tr key={r.key}>
+                      <td className={styles["first-column-cell"]}>
+                        {idx + 1}.{itemIdx + 1}
+                      </td>
+                      <td className={styles["second-column-cell"]}>
+                        {r.label}
+                      </td>
+                      <td
+                        className={`${styles["third-column-cell"]} ${counts[r.key].toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
+                      >
+                        <textarea
+                          ref={inputRef as any}
+                          className={`${styles["third-column-textarea"]}`}
+                          value={
+                            editingKey === r.key
+                              ? editingRaw
+                              : getDisplayValue(r.key)
+                          }
+                          rows={1}
+                          disabled={!props.isEditing}
+                          onChange={(e) => handleTextareaChange(r.key, e)}
+                          onPaste={(e) => handleTextareaPaste(r.key, e)}
+                          onFocus={(e) => handleTextareaFocus(r.key, e)}
+                          onKeyDown={(e) => handleTextareaKeyDown(r.key, e)}
+                          onBlur={() => handleTextareaBlur(r.key)}
+                        />
+                      </td>
+                      <td className={`${styles["fourth-column-cell"]}`}>
+                        {r.unit}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
+          </div>
+        ))}
+
+        {/* Add item modal (appears when 'add from group2  header' clicked) */}
+        {showAddGroup2 && (
+          <div
+            className={styles["modal-overlay"]}
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => {
+              // click backdrop to close
+              if (e.target === e.currentTarget) setShowAddGroup2(false);
+            }}
+          >
+            <div
+              className={styles["modal"]}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className={styles["modal-header"]}>
+                <h3>เพิ่มข้อมูลวินัยและการลงโทษ</h3>
+              </div>
+
+              {/* modal body rendered as a mini table to match form style */}
+              <div className={styles["modal-body"]}>
+                <div className={styles["mo-table-wrapper"]}>
+                  <table className={styles["mo-table"]}>
+                    <thead>
+                      <tr>
+                        <th
+                          colSpan={1}
+                          className={`${styles["first-column-cell"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
+                        >
+                          5
+                        </th>
+                        <th
+                          colSpan={4}
+                          className={`${styles["mo-table-header"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
+                        >
+                          <div
+                            className={`${styles["mo-header"]}`}
+                            style={{
+                              padding: "6px 8px",
+                              justifyContent: "flex-start",
+                            }}
+                          >
+                            <p className={styles["mo-header-red-text"]}>
+                              วินัยและการลงโทษ
+                            </p>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* single selector row — pick one discipline type not yet active */}
+                      {(() => {
+                        // Get keys already active in the current form
+                        const activeKeys = new Set(
+                          dynamicGroup2
+                            .filter((g) => g.key === "discipline")
+                            .flatMap((g) =>
+                              g.items
+                                .filter((r) => r.isActive === true)
+                                .map((r) => r.key),
+                            ),
+                        );
+
+                        // Available options: from API distinct types, minus already-active ones
+                        const availableOptionsRaw =
+                          distinctDisciplineTypes.length > 0
+                            ? distinctDisciplineTypes.filter(
+                                (d) => !activeKeys.has(d.key),
+                              )
+                            : dynamicGroup2
+                                .filter((g) => g.key === "discipline")
+                                .flatMap((g) =>
+                                  g.items.filter(
+                                    (r) =>
+                                      r.isActive === false &&
+                                      String(r.key).startsWith("discipline_"),
+                                  ),
+                                )
+                                .map((r) => ({
+                                  key: r.key,
+                                  label: r.label,
+                                }));
+                        const availableOptions = Array.from(
+                          new Map(
+                            availableOptionsRaw.map((o) => [o.key, o]),
+                          ).values(),
+                        );
+
+                        if (availableOptions.length === 0) return null;
+                        const selected =
+                          availableOptions.find((r) =>
+                            checkedItems.has(r.key),
+                          ) ?? null;
+                        const activeCount = dynamicGroup2
+                          .filter((g) => g.key === "discipline")
+                          .flatMap((g) =>
+                            g.items.filter((r) => r.isActive === true),
+                          ).length;
+                        return (
+                          <tr>
+                            <td className={styles["first-column-cell"]}>
+                              5.{activeCount + 1}
+                            </td>
+                            <td
+                              className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                              colSpan={2}
+                              style={{ position: "relative" }}
+                            >
+                              {isOtherMode ? (
+                                <>
+                                  <textarea
+                                    className={`${styles["third-column-textarea"]} ${styles["third-column-textarea-danger"]}`}
+                                    value={newGroup2Label}
+                                    placeholder="ระบุรายการอื่น..."
+                                    rows={1}
+                                    onChange={(e) => {
+                                      setNewGroup2Label(e.target.value);
+                                      adjustTextareaHeight(e.target);
+                                    }}
+                                    style={{
+                                      paddingRight: 28,
+                                      textAlign: "left",
+                                      fontSize: 13,
+                                      fontWeight: 400,
+                                    }}
+                                  />
+                                  <X
+                                    size={18}
+                                    style={{
+                                      position: "absolute",
+                                      top: 5,
+                                      right: 8,
+                                      cursor: "pointer",
+                                      color: "#fff",
+                                      background: "rgba(183, 28, 28, 0.7)",
+                                      borderRadius: "50%",
+                                      padding: 1,
+                                    }}
+                                    onClick={() => {
+                                      setIsOtherMode(false);
+                                      setNewGroup2Label("");
+                                      setCheckedItems(new Set());
+                                    }}
+                                  />
+                                </>
+                              ) : (
+                                <select
+                                  className={styles["sector-cell-select"]}
+                                  style={{
+                                    width: "100%",
+                                    maxWidth: "100%",
+                                    background: "transparent",
+                                    color: "inherit",
+                                    border: "1px solid #ccc",
+                                    padding: "4px 8px",
+                                    fontSize: 14,
+                                  }}
+                                  value={selected?.key ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "__other__") {
+                                      setIsOtherMode(true);
+                                      setCheckedItems(new Set());
+                                    } else {
+                                      setIsOtherMode(false);
+                                      setCheckedItems(
+                                        val ? new Set([val]) : new Set(),
+                                      );
+                                    }
+                                  }}
+                                >
+                                  <option value="">-- เลือกรายการ --</option>
+                                  {availableOptions.map((r) => (
+                                    <option key={r.key} value={r.key}>
+                                      {r.label}
+                                    </option>
+                                  ))}
+                                  <option value="__other__">-- อื่นๆ --</option>
+                                </select>
+                              )}
+                            </td>
+                            <td className={styles["third-column-cell"]}>
+                              {(selected ||
+                                (isOtherMode &&
+                                  newGroup2Label.trim() !== "")) && (
+                                <textarea
+                                  className={`${styles["third-column-textarea"]} ${styles["third-column-textarea-danger"]}`}
+                                  value={
+                                    selected
+                                      ? editingKey === selected.key
+                                        ? editingRaw
+                                        : getDisplayValue(selected.key) === "0"
+                                          ? ""
+                                          : getDisplayValue(selected.key)
+                                      : editingKey === "__other__"
+                                        ? editingRaw
+                                        : getDisplayValue("__other__") === "0"
+                                          ? ""
+                                          : getDisplayValue("__other__")
+                                  }
+                                  placeholder="0"
+                                  rows={1}
+                                  onChange={(e) =>
+                                    selected
+                                      ? handleTextareaChange(selected.key, e)
+                                      : handleTextareaChange("__other__", e)
+                                  }
+                                  onFocus={(e) =>
+                                    selected
+                                      ? handleTextareaFocus(selected.key, e)
+                                      : handleTextareaFocus("__other__", e)
+                                  }
+                                  onKeyDown={(e) =>
+                                    selected
+                                      ? handleTextareaKeyDown(selected.key, e)
+                                      : handleTextareaKeyDown("__other__", e)
+                                  }
+                                  onBlur={() =>
+                                    selected
+                                      ? handleTextareaBlur(selected.key)
+                                      : handleTextareaBlur("__other__")
+                                  }
+                                />
+                              )}
+                            </td>
+                            <td className={styles["fourth-column-cell"]}>
+                              {"คน"}
+                            </td>
+                          </tr>
+                        );
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className={styles["modal-footer"]}>
                 <button
                   type="button"
-                  className={`${styles["guts-icon-btn"]} ${styles["guts-icon-delete"]}`}
-                  onClick={handleDelete}
-                  title="Delete"
-                  aria-label="Delete"
+                  className={styles["btn-secondary"]}
+                  onClick={() => {
+                    setShowAddGroup2(false);
+                    setNewGroup2Label("");
+                    setCheckedItems(new Set());
+                    setIsOtherMode(false);
+                    setEditingKey(null);
+                    setEditingRaw("");
+                    setCounts((prev) => {
+                      const next = { ...prev };
+                      delete next["__other__"];
+                      return next;
+                    });
+                  }}
                 >
-                  <Trash2 size={18} />
+                  ปิดหน้าจอ
+                </button>
+                <button
+                  type="button"
+                  className={styles["btn-primary"]}
+                  onClick={handleSaveModal}
+                  disabled={
+                    (checkedItems.size === 0 && newGroup2Label.trim() === "") ||
+                    Number(
+                      isOtherMode
+                        ? editingKey === "__other__"
+                          ? editingRaw
+                          : (counts["__other__"] ?? "0")
+                        : checkedItems.size > 0
+                          ? editingKey === [...checkedItems][0]
+                            ? editingRaw
+                            : (counts[[...checkedItems][0]] ?? "0")
+                          : "0",
+                    ) < 1
+                  }
+                >
+                  บันทึก
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* dynamic sections rendered from group2 */}
+        {dynamicGroup2.map((g, idx) => (
+          <div
+            key={g.key}
+            ref={wrapperRef}
+            className={styles["mo-table-wrapper"]}
+          >
+            <table className={styles["mo-table"]}>
+              <thead>
+                <tr>
+                  <th
+                    colSpan={1}
+                    className={`${styles["first-column-cell"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
+                  >
+                    {idx + 1}.
+                  </th>
+                  <th
+                    colSpan={4}
+                    className={`${styles["mo-table-header"]} ${styles["mo-table-header-red"]} ${styles["no-border"]}`}
+                  >
+                    <div
+                      className={`${styles["mo-header"]}`}
+                      onClick={() =>
+                        setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      <p
+                        className={
+                          g.key === "discipline"
+                            ? styles["mo-header-red-text"]
+                            : ""
+                        }
+                      >
+                        {g.title}
+                      </p>
+                      <div>
+                        {openGroups[g.key] ? (
+                          <ChevronDown size={18} />
+                        ) : (
+                          <ChevronRight size={18} />
+                        )}
+                      </div>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+
+              {openGroups[g.key] && (
+                <tbody>
+                  {g.items
+                    .filter((r) => r.isActive === true)
+                    .map((r, itemIdx) => (
+                      <tr key={r.key}>
+                        <td className={styles["first-column-cell"]}>
+                          {itemIdx + 1}
+                        </td>
+                        <td className={styles["second-column-cell"]}>
+                          {props.isEditing ? (
+                            <textarea
+                              className={`${styles["third-column-textarea"]} ${styles["textarea-left"]}`}
+                              value={r.label}
+                              rows={1}
+                              onChange={(e) => {
+                                const newLabel = e.target.value;
+                                setDynamicGroup2((prev) =>
+                                  prev.map((pg) =>
+                                    pg.key === "discipline"
+                                      ? {
+                                          ...pg,
+                                          items: pg.items.map((item) =>
+                                            item.key === r.key
+                                              ? { ...item, label: newLabel }
+                                              : item,
+                                          ),
+                                        }
+                                      : pg,
+                                  ),
+                                );
+                              }}
+                            />
+                          ) : (
+                            r.label
+                          )}
+                        </td>
+                        <td
+                          className={`${styles["third-column-cell"]} ${counts[r.key].toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
+                        >
+                          <textarea
+                            ref={inputRef as any}
+                            className={`${styles["third-column-textarea"]} ${g.key === "discipline" ? styles["third-column-textarea-danger"] : ""}`}
+                            value={
+                              editingKey === r.key
+                                ? editingRaw
+                                : getDisplayValue(r.key)
+                            }
+                            rows={1}
+                            disabled={!props.isEditing}
+                            onChange={(e) => handleTextareaChange(r.key, e)}
+                            onPaste={(e) => handleTextareaPaste(r.key, e)}
+                            onFocus={(e) => handleTextareaFocus(r.key, e)}
+                            onKeyDown={(e) => handleTextareaKeyDown(r.key, e)}
+                            onBlur={() => handleTextareaBlur(r.key)}
+                          />
+                        </td>
+                        <td
+                          className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-danger"]}`}
+                        >
+                          {r.unit}
+                        </td>
+                        {props.isEditing && (
+                          <td
+                            className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
+                            onClick={() => handleDeactivate(r.key)}
+                          >
+                            ลบ
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  {/* Add discipline row inline — like MoNewForm */}
+                  {props.isEditing && (
+                    <tr style={{ cursor: "pointer" }} onClick={openAddGroup2}>
+                      <td className={styles["first-column-cell"]}>
+                        {g.items.filter((r) => r.isActive === true).length + 1}
+                      </td>
+                      <td colSpan={4} className={styles["add-row-cell"]}>
+                        <div className={styles["add-row-centered"]}>
+                          <PlusIcon className={styles["pin-icon"]} />
+                          เพิ่มข้อมูลวินัยและการลงโทษ
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              )}
+            </table>
+          </div>
+        ))}
+
+        {showAddGroup3 && (
+          <div
+            className={styles["modal-overlay"]}
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) closeGroup3Modal();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                closeGroup3Modal();
+              }
+            }}
+          >
+            <div
+              className={styles["modal"]}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className={styles["modal-header"]}>
+                <h3>
+                  {editingGroup3Index === null
+                    ? "เพิ่มข้อมูลเข้าพบผู้ว่าจ้าง"
+                    : "รายละเอียดการเข้าพบผู้ว่าจ้าง"}
+                </h3>
+              </div>
+              <div className={styles["modal-body"]}>
+                <div className={styles["mo-table-wrapper"]}>
+                  <table className={styles["mo-table"]}>
+                    <thead>
+                      <tr>
+                        <th
+                          colSpan={1}
+                          className={`${styles["first-column-cell"]} ${styles["no-border"]} `}
+                        >
+                          6.
+                        </th>
+                        <th
+                          colSpan={4}
+                          className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                        >
+                          <div
+                            className={`${styles["mo-header"]}`}
+                            style={{
+                              padding: "6px 8px",
+                              justifyContent: "flex-start",
+                            }}
+                          >
+                            <p className={styles["mo-header-red-text"]}>
+                              เข้าพบผู้ว่าจ้าง
+                            </p>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>
+                          {(() => {
+                            if (editingGroup3Index !== null) {
+                              return `6.${editingGroup3Index + 1}`;
+                            }
+                            const grp = dynamicGroup3.find(
+                              (x) => x.key === "meeting",
+                            );
+                            return `6.${grp ? grp.items.length + 1 : 1}`;
+                          })()}
+                        </td>
+                        <td
+                          colSpan={3}
+                          className={`${styles["group3-second-column-cell"]} ${styles["second-column-cell-left"]}`}
+                        >
+                          <textarea
+                            ref={labelInputRef as any}
+                            className={`${styles["third-column-textarea"]} ${styles["textarea-left"]}`}
+                            value={newGroup3Label}
+                            rows={1}
+                            onChange={handleLabelChangeGroup3}
+                            onPaste={() => {}}
+                            onFocus={handleLabelFocus}
+                            onKeyDown={handleLabelKeyDown}
+                            onBlur={(e) =>
+                              adjustTextareaHeight(
+                                e.target as HTMLTextAreaElement,
+                              )
+                            }
+                            placeholder="เช่น โครงการ XXXXX"
+                            readOnly={!props.isEditing}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>
+                          รายละเอียด
+                        </td>
+                        <td
+                          className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                          colSpan={2}
+                        >
+                          <textarea
+                            ref={labelInputRef as any}
+                            className={`${styles["group3-popup-third-column-textarea1"]} ${styles["textarea-left"]}`}
+                            value={newGroup3Detail}
+                            rows={1}
+                            onChange={handleGroup3DetailChange}
+                            onPaste={() => {}}
+                            onFocus={handleLabelFocus}
+                            onKeyDown={handleLabelKeyDown}
+                            onBlur={(e) =>
+                              adjustTextareaHeight(
+                                e.target as HTMLTextAreaElement,
+                              )
+                            }
+                            placeholder="เช่น รายละเอียดการเข้าพบ"
+                            readOnly={!props.isEditing}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>สถานะ</td>
+                        <td className={`${styles["second-column-cell"]} `}>
+                          <div className={styles["radio-group"]}>
+                            <label className={styles["radio-item"]}>
+                              <input
+                                type="radio"
+                                name="newGroup3Status"
+                                value="normal"
+                                checked={newGroup3Status === "normal"}
+                                onChange={handleGroup3StatusChange}
+                                className={styles["radio-input"]}
+                                disabled={!props.isEditing}
+                              />
+                              <span>ปกติ</span>
+                            </label>
+                            <label className={styles["radio-item"]}>
+                              <input
+                                type="radio"
+                                name="newGroup3Status"
+                                value="warning"
+                                checked={newGroup3Status === "warning"}
+                                onChange={handleGroup3StatusChange}
+                                className={styles["radio-input"]}
+                                disabled={!props.isEditing}
+                              />
+                              <span>ผิดปกติ</span>
+                            </label>
+                            <label className={styles["radio-item"]}>
+                              <input
+                                type="radio"
+                                name="newGroup3Status"
+                                value="danger"
+                                checked={newGroup3Status === "danger"}
+                                onChange={handleGroup3StatusChange}
+                                className={styles["radio-input"]}
+                                disabled={!props.isEditing}
+                              />
+                              <span>จุดเด่น</span>
+                            </label>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>
+                          หมายเหตุ
+                        </td>
+                        <td
+                          className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                          colSpan={2}
+                        >
+                          <textarea
+                            ref={labelInputRef as any}
+                            className={`${styles["group3-popup-third-column-textarea2"]} ${styles["textarea-left"]}`}
+                            value={newGroup3Note}
+                            rows={1}
+                            onChange={handleGroup3NoteChange}
+                            onPaste={() => {}}
+                            onFocus={handleLabelFocus}
+                            onKeyDown={handleLabelKeyDown}
+                            onBlur={(e) =>
+                              adjustTextareaHeight(
+                                e.target as HTMLTextAreaElement,
+                              )
+                            }
+                            placeholder="เช่น หมายเหตุเพิ่มเติม"
+                            readOnly={!props.isEditing}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className={styles["modal-footer"]}>
+                <button
+                  type="button"
+                  className={styles["btn-secondary"]}
+                  onClick={closeGroup3Modal}
+                >
+                  {props.isEditing ? "ปิดหน้าจอ" : "ปิด"}
+                </button>
+                {props.isEditing && (
+                  <button
+                    type="button"
+                    className={styles["btn-primary"]}
+                    onClick={saveGroup3Modal}
+                    disabled={newGroup3Label.trim() === ""}
+                  >
+                    บันทึก
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* dynamic sections rendered from group3 */}
+        {dynamicGroup3.map((g, idx) => (
+          <div
+            key={g.key}
+            ref={wrapperRef}
+            className={styles["mo-table-wrapper"]}
+          >
+            <table className={styles["mo-table"]}>
+              <thead>
+                <tr>
+                  <th
+                    colSpan={1}
+                    className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
+                  >
+                    {idx + 1}.
+                  </th>
+                  <th
+                    colSpan={props.isEditing ? 5 : 4}
+                    className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                  >
+                    <div
+                      className={`${styles["mo-header"]}`}
+                      onClick={() =>
+                        setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      <p className={styles["mo-header-red-text"]}>{g.title}</p>
+                      <div>
+                        {openGroups[g.key] ? (
+                          <ChevronDown size={18} />
+                        ) : (
+                          <ChevronRight size={18} />
+                        )}
+                      </div>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              {openGroups[g.key] && (
+                <tbody>
+                  {g.items.map((r, itemIdx) => (
+                    <tr key={itemIdx}>
+                      <td className={styles["first-column-cell"]}>
+                        {idx + 1}.{itemIdx + 1}
+                      </td>
+                      <td className={styles["group3-second-column-cell"]}>
+                        {props.isEditing ? (
+                          <textarea
+                            className={`${styles["third-column-textarea"]} ${styles["textarea-left"]}`}
+                            value={r.label}
+                            rows={1}
+                            onChange={(e) => {
+                              const newLabel = e.target.value;
+                              setDynamicGroup3((prev) =>
+                                prev.map((pg) =>
+                                  pg.key === "meeting"
+                                    ? {
+                                        ...pg,
+                                        items: pg.items.map((item, i) =>
+                                          i === itemIdx
+                                            ? { ...item, label: newLabel }
+                                            : item,
+                                        ),
+                                      }
+                                    : pg,
+                                ),
+                              );
+                            }}
+                            onClick={(e) => {
+                              // Prevent textarea click from bubbling up to tr click handler
+                              e.stopPropagation();
+                            }}
+                          />
+                        ) : (
+                          <div 
+                            onClick={() => props.isEditing ? handleOpenRow(itemIdx) : undefined}
+                            style={{ cursor: props.isEditing ? 'pointer' : 'default' }}
+                          >
+                            {r.label}
+                          </div>
+                        )}
+                      </td>
+                      <td
+                        className={`${styles["group3-third-column-cell"]} ${styles[`status-${r.status ?? statusOptions[rowStatus[String(itemIdx)] ?? 0].key}`]} `}
+                        onClick={() => {
+                          if (props.isEditing) {
+                            handleOpenRow(itemIdx);
+                          } else {
+                            cycleStatus(itemIdx);
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            if (props.isEditing) {
+                              handleOpenRow(itemIdx);
+                            } else {
+                              cycleStatus(itemIdx);
+                            }
+                          }
+                        }}
+                      >
+                        {(() => {
+                          const key =
+                            r.status ??
+                            statusOptions[rowStatus[String(itemIdx)] ?? 0].key;
+                          const opt =
+                            statusOptions.find((s) => s.key === key) ??
+                            statusOptions[0];
+                          return opt.label;
+                        })()}
+                      </td>
+                      {/* Show separate detail/note columns when editing, otherwise show click to view button */}
+                   
+                        <td
+                          className={`${styles["group3-fourth-column-cell"]} `}
+                        >
+                          <button
+                            type="button"
+                            className={styles["action-link"]}
+                            onClick={() => handleOpenRow(itemIdx)}
+                          >
+                            คลิกดู
+                          </button>
+                        </td>
+              
+                      {props.isEditing && (
+                        <td
+                          className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
+                          onClick={() => handleRemoveGroup3Item(g.key, itemIdx)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleRemoveGroup3Item(g.key, itemIdx);
+                            }
+                          }}
+                        >
+                          ลบ
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                  {/* Add meeting row inline — like MoNewForm */}
+                  {props.isEditing && (
+                    <tr
+                      style={{ cursor: "pointer" }}
+                      onClick={openAddGroup3}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openAddGroup3();
+                        }
+                      }}
+                    >
+                      <td className={styles["first-column-cell"]}>
+                        {idx + 1}.{g.items.length + 1}
+                      </td>
+                      <td colSpan={props.isEditing ? 4 : 3} className={styles["add-row-cell"]}>
+                        <div className={styles["add-row-centered"]}>
+                          <PlusIcon className={styles["pin-icon"]} />
+                          เพิ่มข้อมูลเข้าพบผู้ว่าจ้าง
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              )}
+            </table>
+          </div>
+        ))}
+        
+      </form>
+      
+      {/* Approval Section */}
+      <div className={styles["approval-section"]}>
+        <div className={styles["approval-header"]}>
+          <h3 className={styles["approval-title"]}>
+            การอนุมัติ
+          </h3>
+        </div>
+        <div
+          className={[
+            styles["approval-remark-section"],
+            approvalStatus === "APPROVED"
+              ? styles["approval-remark-approved"]
+              : approvalStatus === "REJECT"
+                ? styles["approval-remark-reject"]
+                : styles["approval-remark-pending"],
+          ].join(" ")}
+        >
+          {isManager ? (
+            <div className={styles["approval-status-row"]}>
+              <label className={styles["approval-status-label"]}>
+                การอนุมัติ:
+              </label>
+              <select
+                className={[
+                  styles["approval-select"],
+                  approvalStatus === "APPROVED"
+                    ? styles["approval-select-approved"]
+                    : approvalStatus === "REJECT"
+                      ? styles["approval-select-reject"]
+                      : styles["approval-select-pending"],
+                ].join(" ")}
+                value={approvalStatus}
+                disabled={!props.isEditing}
+                onChange={(e) =>
+                  setApprovalStatus(e.target.value as "PENDING" | "APPROVED" | "REJECT")
+                }
+              >
+                <option value="PENDING">รออนุมัติ</option>
+                <option value="APPROVED">อนุมัติแล้ว</option>
+                <option value="REJECT">ไม่อนุมัติ</option>
+              </select>
+            </div>
+          ) : null}
+          <div className={styles["approval-content"]}>
+            <AutoResizeTextarea
+              className={styles["approval-textarea"]}
+              rows={3}
+              value={approvalRemark}
+              disabled={!props.isEditing || !isManager}
+              onChange={(e) => setApprovalRemark(e.target.value)}
+              placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
+            />
+          </div>
+        </div>
+      </div>
+      <div className={styles["signature-section"]}>
+        <div className={styles["signature-slot"]}>
+          <div className={styles["signature-title"]}>ผู้ บันทึก</div>
+          <div className={styles["signature-line"]}>
+            {reportItem?.created_by || "ADMIN"}
+          </div>
+        </div>
+        <div className={styles["signature-slot"]}>
+          <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
+          <div className={styles["signature-line"]}>
+            {reportItem?.approved_by || "\u00A0"}
+          </div>
+        </div>
+      </div>
+      
+      <div
+        className={`${styles["guts-Mo-actions"]} ${styles["guts-actions-line"]}`}
+      >
+        {props.isEditing && (
+          <>
+            {/* ── บันทึกรายงาน ── shown for all editing users */}
+            <button
+              type="button"
+              className={styles["guts-save-report-btn"]}
+              disabled={!isDirty}
+              style={!isDirty ? { opacity: 0.35, cursor: "not-allowed" } : {}}
+              onClick={() => {
+                if (isDirty) setShowConfirmSubmit(true);
+              }}
+            >
+              บันทึกรายงาน
+            </button>
+
+            {/* ── Manager-only buttons ── */}
+            {isManager && (
+              <>
+                {/* อนุมัติรายงาน: teal filled, saves with approve flag */}
+                <button
+                  type="button"
+                  className={styles["guts-approve-btn"]}
+                  onClick={async () => {
+                    setApprovalStatus("APPROVED");
+                    await doSave({ approve: true });
+                  }}
+                >
+                  อนุมัติรายงาน
+                </button>
+
+                {/* ส่งกลับแก้ไข หลังอนุมัติ: yellow, only active when currently APPROVED */}
+                <button
+                  type="button"
+                  className={styles["guts-sendback-btn"]}
+                  disabled={approvalStatus !== "APPROVED"}
+                  style={approvalStatus !== "APPROVED" ? { opacity: 0.4, cursor: "not-allowed" } : {}}
+                  onClick={async () => {
+                    setApprovalStatus("REJECT");
+                    await doSave();
+                  }}
+                >
+                  ส่งกลับแก้ไข
+                  <br />
+                  หลังอนุมัติ
                 </button>
               </>
             )}
-          </div>
-        ) : null}
+          </>
+        )}
       </div>
-      <ConfirmDeleteDialog
-        open={showConfirmDelete}
-        title="ยืนยันลบรายการนี้?"
-        description={"รายการนี้จะถูกลบออกจากระบบ ไม่สามารถกู้คืนได้"}
-        onCancel={cancelDelete}
-        onConfirm={confirmDelete}
+
+      <ConfirmCancelDialog
+        open={showConfirmCancel}
+        onCancel={() => setShowConfirmCancel(false)}
+        onConfirm={() => {
+          setShowConfirmCancel(false);
+          handleReset();
+        }}
       />
+
+      <ConfirmSubmitDialog
+        open={showConfirmSubmit}
+        title="ยืนยันบันทึกการแก้ไข?"
+        description="ระบบจะบันทึกข้อมูลที่แก้ไขทั้งหมด"
+        onCancel={() => setShowConfirmSubmit(false)}
+        onConfirm={async () => {
+          setShowConfirmSubmit(false);
+          await doSave();
+        }}
+      />
+
       <InfoModel
         open={showSuccess}
         onClose={() => {
@@ -439,832 +2362,9 @@ export default function MoUpdatePage(props: Props) {
           else window.history.back();
         }}
         variant="success"
-        title={successTitle}
-        description={successDescription}
+        title="บันทึกรายงานสำเร็จ!"
+        description="ระบบได้ทำการบันทึกข้อมูลของคุณเรียบร้อยแล้ว"
       />
-      <form
-        className={`${styles["guts-Mo-layout"]} ${showActionIcons ? styles["icons-visible"] : styles["icons-hidden"]}`}
-        onSubmit={onSubmit}
-      >
-     
-      <div className={styles["region-card-header"]}>
-          <div className={styles["region-card-left"]}>
-            <div className={styles["region-card-avatar"]}>
-              <MapPinCheck size={20} />
-            </div>
-            <div className={styles["region-card-body"]}>
-              <div className={styles["region-card-top-row"]}>
-                <div className={styles["region-card-title-wrap"]}>
-                  <div className={styles["region-card-title"]}>ภาค</div>
-                  <span
-                    className={[
-                      styles["status-badge"],
-                      approvalStatus === "APPROVED"
-                        ? styles["status-approved"]
-                        : approvalStatus === "REJECT"
-                          ? styles["status-reject"]
-                          : styles["status-pending"],
-                    ].join(" ")}
-                  >
-                    <ApprovalStatusIcon value={approvalStatus} />
-                    {approvalStatusLabel(approvalStatus)}
-                  </span>
-                </div>
-              </div>
-
-              <div className={styles["region-card-value"]}>{region || "-"}</div>
-            </div>
-          </div>
-
-          <div className={styles["region-card-right"]}>
-            <p className={styles["region-card-meta-id"]}>#{props.item?.id ?? ""}</p>
-            <p className={styles["region-card-meta-date"]}>
-              {props.item?.created_at
-                ? new Date(props.item.created_at).toLocaleDateString("th-TH")
-                : date}
-            </p>
-          </div>
-        </div>
-  
-  
-
-        <div
-          className={[
-            styles["guts-box"],
-            styles["collapsible"],
-            leaveOpen ? "" : styles["collapsed"],
-          ].join(" ")}
-        >
-          <div
-            className={`${styles["guts-box-title"]} ${styles["collapsible"]}`}
-            role="button"
-            aria-expanded={leaveOpen}
-            onClick={() => setLeaveOpen((v) => !v)}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setLeaveOpen((v) => !v);
-            }}
-          >
-            ลา
-            <button
-              type="button"
-              className={styles["guts-collapse-toggle"]}
-              aria-label={leaveOpen ? "ย่อ ลา" : "ขยาย ลา"}
-            >
-              {leaveOpen ? (
-                <ChevronDown size={18} />
-              ) : (
-                <ChevronRight size={18} />
-              )}
-            </button>
-          </div>
-          <div
-            className={`${styles["guts-box-body"]} ${leaveOpen ? "" : styles["collapsed"]}`}
-          >
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>ลาป่วย</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={sickLeave}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setSickLeave(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>ลากิจ</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={personalLeave}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setPersonalLeave(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>ลาอื่น ๆ</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={otherLeaveType}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setOtherLeaveType(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={[
-            styles["guts-box"],
-            styles["collapsible"],
-            personnelOpen ? "" : styles["collapsed"],
-          ].join(" ")}
-        >
-          <div
-            className={styles["guts-box-title"]}
-            role="button"
-            aria-expanded={personnelOpen}
-            onClick={() => setPersonnelOpen((v) => !v)}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
-                setPersonnelOpen((v) => !v);
-            }}
-          >
-            กำลังพล
-            <button
-              type="button"
-              className={styles["guts-collapse-toggle"]}
-              aria-label={personnelOpen ? "ย่อ กำลังพล" : "ขยาย กำลังพล"}
-            >
-              {personnelOpen ? (
-                <ChevronDown size={18} />
-              ) : (
-                <ChevronRight size={18} />
-              )}
-            </button>
-          </div>
-
-          <div
-            className={`${styles["guts-box-body"]} ${personnelOpen ? "" : styles["collapsed"]}`}
-          >
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>ขาดงาน</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={absentCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setAbsentCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[
-                styles["guts-subbox"],
-                workShiftOpen ? "" : styles["collapsed"],
-              ].join(" ")}
-            >
-              <div
-                className={styles["guts-subbox-title"]}
-                role="button"
-                tabIndex={0}
-                aria-expanded={workShiftOpen}
-                onClick={() => setWorkShiftOpen((v) => !v)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ")
-                    setWorkShiftOpen((v) => !v);
-                }}
-              >
-                <label className={styles["guts-label"]}>การควงกะ</label>
-                <div className={styles["guts-subbox-toggle"]} aria-hidden>
-                  {workShiftOpen ? (
-                    <ChevronDown size={18} />
-                  ) : (
-                    <ChevronRight size={18} />
-                  )}
-                </div>
-              </div>
-
-              <div
-                className={`${styles["guts-subbox-body"]} ${workShiftOpen ? "" : styles["collapsed"]}`}
-              >
-                <div
-                  className={[styles["guts-field-row"], styles["two-col"]].join(
-                    " ",
-                  )}
-                >
-                  <label className={styles["guts-label"]}>จัด 18 ชั่วโมง</label>
-                  <div className={styles["guts-input-group"]}>
-                    <input
-                      className={`${styles["guts-input"]} ${styles["small"]}`}
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={shift18}
-                      disabled={!showActionIcons}
-                      onChange={(e) =>
-                        setShift18(e.target.value.replace(/\D/g, ""))
-                      }
-                      onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="0"
-                      inputMode="numeric"
-                    />
-                    <span className={styles["guts-suffix"]}>คน</span>
-                  </div>
-                </div>
-
-                <div
-                  className={[styles["guts-field-row"], styles["two-col"]].join(
-                    " ",
-                  )}
-                >
-                  <label className={styles["guts-label"]}>จัด 24 ชั่วโมง</label>
-                  <div className={styles["guts-input-group"]}>
-                    <input
-                      className={`${styles["guts-input"]} ${styles["small"]}`}
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={shift24}
-                      disabled={!showActionIcons}
-                      onChange={(e) =>
-                        setShift24(e.target.value.replace(/\D/g, ""))
-                      }
-                      onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="0"
-                      inputMode="numeric"
-                    />
-                    <span className={styles["guts-suffix"]}>คน</span>
-                  </div>
-                </div>
-
-                <div
-                  className={[styles["guts-field-row"], styles["two-col"]].join(
-                    " ",
-                  )}
-                >
-                  <label className={styles["guts-label"]}>จัด 36 ชั่วโมง</label>
-                  <div className={styles["guts-input-group"]}>
-                    <input
-                      className={`${styles["guts-input"]} ${styles["small"]}`}
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={shift36}
-                      disabled={!showActionIcons}
-                      onChange={(e) =>
-                        setShift36(e.target.value.replace(/\D/g, ""))
-                      }
-                      onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="0"
-                      inputMode="numeric"
-                    />
-                    <span className={styles["guts-suffix"]}>คน</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={[
-            styles["guts-box"],
-            styles["collapsible"],
-            disciplineOpen ? "" : styles["collapsed"],
-          ].join(" ")}
-        >
-          <div
-            className={styles["guts-box-title"]}
-            role="button"
-            aria-expanded={disciplineOpen}
-            onClick={() => setDisciplineOpen((v) => !v)}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
-                setDisciplineOpen((v) => !v);
-            }}
-          >
-            ผิดข้อปฏิบัติ / การตักเตือน
-            <button
-              type="button"
-              className={styles["guts-collapse-toggle"]}
-              aria-label={
-                disciplineOpen ? "ย่อ ผิดข้อปฏิบัติ" : "ขยาย ผิดข้อปฏิบัติ"
-              }
-            >
-              {disciplineOpen ? (
-                <ChevronDown size={18} />
-              ) : (
-                <ChevronRight size={18} />
-              )}
-            </button>
-          </div>
-
-          <div
-            className={`${styles["guts-box-body"]} ${disciplineOpen ? "" : styles["collapsed"]}`}
-          >
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>หลับเวร</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={sleepCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setSleepCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>เล่นโทรศัพท์</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={phoneCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setPhoneCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>ไม่แขวนบัตร</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={badgeCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setBadgeCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-            <div className={styles["guts-field-row"]}>
-              <label
-                className={[styles["guts-label"], styles["section-label"]].join(
-                  " ",
-                )}
-              >
-                การตักเตือน
-              </label>
-            </div>
-
-            <AutoResizeTextarea
-              className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-              rows={2}
-              value={disciplineNote}
-              disabled={!showActionIcons}
-              onChange={(e) => setDisciplineNote(e.target.value)}
-              placeholder="บันทึกการตักเตือน (สาเหตุ/คำสั่ง/ผู้รับผิดชอบ)"
-            />
-          </div>
-        </div>
-
-        <div
-          className={[
-            styles["guts-box"],
-            styles["collapsible"],
-            uniformOpen ? "" : styles["collapsed"],
-          ].join(" ")}
-        >
-          <div
-            className={styles["guts-box-title"]}
-            role="button"
-            aria-expanded={uniformOpen}
-            onClick={() => setUniformOpen((v) => !v)}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setUniformOpen((v) => !v);
-            }}
-          >
-            เครื่องแต่งกาย
-            <button
-              type="button"
-              className={styles["guts-collapse-toggle"]}
-              aria-label={
-                uniformOpen ? "ย่อ เครื่องแต่งกาย" : "ขยาย เครื่องแต่งกาย"
-              }
-            >
-              {uniformOpen ? (
-                <ChevronDown size={18} />
-              ) : (
-                <ChevronRight size={18} />
-              )}
-            </button>
-          </div>
-
-          <div
-            className={`${styles["guts-box-body"]} ${uniformOpen ? "" : styles["collapsed"]}`}
-          >
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>หมวก เก่า:</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={hatCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setHatCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>เสื้อ เก่า:</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={shirtCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setShirtCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>กางเกง เก่า:</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={pantsCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setPantsCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>รองเท้า เก่า:</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={shoesCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setShoesCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>คน</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={[
-            styles["guts-box"],
-            styles["collapsible"],
-            otherOpen ? "" : styles["collapsed"],
-          ].join(" ")}
-        >
-          <div
-            className={styles["guts-box-title"]}
-            role="button"
-            aria-expanded={otherOpen}
-            onClick={() => setOtherOpen((v) => !v)}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setOtherOpen((v) => !v);
-            }}
-          >
-            อื่น ๆ
-            <button
-              type="button"
-              className={styles["guts-collapse-toggle"]}
-              aria-label={otherOpen ? "ย่อ อื่น ๆ" : "ขยาย อื่น ๆ"}
-            >
-              {otherOpen ? (
-                <ChevronDown size={18} />
-              ) : (
-                <ChevronRight size={18} />
-              )}
-            </button>
-          </div>
-
-          <div
-            className={`${styles["guts-box-body"]} ${otherOpen ? "" : styles["collapsed"]}`}
-          >
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-            >
-              <label className={styles["guts-label"]}>พบผู้ว่างจ้าง:</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={foundCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setFoundCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>จุด</span>
-              </div>
-            </div>
-
-            <div className={styles["guts-detail-box"]}>
-              <AutoResizeTextarea
-                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-                rows={2}
-                value={foundNote}
-                disabled={!showActionIcons}
-                onChange={(e) => setFoundNote(e.target.value)}
-                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-              />
-            </div>
-
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-              style={{ marginTop: 8 }}
-            >
-              <label className={styles["guts-label"]}>อบรม:</label>
-              <div className={styles["guts-input-group"]}>
-                <input
-                  className={`${styles["guts-input"]} ${styles["small"]}`}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={trainCount}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setTrainCount(e.target.value.replace(/\D/g, ""))
-                  }
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="0"
-                  inputMode="numeric"
-                />
-                <span className={styles["guts-suffix"]}>จุด:</span>
-              </div>
-            </div>
-
-            <div className={styles["guts-detail-box"]}>
-              <AutoResizeTextarea
-                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-                rows={2}
-                value={otherNote}
-                disabled={!showActionIcons}
-                onChange={(e) => setOtherNote(e.target.value)}
-                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-              />
-            </div>
-            <div
-              className={[styles["guts-field-row"], styles["two-col"]].join(
-                " ",
-              )}
-              style={{ marginTop: 8 }}
-            >
-              <label className={styles["guts-label"]}>เพิ่มเติม:</label>
-            </div>
-
-            <div className={styles["guts-detail-box"]}>
-              <AutoResizeTextarea
-                className={`${styles["guts-input-full"]} ${styles["guts-detail-textarea"]} ${styles["approval-textarea"]}`}
-                rows={2}
-                value={trainNote}
-                disabled={!showActionIcons}
-                onChange={(e) => setTrainNote(e.target.value)}
-                placeholder="รายละเอียด/เวลา/ผู้เกี่ยวข้อง"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className={styles["approval-section"]}>
-          <div
-            className={[
-              styles["approval-remark-section"],
-              approvalStatus === "APPROVED"
-                ? styles["approval-remark-approved"]
-                : approvalStatus === "REJECT"
-                  ? styles["approval-remark-reject"]
-                  : styles["approval-remark-pending"],
-            ].join(" ")}
-          >
-            {isManager ? (
-              <div className={styles["approval-status-row"]}>
-                <label className={styles["approval-status-label"]}>
-                  การอนุมัติ:
-                </label>
-                <select
-                  className={[
-                    styles["approval-select"],
-                    approvalStatus === "APPROVED"
-                      ? styles["approval-select-approved"]
-                      : approvalStatus === "REJECT"
-                        ? styles["approval-select-reject"]
-                        : styles["approval-select-pending"],
-                  ].join(" ")}
-                  value={approvalStatus}
-                  disabled={!showActionIcons}
-                  onChange={(e) =>
-                    setApprovalStatus(toApprovalStatus(e.target.value))
-                  }
-                >
-                  <option value="PENDING">รออนุมัติ</option>
-                  <option value="APPROVED">อนุมัติแล้ว</option>
-                  <option value="REJECT">ไม่อนุมัติ</option>
-                </select>
-              </div>
-            ) : null}
-
-            <div className={styles["approval-content"]}>
-              <AutoResizeTextarea
-                className={styles["approval-textarea"]}
-                rows={3}
-                value={approvalRemark}
-                disabled={!isManager || !showActionIcons}
-                onChange={(e) => setApprovalRemark(e.target.value)}
-                placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
-              />
-            </div>
-          </div>
-          <div className={styles["signature-section"]}>
-            <div className={styles["signature-slot"]}>
-              <div className={styles["signature-title"]}>ผู้ บันทึก</div>
-              <div className={styles["signature-line"]}>
-                {props.item?.created_by || "ADMIN"}
-              </div>
-            </div>
-            <div className={styles["signature-slot"]}>
-              <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
-              <div className={styles["signature-line"]}>
-                {props.item?.approved_by || "\u00A0"}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={styles["guts-Mo-actions"]}
-          style={{ gridColumn: "1 / 2" }}
-        >
-          {showActionIcons && (
-            <>
-              <button
-                type="button"
-                className={`${styles["guts-btn"]} ${styles["guts-cancel-btn"]}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowActionIcons((v) => !v);
-                }}
-              >
-                ยกเลิก
-              </button>
-
-              <button
-                type="submit"
-                className={`${styles["guts-btn"]} ${styles["guts-submit-btn"]}`}
-                disabled={!hasAnyData() || !isDirty()}
-              >
-                อัปเดต
-              </button>
-            </>
-          )}
-        </div>
-      </form>
     </>
   );
 }
-
-// also provide a named export for easier re-exports/imports
-export { MoUpdatePage };

@@ -1,1074 +1,896 @@
-/* --- REPLACED: remove old mixed selectors and conflicting max-width --- */
-/* Separate submit vs back button styles (do NOT mix) */
-
-/* submit button handled by consolidated .guts-submit-btn below */
-
-/* consolidated back/action styles appear later in file */
-
-/* Back hover removed */
-
-/* keep responsive layout (side-by-side on wide screens) */
-@media (min-width: 720px) {
-  .guts-Mo-actions {
-    flex-direction: row;
+.sector-cell-narrow {
+    padding: 2px 2px !important;
+    background-color: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
+    width: 32px;
+    min-width: 32px;
+    max-width: 36px;
+    font-size: 15px;
+    font-weight: bold;
+    align-items: center;
     justify-content: center;
-    gap: 12px;
-  }
+    height: 36px;
+    min-height: 36px;
+    height: 36px;
+    min-height: 36px;
+}
+.pin-icon {
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 auto;
+    font-weight: bold;
+    color: #0b4bd6 !important; /* match the blue text */
+    fill: currentColor !important;
+    stroke: currentColor !important;
+    margin-right: 2px; /* tiny gap if needed */
 }
 
-/* keep responsive spacing when actions are horizontal in other contexts */
-@media (min-width: 720px) {
-  .guts-Mo-actions {
-    flex-direction: row;
-  }
+.sector-cell-bodytext {
+    padding: 4px 8px !important;
+    text-align: left !important;
+    background-color: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
+    vertical-align: middle;
+    font-size: 14px;
+    font-weight: bold;
 }
 
-/* Back/action styles removed per request */
-
-/* Ensure action buttons appear inline on narrow screens without overflowing */
-@media (max-width: 420px) {
-  .guts-Mo-actions {
-    flex-direction: row; /* keep them side-by-side */
-    gap: 8px;
+.sector-cell-bodytext-inner {
+    display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: nowrap;
-  }
-
-  .guts-Mo-actions .guts-btn,
-  .guts-Mo-actions .guts-submit-btn {
-    min-width: 0 !important; /* allow shrinking */
-    max-width: none !important;
-    width: auto !important; /* don't force full-width per-button */
-    flex: 1 1 0; /* let both buttons share the row equally */
-  }
-
-  /* reduce overall padding/margins so buttons fit better on tiny screens */
-  .guts-Mo-actions {
-    margin-top: 8px;
-  }
+    gap: 8px;
+    width: 100%;
+    vertical-align: middle;
 }
+.sector-header-fullwidth {
+    width: 100%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box;
+    font-weight: bold;
+    font-size: 16px;
+    /* ensure the header container fills the table cell height */
+    height: 100%;
+}
+.plus-header-fullwidth {
+    width: auto;
+    display: inline-flex;
+    color: var(--brandDark, rgba(2, 75, 118, 0.9)) !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    box-sizing: border-box;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 4px 8px;
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    max-width: 100%;
+}
+
+.plus-header-fullwidth:hover {
+    background-color: #f0f2f5;
+}
+
+.plus-header-fullwidth span {
+    color: var(--brandDark, rgba(2, 75, 118, 0.9));
+    font-weight: 500;
+    text-decoration: none;
+    line-height: 1;
+    text-align: left;
+}
+/* Trimmed CSS: only classes used by MoNewForm.tsx */
 
 /* Back button (outside form) */
-.gut-detail-btns-box {
-  display: flex;
-  width: 100%;
-  justify-content: space-between; /* spread back pill and action icons */
-  align-items: center;
-  gap: 8px;
-  margin: 12px 0;
-  box-sizing: border-box;
+.guts-back-outer {
+    display: flex;
+    max-width: 420px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    padding: 0 0 2px 0;
+    box-sizing: border-box;
 }
 
-/* Hover states */
-.gut-back-icon {
-  height: 40px;
-  padding: 10px; /* make it a broader pill */
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--brandDark, rgba(2, 75, 118, 0.9));
-  border: 1px solid rgba(2, 75, 118, 0.06);
-  color: #ffffff;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1);
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    background 0.12s ease,
-    color 0.12s ease;
+.guts-back-outer .guts-back-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1) !important;
+    background: rgba(4, 110, 146, 0.9) !important;
+    border-color: rgba(2, 75, 118, 0.18) !important;
 }
 
-.gut-back-icon:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
-  background: rgba(4, 110, 146, 0.9);
-  border-color: rgba(2, 75, 118, 0.18);
-}
-
-/* ensure the arrow icon follows the button color */
-.gut-back-icon svg {
-  stroke: currentColor !important;
-  fill: none !important;
-}
-
-.guts-action-icons {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* Small square icon buttons that sit to the right of the back pill */
-.guts-action-icons {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.guts-icon-btn {
-  height: 38px;
-  width: 38px;
-  padding: 0;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  border: 1px solid rgba(2, 75, 118, 0.06);
-  color: var(--brandDark, rgba(2, 75, 118, 0.9));
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(2, 16, 43, 0.1);
-}
-
-.guts-icon-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
-}
-
-/* Hover specifics: Save = blue background */
-
-/* Save button uses attribute selector (no extra class needed) */
-.guts-icon-btn[title="Save"]:hover {
-  background: rgba(2, 75, 118, 0.14); /* light blue */
-  color: rgba(2, 75, 118, 0.9); /* icon stroke follows this (darker blue) */
-  border-color: rgba(2, 75, 118, 0.18);
-  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
-  transform: translateY(-2px);
-}
-
-.guts-icon-btn[title="Save"]:hover svg {
-  stroke: currentColor !important;
-  fill: none !important;
-}
-
-.guts-icon-btn[title="Preview PDF"]:hover {
-  background: rgba(16, 185, 129, 0.14); /* light green */
-  color: rgb(16, 185, 129); /* icon stroke follows this (dark green) */
-  border-color: rgba(16, 185, 129, 0.18);
-  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
-  transform: translateY(-2px);
-}
-
-.guts-icon-btn[title="Preview PDF"]:hover svg {
-  stroke: currentColor !important;
-  fill: none !important;
-}
-
-/* Ensure icons use the button's color by default */
-.guts-icon-btn svg {
-  stroke: currentColor !important;
-  fill: none !important;
-}
-
-/* Delete button: keep red color but same movement as Save */
-.guts-icon-delete:hover {
-  background: rgba(185, 28, 28, 0.14); /* light red */
-  color: rgb(185, 28, 28); /* icon stroke follows this (dark red) */
-  border-color: rgba(185, 28, 28, 0.18);
-  box-shadow: 0 14px 32px rgba(2, 75, 118, 0.1);
-  transform: translateY(-2px);
-}
-
-.guts-icon-delete:hover svg {
-  stroke: currentColor !important;
-  fill: none !important;
+.guts-back-btn {
+    height: 40px !important;
+    padding: 10px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--brandDark, rgba(2, 75, 118, 0.9)) !important;
+    border: 1px solid rgba(2, 75, 118, 0.06) !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1) !important;
+    width: auto !important;
+    box-sizing: border-box;
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        background 0.12s ease,
+        color 0.12s ease !important;
 }
 
 /* MO form shell */
 .guts-Mo-layout {
-  margin-top: 30px;
-  margin-bottom: 0;
-  border-radius: 10px;
-  border: 2px solid rgba(2, 75, 118, 0.18);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.1);
-  padding: 14px 0px 0px 0px;
-  display: grid;
-  grid-template-columns: 1fr; /* always single column (mobile-first) */
-  gap: 5px;
-  align-items: start;
+    margin-top: 14px;
+    margin-bottom: 0;
+    border-radius: 5px;
+    border: 2px solid rgba(2, 75, 118, 0.18);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.1);
+    padding: 14px 1px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    align-items: start;
 }
 
-/* When the inline action icons are hidden, use a lighter border/shadow */
-.guts-Mo-layout.icons-hidden {
-  border: 2px solid rgba(2, 75, 118, 0.18);
-  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.1);
+.sector-table-wrapper {
+    margin-bottom: 0;
 }
 
-/* Explicit rule for visible state to ensure consistent look */
-.guts-Mo-layout.icons-visible {
-  border: 2px solid rgba(2, 75, 118, 0.24);
-  box-shadow: 0 18px 34px rgba(2, 75, 118, 0.14);
+.sector-cell {
+    padding: 4px 8px !important;
+    text-align: left !important;
+    background-color: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
+    vertical-align: middle;
 }
 
-/* box title */
-.guts-box-title {
-  font-weight: 900;
-  color: var(--blueText);
-  font-size: 17px;
-  line-height: 1.1;
-  margin: 0 0 10px;
+.sector-cell-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin-right: 8px;
 }
 
-.region-card-header {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  padding: 4px 9px 6px;
+.sector-cell-select {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 0 !important;
+    border: 1px solid #fff;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    outline: none;
+    box-sizing: border-box;
+
+    /* Responsive fixed width: won't stretch to fill the whole header */
+    min-width: 140px; /* don't go smaller than this */
+    max-width: 60%; /* allow growth up to 60% of header */
+    width: auto; /* let content determine width within min/max */
+    flex: 0 0 auto; /* keep current horizontal sizing behaviour */
+
+    /* make the select stretch vertically to match its header container */
+    align-self: stretch;
+    height: 100%;
 }
 
-.region-card-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
+.sector-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
 }
 
-.region-card-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  align-self: center;
-  gap: 4px;
-  min-width: fit-content;
+.sector-cell-select-green {
+    background-color: var(--brandDark) !important;
+    color: #fff;
 }
 
-.region-card-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.08);
-  color: var(--brandDark, #014f86);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.region-card-avatar svg {
-  stroke: currentColor;
-}
-
-.region-card-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.region-card-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  min-width: 0;
-}
-
-.region-card-title-wrap {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.region-card-title {
-  font-weight: 800;
-  font-size: 16px;
-  color: var(--blueText);
-  white-space: nowrap;
-}
-
-.region-card-meta-date,
-.region-card-meta-id {
-  display: block;
-  margin: 0;
-  color: var(--blueText);
-  text-align: right;
-  line-height: 1;
+.sector-cell-select:hover,
+.sector-cell-select:focus {
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 .region-card-meta-date {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.region-card-meta-id {
-  font-size: 16px;
-  font-weight: 700;
+    display: block;
+    margin: 0;
+    color: var(--blueText);
+    text-align: right;
+    line-height: 1;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .region-card-value {
-  width: 100%;
-  color: #334155;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border-radius: 999px;
-  padding: 2px 3px;
-  font-size: 10px;
-  font-weight: 900;
-  border: 1px solid transparent;
-  line-height: 1;
-  white-space: nowrap;
-  word-break: keep-all;
+    width: 100%;
+    color: var(--blueText);
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.1;
+    padding-left: 8px;
 }
 
-.status-badge svg {
-  flex-shrink: 0;
+/* Table styles used by the form */
+.mo-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
 }
 
-.status-pending {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 247, 237, 0.96),
-    rgba(255, 237, 213, 0.98)
-  );
-  color: rgb(154, 82, 20);
-  border-color: rgba(245, 158, 11, 0.3);
+/* ensure the table wrapper allows expanded cells to be visible */
+.mo-table-wrapper {
+    position: relative;
+    overflow: visible; /* allow cells to grow without clipping */
 }
 
-.status-approved {
-  background: linear-gradient(
-    180deg,
-    rgba(240, 253, 244, 0.96),
-    rgba(220, 252, 231, 0.98)
-  );
-  color: rgb(6, 95, 70);
-  border-color: rgba(52, 211, 153, 0.34);
+.mo-table th,
+.mo-table td {
+    border: none;
+    text-align: center;
+    vertical-align: top;
 }
 
-.status-reject {
-  background: linear-gradient(
-    180deg,
-    rgba(254, 242, 242, 0.96),
-    rgba(254, 226, 226, 0.98)
-  );
-  color: rgb(153, 27, 27);
-  border-color: rgba(248, 113, 113, 0.32);
+.mo-table td {
+    font-size: 12px;
 }
 
-.guts-box {
-  margin-bottom: 0; /* spacing handled by grid gap */
-  padding-bottom: 0; /* spacing handled by grid gap */
-  background: #ffffff;
-  margin-left: 3px;
-  margin-right: 3px;
-  border: 1px solid #d8e1ec;
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.12);
+.mo-table th {
+    font-size: 13px;
 }
 
-/* collapsible box (used for "ลา") */
-.guts-box.collapsible .guts-box-title {
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  color: var(--blueText);
-  background: #f3f7fc;
-  margin: 0;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  padding: 7px 10px;
+/* Restore header padding explicitly (headers should keep slightly larger padding) */
+.mo-table th {
+    padding: 5px 6px;
 }
 
-.guts-box-body {
-  padding: 5px;
+/* default table header styling */
+.mo-table th {
+    background-color: #003366;
+    color: white;
+    font-weight: bold;
 }
 
-/* label + control row (default: horizontal — label left, control right) */
-.guts-field-row {
-  display: flex;
-  flex-direction: row; /* keep inline on mobile */
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 0;
+/* Add row dividers — bottom border on each data row */
+.mo-table tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+    border-left: 1px solid #e5e7eb;
+    border-right: 1px solid #e5e7eb;
 }
 
-.guts-field-row .guts-label {
-  max-width: 40%;
-  text-align: left;
-  font-weight: 700;
-  color: #334155;
-  font-size: 15px;
-  padding-left: 6px;
+/* Add reduced default padding for common data cells */
+.mo-table td.first-column-cell,
+.mo-table td.second-column-cell,
+.mo-table td.third-column-cell,
+.mo-table td.fourth-column-cell,
+.mo-table td.five-column-cell {
+    padding: 6px 8px;
+    box-sizing: border-box;
 }
 
-.guts-field-row .guts-input,
-.guts-field-row select,
-.guts-field-row textarea {
-  max-width: 60%;
-  align-self: right;
-  height: 38px;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 500;
-  font-size: 14px;
-  color: #334155;
-  border: 1.5px solid rgba(92, 133, 214, 0.18);
-  background: #fff;
-  box-shadow: none;
-  transition:
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
+/* red variant for special groups (applied to the same th element)
+   use the more specific selector to override defaults */
+.mo-table th.mo-table-header-red {
+    background-color: #9b111e; /* dark red */
+    color: #ffffff;
+    border-color: #7f0f0f !important;
+}
+.mo-table th.mo-table-header-white {
+    background-color: transparent;
+    border: none;
+    padding: 0;
 }
 
-.guts-field-row .guts-input-full,
-.guts-field-row select,
-.guts-field-row textarea {
-  max-width: 100%;
-  align-self: right;
-  height: 38px;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 500;
-  font-size: 14px;
-  color: #334155;
-  border: 1.5px solid rgba(92, 133, 214, 0.18);
-  background: #fff;
-  box-shadow: none;
-  transition:
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
+.mo-location-table-header {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    text-align: left !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.mo-pluse-button-header {
+    padding: 0;
+    text-align: left !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.location-table-header {
+    /* let inner .mo-header control padding so inner content lines up with cells */
+    padding: 6px 8px;
+    line-height: 1.1;
+}
+.mo-table th.first-column-cell {
+    font-size: smaller;
+    font-weight: bold;
+    text-align: left !important;
+    width: 5%;
+}
+.mo-table-header {
+    /* let inner .mo-header control padding so inner content lines up with cells */
+    padding: 0 !important;
+    line-height: 1.1;
 }
 
-.guts-field-row textarea.guts-input {
-  min-height: 88px;
-  height: auto;
+.mo-header {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px; /* match table cell padding so edges align */
+    box-sizing: border-box;
 }
 
-.guts-field-row .guts-input:focus,
-.guts-field-row select:focus,
-.guts-field-row textarea:focus {
-  border-color: #5c85d6;
-  box-shadow: 0 0 0 3px rgba(92, 133, 214, 0.12);
-  outline: none;
-  background: #fafbfc;
+/* ensure the header text takes remaining space and the chevron has a fixed slot */
+.mo-header p {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 700;
+    flex: 1 1 auto;
+    text-align: left;
 }
 
-/* two-column small-row: label left, input+suffix right (mobile inline) */
-.guts-field-row.two-col {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 3px 0;
+/* make the chevron occupy a fixed width so its presence/absence doesn't shift layout */
+.mo-header svg,
+.mo-header .chevron-slot {
+    flex: 0 0 28px; /* fixed slot for the chevron */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.guts-field-row.two-col .guts-label {
-  flex: 0 0 120px; /* fixed label column width */
-  max-width: 40%;
-  padding-left: 6px;
-  text-align: left;
-  font-size: 14px;
+/* ensure chevron slot doesn't show border: remove any inherited border */
+.mo-header .chevron-slot {
+    border: none;
+    padding: 0;
 }
 
-.guts-field-row.two-col .guts-input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1 1 auto;
-  justify-content: flex-start;
+/* if you prefer the chevron visually separated, the SVG can be nudged */
+.mo-header svg {
+    margin-left: 6px;
 }
 
-.guts-field-row.two-col .guts-input.small {
-  width: 60px;
-  height: 34px;
-  min-width: 60px;
-  max-width: 60px;
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: #334155;
+/* red header style for discipline group */
+.mo-table-header-red {
+    background: #9b111e; /* dark red */
+    color: #fff;
+    border-color: #7f0f0f !important;
 }
 
-.guts-field-row.two-col .guts-suffix {
-  font-weight: 700;
-  color: #334155;
-  font-size: 15px;
-  white-space: nowrap;
+/* red text style for header title when in red header */
+.mo-header-red-text {
+    color: #fff;
+    font-weight: 700;
 }
 
-/* make full-width textareas appear as real multi-line fields */
-.guts-input-full {
-  min-height: 52px;
-  height: auto;
-  padding: 12px 14px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.6;
-  color: #334155;
-  border-radius: 8px;
-  box-sizing: border-box;
+/* textarea danger (red numbers) */
+.third-column-textarea-danger {
+    color: #b71c1c; /* red */
+    font-weight: 500;
 }
 
-/* override the generic 35px height so it doesn't shrink full-width textareas */
-.guts-field-row .guts-input-full {
-  height: auto !important;
-  min-height: 48px !important;
+/* five-column cell base + danger style (red + underline) */
+.five-column-cell {
+    font-size: smaller;
+    text-align: center;
+    box-sizing: border-box;
+    min-width: 36px;
+    width: 10%;
+    padding: 2px;
+}
+.five-column-cell-danger {
+    color: #b71c1c;
+    text-decoration: underline;
+    text-decoration-color: #b71c1c;
+    font-weight: 700;
+    text-align: center;
 }
 
-/* small numeric inputs used inside collapsed section */
-.guts-input.small {
-  width: 60px;
-  max-width: 60px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 14px;
-  color: #334155;
-  border-radius: 6px;
-  padding-top: 5px;
-  padding-bottom: 5px;
+.no-border {
+    border: none !important;
 }
 
-.guts-field-row input.guts-input:not(:focus),
-.guts-field-row input.guts-input.small:not(:focus) {
-  background: #f3f6f9;
-  border: none;
-  box-shadow: none;
+.mo-table td.first-column-cell {
+    font-weight: bold;
+    background-color: transparent;
+    text-align: left !important;
+    width: 5%;
+    border-right: 1px solid #e5e7eb !important;
 }
 
-.guts-field-row input.guts-input:focus,
-.guts-field-row input.guts-input.small:focus {
-  background: #ffffff;
-  border: none;
-  box-shadow: 0 0 0 3px rgba(92, 133, 214, 0.12);
+.mo-table td.second-column-cell {
+    text-align: right !important;
+    background-color: transparent;
+    width: 45%;
+    word-break: break-word;
+    font-weight: 600;
+    vertical-align: middle;
+    font-size: 13px;
+    overflow: visible;
 }
 
-.guts-field-row input.guts-input:disabled,
-.guts-field-row input.guts-input.small:disabled {
-  background: #f3f6f9;
-  border: none;
-  box-shadow: none;
-  color: #334155;
-  opacity: 1;
+.mo-table td.group3-second-column-cell {
+    padding: 1px 2px;
+    text-align: left !important;
+    background-color: transparent;
+    width: 35%;
+    word-break: break-word;
+    font-weight: 600;
+    vertical-align: middle;
+    font-size: 13px;
 }
 
-.guts-collapse-toggle {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--blueText);
+.mo-table td.third-column-cell {
+    position: relative;
+    text-align: center !important;
+    font-weight: bold;
+    padding: 0 !important;
+    width: 10%;
+    background-color: transparent !important;
+    border: none !important;
+    vertical-align: middle;
 }
 
-/* hide body when collapsed */
-.guts-box-body.collapsed {
-  display: none;
+/* Zebra striping */
+.mo-table tbody tr:nth-child(even) td {
+    background-color: #eff1f3 !important;
 }
 
-/* when the box wrapper itself is marked collapsed, remove extra bottom padding
-   so the collapsed box visually shrinks (prevents leftover space) */
-.guts-box.collapsible.collapsed {
-  padding-bottom: 0;
+.mo-table td.group3-third-column-cell {
+    position: relative;
+    text-align: center !important;
+    font-weight: bold;
+    padding: 0 !important;
+    width: 10%;
+    min-height: 100%;
+    background-color: transparent;
+    display: table-cell;
+    vertical-align: middle;
+    box-sizing: border-box;
+    cursor: pointer;
+    line-height: 1;
+    color: #fff;
+    border-radius: 0;
 }
 
-/* make the small section label match the box title visually */
-.guts-label.section-label {
-  font-weight: 900;
-  color: var(--blueText);
-  font-size: 18px;
-  margin: 0 0 6px;
-  padding-left: 6px; /* keep alignment with other labels */
+/* when a cell needs to show wrapped content, allow it to expand */
+.third-column-wrap-cell {
+    width: auto !important;
+    max-width: none !important;
 }
 
-/* Global flat form control styling
-   - slightly smaller type for compactness
-   - remove visible borders per request
-   - keep a subtle pale background for contrast
-   - keep padding and radius for touch targets
-*/
-.guts-field-row .guts-input,
-.guts-field-row .guts-input-full,
-.guts-field-row select,
-.guts-field-row textarea,
-.guts-detail-box .guts-input-full,
-.guts-detail-box .guts-detail-textarea,
-.approval-textarea {
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.55;
-  color: #334155;
-  background: rgba(243, 247, 255, 0.95);
-  border: none !important;
-  box-shadow: inset 0 0 0 1px rgba(92, 133, 214, 0.04);
-  padding: 10px 14px;
-  border-radius: 8px;
-  width: 100%;
-  box-sizing: border-box;
+/* textarea used for wrapped editing */
+.third-column-textarea {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 6px 3px !important;
+    margin: 0 !important;
+    font-weight: 400;
+    font-size: 13px;
+    color: #333;
+    background: transparent;
+    border: none !important;
+    outline: none !important;
+    resize: none;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: #8cb4d4;
+}
+.group3-popup-third-column-textarea1 {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 80px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 3px 3px !important;
+    margin: 0 !important;
+    font-weight: 400;
+    font-size: 13px;
+    color: #333;
+    background: transparent;
+    border: none !important;
+    outline: none !important;
+    resize: none;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: #8cb4d4;
+}
+.group3-popup-third-column-textarea2 {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 3px 3px !important;
+    margin: 0 !important;
+    font-weight: 400;
+    font-size: 13px;
+    color: #333;
+    background: transparent;
+    border: none !important;
+    outline: none !important;
+    resize: none;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: #8cb4d4;
 }
 
-/* Focus state uses subtle ring rather than border change */
-.guts-field-row .guts-input:focus,
-.guts-field-row select:focus,
-.guts-field-row textarea:focus,
-.approval-textarea:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(92, 133, 214, 0.08);
+/* make a specific cell variant that removes the cell padding so a child textarea can fill it */
+.textarea-cell {
+    padding: 0 !important;
+    box-sizing: border-box;
+    overflow: visible !important;
+    /* remove fixed height so cell can grow naturally; use min-height if needed */
+    min-height: 48px;
+    vertical-align: top; /* allow cell to grow with content */
 }
 
-/* Ensure all form controls inside the MO form use the same flat styling
-   This covers any inputs that weren't matched by the earlier selectors. */
-.guts-Mo-layout input,
-.guts-Mo-layout textarea,
-.guts-Mo-layout select {
-  border: none !important;
-  background: rgba(243, 247, 255, 0.95);
-  box-shadow: inset 0 0 0 1px rgba(92, 133, 214, 0.04);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.55;
-  color: #334155;
-  padding: 10px 14px;
-  border-radius: 8px;
-  box-sizing: border-box;
+/* Ensure text inside table cells aligns to top vertically while preserving horizontal centering.
+   Use .cell-top-left when you want left-aligned text that also sits at the top. */
+.cell-top-left {
+    text-align: left !important;
+    vertical-align: top !important;
 }
 
-/* Small numeric inputs should keep compact size but match the flat look */
-.guts-input.small {
-  border: none !important;
-  background: rgba(243, 247, 255, 0.95);
-  box-shadow: inset 0 0 0 1px rgba(92, 133, 214, 0.04);
-  padding: 6px 8px;
+/* visual warning state when user attempts invalid content */
+.third-column-textarea-warning {
+    /* show a red border and subtle glow */
+    box-shadow: 0 0 0 2px darkred;
+    outline: none;
 }
 
-/* subbox (inner panel used for การควงกะ) */
-.guts-subbox {
-  border: 1px solid #d8e1ec;
-  border-radius: 0;
-  background: #fafafa;
-  padding: 0;
-  margin-top: 8px;
-  box-sizing: border-box;
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(2, 75, 118, 0.05);
+.mo-table td.fourth-column-cell {
+    background-color: transparent;
+    text-align: center !important;
+    box-sizing: border-box;
+    min-width: 40px;
+    width: 18%;
+    vertical-align: middle !important;
+}
+.mo-table td.group3-fourth-column-cell {
+    background-color: transparent;
+    text-align: center !important;
+    box-sizing: border-box;
+    min-width: 40px;
+    width: 10%;
+    vertical-align: top !important;
+    border-right: 1px solid #e5e7eb;
 }
 
-/* ensure two-col rows inside subbox follow same layout */
-.guts-subbox .guts-field-row.two-col {
-  padding: 3px 2px;
+/* reduced width variant for discipline/group-5 fourth column */
+.fourth-column-cell-danger {
+    min-width: 40px !important;
+    width: 10% !important;
+    text-align: center !important;
+    font-weight: 700;
+    border-right: 1px solid #e5e7eb !important;
 }
 
-.guts-subbox .guts-field-row.two-col .guts-label,
-.guts-subbox .guts-field-row.two-col .guts-suffix {
-  font-size: 14px;
+/* action button used for group3 rows */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: inherit;
 }
 
-.guts-subbox-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  padding: 6px 4px;
-  background: #f3f7fc;
-  color: var(--blueText);
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom: 1px solid #d8e1ec;
+.action-label {
+    color: #0b4bd6;
+    text-decoration: underline;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-.guts-subbox-title .guts-label {
-  font-weight: 900;
-  font-size: 17px;
-  color: var(--blueText);
-  padding-left: 2px;
+/* explicit styles for the action link in column 4 */
+.action-link {
+    background: transparent;
+    border: none;
+    color: #0b4bd6;
+    text-decoration: underline;
+    font-weight: 800;
+    font-size: 14px;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 2px;
+    display: inline-block;
+    cursor: pointer;
 }
 
-.guts-subbox-toggle {
-  font-weight: 700;
-  color: var(--blueText);
-  padding-right: 6px;
+/* styles for the delete action in column 5 */
+.delete-link {
+    background: transparent;
+    border: none;
+    color: #b71c1c;
+    font-weight: 700;
+    padding: 4px 8px;
+    display: inline-block;
+    cursor: pointer;
 }
 
-.guts-subbox-body.collapsed {
-  display: none;
+.status-normal {
+    background: #4caf50 !important; /* green */
+    border-color: #3a8a3a !important;
+}
+.status-warning {
+    background: #ff9800 !important; /* orange */
+    border-color: #e07a00 !important;
+}
+.status-danger {
+    background: #b71c1c !important; /* red */
+    border-color: #7f0f0f !important;
 }
 
-.guts-subbox-body {
-  padding-top: 8px;
+/* Report approval status badges (matching MoHome.module.css) */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.6;
+}
+.status-done {
+    background: #08a99f;
+    color: white;
+}
+.status-undergo {
+    background: #e67e22;
+    color: white;
+}
+.status-waited {
+    background: #ff9800;
+    color: white;
+}
+.status-rejected {
+    background: #b71c1c;
+    color: white;
+}
+.status-undone {
+    background: transparent;
+    color: #999;
 }
 
-/* collapse subbox wrapper when closed to remove its padding/margin */
-.guts-subbox.collapsed {
-  padding: 0;
-  margin-top: 0;
+/* Approval Section - matching MoDetailPage style */
+.approval-section {
+    padding: 10px 3px 12px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
 }
 
-/* ensure full-width textarea always fills the available width */
-.guts-input-full {
-  display: block;
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box;
+.approval-remark-section {
+    background: #f3f6f9;
+    border-left: 4px solid transparent;
+    border-right: 1px solid transparent;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    padding: 8px 0 4px;
+    box-shadow: 0 6px 14px rgba(2, 75, 118, 0.04);
+}
+
+.approval-remark-pending {
+    background: rgba(255, 247, 237, 0.4);
+    border-left-color: rgba(217, 119, 6, 0.18);
+    border-right-color: rgba(217, 119, 6, 0.12);
+    border-top-color: rgba(217, 119, 6, 0.18);
+    border-bottom-color: rgba(217, 119, 6, 0.12);
+    box-shadow:
+        0 -4px 10px rgba(217, 119, 6, 0.05),
+        0 6px 14px rgba(217, 119, 6, 0.04);
+}
+
+.approval-remark-approved {
+    background: rgba(240, 253, 244, 0.45);
+    border-left-color: rgba(16, 185, 129, 0.18);
+    border-right-color: rgba(16, 185, 129, 0.12);
+    border-top-color: rgba(16, 185, 129, 0.18);
+    border-bottom-color: rgba(16, 185, 129, 0.12);
+    box-shadow:
+        0 -4px 10px rgba(16, 185, 129, 0.05),
+        0 6px 14px rgba(16, 185, 129, 0.04);
+}
+
+.approval-remark-reject {
+    background: rgba(254, 242, 242, 0.45);
+    border-left-color: rgba(185, 28, 28, 0.18);
+    border-right-color: rgba(185, 28, 28, 0.12);
+    border-top-color: rgba(185, 28, 28, 0.18);
+    border-bottom-color: rgba(185, 28, 28, 0.12);
+    box-shadow:
+        0 -4px 10px rgba(185, 28, 28, 0.05),
+        0 6px 14px rgba(185, 28, 28, 0.04);
+}
+
+.approval-status-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 6px;
+    padding: 0 8px;
+}
+
+.approval-status-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--blueText);
+}
+
+.approval-content {
+    margin-bottom: 0;
+    padding: 0 8px;
 }
 
 .approval-select {
-  max-width: 60%;
-  width: 100%;
-  height: 35px;
-  border-radius: 7px;
-  padding: 8px 12px;
-  font-weight: 700;
-  font-size: 15px;
-  border: 1px solid rgba(2, 75, 118, 0.12);
-  background: transparent;
-  box-shadow: none;
+    max-width: 60%;
+    width: 100%;
+    height: 35px;
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 15px;
+    border: 1px solid rgba(2, 75, 118, 0.12);
+    background: transparent;
+    box-shadow: none;
 }
 
 .approval-select-pending {
-  background: rgba(217, 119, 6, 0.08);
-  border-color: rgba(217, 119, 6, 0.3);
-  color: rgb(146, 64, 14);
+    background: rgba(217, 119, 6, 0.08);
+    border-color: rgba(217, 119, 6, 0.3);
+    color: rgb(146, 64, 14);
 }
 
 .approval-select-approved {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.3);
-  color: rgb(6, 95, 70);
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: rgb(6, 95, 70);
 }
 
 .approval-select-reject {
-  background: rgba(185, 28, 28, 0.08);
-  border-color: rgba(185, 28, 28, 0.3);
-  color: rgb(127, 29, 29);
+    background: rgba(185, 28, 28, 0.08);
+    border-color: rgba(185, 28, 28, 0.3);
+    color: rgb(127, 29, 29);
 }
 
 /* Stronger selectors to beat generic `.guts-field-row select` border rules */
 .guts-field-row .approval-select.approval-select-pending {
-  border-color: rgba(217, 119, 6, 0.22);
+    border-color: rgba(217, 119, 6, 0.22);
 }
 
 .guts-field-row .approval-select.approval-select-approved {
-  border-color: rgba(16, 185, 129, 0.22);
+    border-color: rgba(16, 185, 129, 0.22);
 }
 
 .guts-field-row .approval-select.approval-select-reject {
-  border-color: rgba(185, 28, 28, 0.22);
-}
-
-/* ensure detail-box textareas use the same full-width styling */
-.guts-detail-box .guts-input-full,
-.guts-detail-box .guts-detail-textarea {
-  display: block;
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box;
-  min-height: 52px;
-  height: auto;
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: #334155;
-  border-radius: 8px;
-  border: 1.5px solid rgba(92, 133, 214, 0.18);
-  background: #fff;
-  font-weight: 500;
-}
-
-/* actions (submit) - layout only; detailed button styles consolidated below */
-.guts-Mo-actions {
-  display: flex;
-  grid-column: 1 / 2;
-  padding: 8px 10px 0; /* reduce horizontal section padding */
-  margin-bottom: 8px;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-}
-
-.guts-Mo-actions .guts-btn {
-  min-width: 240px;
-  width: 100%;
-  max-width: 420px; /* limit max width for large viewports */
-  height: 44px;
-  border-radius: 999px; /* fully rounded pill */
-  font-size: 15px;
-  letter-spacing: 0.4px;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: linear-gradient(90deg, var(--brand), var(--brandDark));
-  color: #fff;
-  border: 0;
-  box-shadow: 0 14px 36px rgba(1, 58, 88, 0.18);
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    filter 0.12s ease;
-  cursor: pointer;
-}
-
-.guts-Mo-actions .guts-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 40px rgba(1, 58, 88, 0.2);
-}
-
-.guts-Mo-actions .guts-btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.guts-Mo-actions .guts-btn:focus-visible {
-  outline: 3px solid rgba(2, 75, 118, 0.18);
-  outline-offset: 4px;
-  border-radius: 12px;
-}
-
-.guts-Mo-actions .guts-btn:disabled {
-  opacity: 0.62;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-/* Force action buttons to remain inline (row) at all viewport sizes */
-.guts-Mo-actions {
-  flex-direction: row !important;
-  gap: 8px !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-bottom: 10px !important;
-  padding: 8px 10px 0 !important; /* ensure tighter horizontal spacing persists when overridden */
-}
-
-.guts-Mo-actions:empty {
-  display: none;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.guts-Mo-actions .guts-btn,
-.guts-Mo-actions .guts-submit-btn {
-  width: auto !important; /* override width:100% rules */
-  min-width: 0 !important;
-  max-width: none !important;
-  flex: 1 1 0 !important; /* share space evenly */
-  height: 44px !important;
-  padding: 0 10px !important;
-  font-size: 15px !important;
-}
-
-/* Stronger selector to ensure cancel styling overrides the action-button gradient */
-.guts-Mo-actions .guts-btn.guts-cancel-btn {
-  background: #f3f6f9;
-  color: rgba(27, 43, 74, 0.9);
-  border: 1px solid rgba(2, 75, 118, 0.08);
-  box-shadow: none;
-}
-
-.guts-Mo-actions .guts-btn.guts-cancel-btn:hover:not(:disabled) {
-  background: rgba(2, 75, 118, 0.06);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(2, 75, 118, 0.06);
-}
-
-/* Approval Section - PDF Viewer Style */
-.approval-section {
-  padding: 10px 3px 12px;
-
-  /* use a vertical gradient for left/right borders where supported */
-  margin-bottom: 8px;
-  box-sizing: border-box;
-}
-
-.approval-remark-section {
-  background: #f3f6f9;
-  border-left: 4px solid transparent;
-  border-right: 1px solid transparent;
-  border-top: 1px solid transparent;
-  border-bottom: 1px solid transparent;
-  padding: 8px 0 4px;
-  box-shadow: 0 6px 14px rgba(2, 75, 118, 0.04);
-}
-
-.approval-remark-pending {
-  background: rgba(255, 247, 237, 0.4);
-  border-left-color: rgba(217, 119, 6, 0.18);
-  border-right-color: rgba(217, 119, 6, 0.12);
-  border-top-color: rgba(217, 119, 6, 0.18);
-  border-bottom-color: rgba(217, 119, 6, 0.12);
-  box-shadow:
-    0 -4px 10px rgba(217, 119, 6, 0.05),
-    0 6px 14px rgba(217, 119, 6, 0.04);
-}
-
-.approval-remark-approved {
-  background: rgba(240, 253, 244, 0.45);
-  border-left-color: rgba(16, 185, 129, 0.18);
-  border-right-color: rgba(16, 185, 129, 0.12);
-  border-top-color: rgba(16, 185, 129, 0.18);
-  border-bottom-color: rgba(16, 185, 129, 0.12);
-  box-shadow:
-    0 -4px 10px rgba(16, 185, 129, 0.05),
-    0 6px 14px rgba(16, 185, 129, 0.04);
-}
-
-.approval-remark-reject {
-  background: rgba(254, 242, 242, 0.45);
-  border-left-color: rgba(185, 28, 28, 0.18);
-  border-right-color: rgba(185, 28, 28, 0.12);
-  border-top-color: rgba(185, 28, 28, 0.18);
-  border-bottom-color: rgba(185, 28, 28, 0.12);
-  box-shadow:
-    0 -4px 10px rgba(185, 28, 28, 0.05),
-    0 6px 14px rgba(185, 28, 28, 0.04);
-}
-
-.approval-status-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 6px;
-  padding: 0 8px;
-}
-
-.approval-status-label {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--blueText);
-}
-
-.approval-content {
-  margin-bottom: 0;
-  padding: 0 8px;
+    border-color: rgba(185, 28, 28, 0.22);
 }
 
 .approval-textarea {
-  width: 100%;
-  min-height: 72px;
-  padding: 8px 10px; /* reduced vertical + horizontal padding */
-  border: 1.5px solid rgba(92, 133, 214, 0.2);
-  border-radius: 8px;
-  font-size: 13px; /* slightly smaller text */
-  font-weight: 500;
-  color: #334155;
-  line-height: 1.4;
-  background: #fafbfc;
-  resize: vertical;
-  transition: all 0.16s ease;
-  box-sizing: border-box;
+    width: 100%;
+    min-height: 72px;
+    padding: 8px 10px; /* reduced vertical + horizontal padding */
+    border: 1.5px solid rgba(92, 133, 214, 0.2);
+    border-radius: 8px;
+    font-size: 13px; /* slightly smaller text */
+    font-weight: 500;
+    color: #334155;
+    line-height: 1.4;
+    background: #fafbfc;
+    resize: vertical;
+    transition: all 0.16s ease;
+    box-sizing: border-box;
 }
 
 .approval-remark-pending .approval-textarea:not(:focus) {
-  background: rgba(255, 247, 237, 0.82);
-  border: 1px solid rgba(217, 119, 6, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.04);
+    background: rgba(255, 247, 237, 0.82);
+    border: 1px solid rgba(217, 119, 6, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.04);
 }
 
 .approval-remark-approved .approval-textarea:not(:focus) {
-  background: rgba(240, 253, 244, 0.84);
-  border: 1px solid rgba(16, 185, 129, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.04);
+    background: rgba(240, 253, 244, 0.84);
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.04);
 }
 
 .approval-remark-reject .approval-textarea:not(:focus) {
-  background: rgba(254, 242, 242, 0.84);
-  border: 1px solid rgba(185, 28, 28, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.04);
+    background: rgba(254, 242, 242, 0.84);
+    border: 1px solid rgba(185, 28, 28, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.04);
 }
 
 .approval-textarea:focus {
-  outline: none;
-  border-color: #5c85d6;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(92, 133, 214, 0.1);
+    outline: none;
+    border-color: #5c85d6;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(92, 133, 214, 0.1);
 }
 
 .approval-textarea:disabled {
-  /* Disabled keeps the same soft status tint from the wrapper selectors. */
-  background: inherit;
-  padding: 8px 10px !important;
-  font-size: 13px !important;
-  line-height: 1.4 !important;
-  box-sizing: border-box !important;
-  opacity: 1 !important;
-  cursor: not-allowed;
+    /* Disabled keeps the same soft status tint from the wrapper selectors. */
+    background: inherit;
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    box-sizing: border-box !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
 }
 
 .approval-textarea::placeholder {
-  color: #94a3b8;
-  font-style: italic;
-  font-size: 12px;
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 12px;
 }
 
 /* Apply the same smaller sizing to other full-width textareas only */
-textarea.guts-detail-textarea,
-textarea.guts-input-full {
-  font-size: 13px;
-  padding: 8px 10px;
-  line-height: 1.4;
-  box-sizing: border-box;
-}
-
-/* Approval textarea base sizing - allow CSS to control colors/border */
-textarea.approval-textarea:not(:disabled) {
-  padding: 8px 10px;
-  font-size: 13px;
-  line-height: 1.4;
-  box-sizing: border-box;
-}
-
-/* Inactive (not focused) controls: pale background and no border */
 textarea.guts-input-full:not(:focus),
 textarea.guts-detail-textarea:not(:focus),
 textarea.approval-textarea:not(:focus) {
-  background: #f3f6f9;
-  border: none;
-  box-shadow: none;
-  padding: 8px 10px;
-  line-height: 1.4;
+    background: #f3f6f9;
+    border: none;
+    box-shadow: none;
+    padding: 8px 10px;
+    line-height: 1.4;
 }
 
 .approval-remark-pending textarea.approval-textarea:not(:focus) {
-  background: rgba(255, 247, 237, 0.82) !important;
-  border: 1px solid rgba(217, 119, 6, 0.18) !important;
-  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.04) !important;
+    background: rgba(255, 247, 237, 0.82) !important;
+    border: 1px solid rgba(217, 119, 6, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.04) !important;
 }
 
 .approval-remark-approved textarea.approval-textarea:not(:focus) {
-  background: rgba(240, 253, 244, 0.84) !important;
-  border: 1px solid rgba(16, 185, 129, 0.18) !important;
-  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.04) !important;
+    background: rgba(240, 253, 244, 0.84) !important;
+    border: 1px solid rgba(16, 185, 129, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.04) !important;
 }
 
 .approval-remark-reject textarea.approval-textarea:not(:focus) {
-  background: rgba(254, 242, 242, 0.84) !important;
-  border: 1px solid rgba(185, 28, 28, 0.18) !important;
-  box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.04) !important;
+    background: rgba(254, 242, 242, 0.84) !important;
+    border: 1px solid rgba(185, 28, 28, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.04) !important;
 }
 
 /* Higher-specificity focus rules inside detail box */
 .guts-detail-box textarea.approval-textarea:focus,
 .guts-detail-box .guts-input-full.approval-textarea:focus {
-  background: #ffffff !important;
-  border: 1.5px solid #5c85d6 !important;
-  box-shadow: 0 0 0 4px rgba(92, 133, 214, 0.12) !important;
-  padding: 8px 10px !important;
-  font-size: 13px !important;
-  line-height: 1.4 !important;
-  outline: none !important;
+    background: #ffffff !important;
+    border: 1.5px solid #5c85d6 !important;
+    box-shadow: 0 0 0 4px rgba(92, 133, 214, 0.12) !important;
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    outline: none !important;
 }
 
 /* Focus appearance for approval textarea anywhere */
@@ -1077,52 +899,457 @@ textarea.approval-textarea:focus,
 .guts-box textarea.approval-textarea:focus,
 .guts-field-row .approval-textarea:focus,
 .guts-box .approval-textarea:focus {
-  background: #ffffff !important;
-  border: 1.5px solid #5c85d6 !important;
-  box-shadow: 0 0 0 4px rgba(92, 133, 214, 0.12) !important;
-  outline: none !important;
+    background: #ffffff !important;
+    border: 1.5px solid #5c85d6 !important;
+    box-shadow: 0 0 0 4px rgba(92, 133, 214, 0.12) !important;
+    outline: none !important;
 }
 
-/* Consistent placeholder styling for all textareas */
-.guts-input-full::placeholder,
-.guts-detail-textarea::placeholder,
-textarea::placeholder {
-  color: #94a3b8;
-  font-style: italic;
-  font-size: 13px;
+/* Overlay/portal styles */
+
+/* Modal overlay + dialog styling to match existing app modals */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    padding: 8px; /* reduce outer padding so modal sits centered without large side margin */
+}
+
+.modal {
+    width: min(520px, 94vw);
+    margin: 0 auto; /* defensive centering */
+    border-radius: 6px; /* reduced radius */
+    background: linear-gradient(
+        180deg,
+        var(--cardTop, #ffffff),
+        var(--cardBottom, #fafafa)
+    );
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    border: 2px solid rgba(2, 75, 118, 0.08);
+}
+
+/* reduce horizontal padding to 2px left/right and tighten vertical spacing */
+.modal-header {
+    padding: 4px 2px; /* further reduced vertical padding */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    min-height: 32px; /* keep header compact but readable */
+    justify-content: flex-start; /* align header content to the left */
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 15px; /* smaller title */
+    line-height: 1.1;
+    padding: 4px 8px; /* restore a bit of left padding */
+    color: var(--blueText, #0b4bd6);
+    font-weight: 700;
+    text-align: left;
+}
+
+.modal-body {
+    padding: 6px 2px; /* reduced vertical padding */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-label {
+    font-size: 13px;
+    color: #333;
+    font-weight: 700;
+    margin-top: 6px;
+}
+
+.modal-input {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #fff;
+    font-size: 14px;
+}
+
+.modal-footer {
+    padding: 6px 2px;
+    display: flex;
+    gap: 12px; /* space between buttons */
+    justify-content: center; /* center the buttons horizontally */
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.btn-primary {
+    /* filled primary button */
+    background: var(--brandDark, #0b4bd6);
+    color: #fff;
+    border: 2px solid var(--brandDark, #0b4bd6);
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 800;
+    min-width: 84px;
+    box-shadow: 0 6px 14px rgba(2, 75, 118, 0.15);
+}
+
+.btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: #fff;
+    color: #b71c1c;
+    border: 2px solid #b71c1c;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 800;
+    min-width: 84px;
+    box-shadow: 0 6px 14px rgba(183, 28, 28, 0.04);
+}
+
+/* hover/focus states */
+.btn-primary:hover:not(:disabled),
+.btn-primary:focus:not(:disabled) {
+    background: #0a3ea8;
+    border-color: #0a3ea8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(2, 75, 118, 0.25);
+}
+.btn-secondary:hover,
+.btn-secondary:focus {
+    background: linear-gradient(180deg, rgba(183, 28, 28, 0.04), #fff);
+    transform: translateY(-1px);
+}
+
+/* utility: left-align textarea inside modal */
+.textarea-left {
+    text-align: left !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    white-space: normal !important;
+}
+
+/* group3 textarea popup variant: initial min-height 60px, left-aligned text, full width */
+.group3-textarea-popup {
+    width: 100% !important;
+    box-sizing: border-box;
+    text-align: left !important;
+    min-height: 60px !important;
+    height: auto !important; /* allow autosize to control height */
+    padding: 8px !important;
+    overflow: visible !important; /* let the textarea grow the row */
+}
+
+/* helper: variant of second column cell with left-aligned content (used for labels like 'Project XXXXX') */
+.second-column-cell-left {
+    text-align: left !important;
+    padding-left: 3px !important;
+    box-sizing: border-box;
+}
+/* checkbox for inactive items in modal */
+.modal-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #c62828;
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+/* cursor pointer for clickable cells */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* label text for inactive items in modal */
+.modal-item-label {
+    display: block;
+    padding: 4px 8px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #333;
+}
+
+.group3-popup-second-column-cell-left {
+    text-align: left !important;
+    padding-left: 8px !important;
+    box-sizing: border-box;
+}
+
+/* radio group for select-like options (flex wrapping, each item grows) */
+.radio-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.radio-item {
+    display: inline-flex;
+    gap: 1px; /* each radio item can grow and will wrap when space is tight */
+    box-sizing: border-box;
+}
+
+.radio-input {
+    /* align the native radio visually with text */
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: var(--brandDark, #0b4bd6);
+}
+
+/* end modal styles */
+
+/* Action buttons (copied from MoNewPage.module.css) */
+.guts-Mo-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+    margin-bottom: 24px;
+
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.guts-actions-line {
+    padding-top: 16px;
+    border-top: 1px solid rgba(2, 75, 118, 0.14);
+}
+
+.guts-Mo-actions .guts-submit-btn {
+    min-width: 0;
+    flex: 1;
+    padding: 14px 24px;
+    height: auto;
+    border-radius: 999px;
+    font-size: 18px;
+    letter-spacing: 0.4px;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(
+        90deg,
+        var(--brand),
+        var(--brandDark)
+    ) !important;
+    color: #fff !important;
+    border: 0;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        filter 0.12s ease;
+    cursor: pointer;
+}
+
+.guts-Mo-actions .guts-submit-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px rgba(1, 58, 88, 0.2);
+}
+
+.guts-Mo-actions .guts-btn {
+    min-width: 0;
+    flex: 1;
+    padding: 14px 24px;
+    height: auto;
+    border-radius: 999px;
+    font-size: 18px;
+    letter-spacing: 0.4px;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: transparent;
+    color: var(--brandDark, #024b76);
+    border: 2.5px solid var(--brandDark, #024b76);
+    box-shadow: none;
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        background 0.12s ease,
+        color 0.12s ease;
+    cursor: pointer;
+}
+
+.guts-Mo-actions .guts-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px rgba(1, 58, 88, 0.2);
+}
+
+.guts-Mo-actions .guts-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.guts-Mo-actions .guts-btn:focus-visible {
+    outline: 3px solid rgba(2, 75, 118, 0.18);
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
+.guts-Mo-actions .guts-btn:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* ── บันทึกรายงาน ── grey outline pill (all editing users) */
+.guts-Mo-actions .guts-save-report-btn {
+    min-width: 0;
+    flex: 1;
+    padding: 14px 24px;
+    height: auto;
+    border-radius: 999px;
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #f0f2f5;
+    color: #4a5568;
+    border: 2px solid #c7cdd8;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    cursor: pointer;
+}
+.guts-Mo-actions .guts-save-report-btn:hover:not(:disabled) {
+    background: #e2e6ea;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+.guts-Mo-actions .guts-save-report-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+/* ── อนุมัติรายงาน ── teal filled pill (manager only) */
+.guts-Mo-actions .guts-approve-btn {
+    min-width: 0;
+    flex: 1;
+    padding: 14px 24px;
+    height: auto;
+    border-radius: 999px;
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #00c9b1, #00a896);
+    color: #fff;
+    border: 0;
+    box-shadow: 0 8px 20px rgba(0, 168, 150, 0.35);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    cursor: pointer;
+}
+.guts-Mo-actions .guts-approve-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(0, 168, 150, 0.45);
+    filter: brightness(1.06);
+}
+.guts-Mo-actions .guts-approve-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+/* ── ส่งกลับแก้ไข หลังอนุมัติ ── yellow pill (manager only, active only when APPROVED) */
+.guts-Mo-actions .guts-sendback-btn {
+    min-width: 0;
+    flex: 1;
+    padding: 14px 24px;
+    height: auto;
+    border-radius: 999px;
+    font-size: 14px;
+    line-height: 1.3;
+    letter-spacing: 0.3px;
+    font-weight: 900;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: linear-gradient(135deg, #ffe234, #ffc107);
+    color: #5a3e00;
+    border: 0;
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    cursor: pointer;
+}
+.guts-Mo-actions .guts-sendback-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(255, 193, 7, 0.45);
+    filter: brightness(1.05);
+}
+.guts-Mo-actions .guts-sendback-btn:active:not(:disabled) {
+    transform: translateY(1px);
 }
 
 /* Signature Section */
 .signature-section {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  margin-top: 6px;
-  padding: 2px 0 0; /* tighten gap between approval and signature */
-  margin-bottom: 0; /* ensure no extra bottom margin */
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 6px;
+    padding: 2px 0 0;
+    margin-bottom: 0;
 }
 
 .signature-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
 }
 
 .signature-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1b2b4a;
-  letter-spacing: 0.3px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1b2b4a;
+    letter-spacing: 0.3px;
 }
 
 .signature-line {
-  width: 100%;
-  border-bottom: 2px solid #1b2b4a;
-  text-align: center;
-  padding: 4px 8px; /* tighten vertical padding */
-  font-size: 14px;
-  font-weight: 700;
-  color: #475569;
-  min-height: 20px;
+    width: 80%;
+    border-bottom: 2px solid #1b2b4a;
+    text-align: center;
+    padding: 4px 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #475569;
+    min-height: 20px;
+}
+
+.mo-table td.add-row-cell {
+    vertical-align: middle;
+}
+
+.add-row-centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    font-weight: 600;
+}
+
+/* Discipline specific first column styles (Group 2) */
+.group2-first-column-cell {
+    background-color: #fff1f2 !important; /* Light red tint for index */
+    color: #e11d48 !important; /* Dark red text */
+    text-align: left !important;
 }

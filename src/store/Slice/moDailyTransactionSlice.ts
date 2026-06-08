@@ -1,40 +1,14 @@
 import type { StateCreator } from "zustand";
-import { sectorReportService } from "../../services/moReporTransaction.Service";
-
-export interface SectorReport {
-  id: number;
-  department_id: number;
-  report_date: string;
-  status: string;
-  approved_status?: "PENDING" | "APPROVED" | "REJECT";
-  approved_by?: string;
-  approved_at?: string;
-  approved_remark?: string;
-  updated_by?: string;
-  updated_at?: string;
-  leave_sick_count: number;
-  leave_business_count: number;
-  leave_other_count: number;
-  absent_count: number;
-  shift_18_count: number;
-  shift_24_count: number;
-  shift_36_count: number;
-  warning?: string;
-  wear_hat_count: number;
-  wear_shirt_count: number;
-  wear_pant_count: number;
-  wear_shoe_count: number;
-  rule_sleep_count: number;
-  rule_use_phone_count: number;
-  rule_no_card_count: number;
-  other_job?: string;
-  other_job_count?: number;
-  other_training?: string;
-  other_training_count?: number;
-  other_extral?: string;
-  created_at?: string;
-  created_by: string;
-}
+import {
+  sectorReportService,
+  type SectorReport,
+  type EmployeeTodayReport,
+  type DistinctDiscipline,
+} from "../../services.dev/moDailyTransaction.Service";
+// import {
+//   sectorReportService,
+//   type SectorReport,
+// } from "../../services/moReporTransaction.Service";
 
 export interface SectorReportFilters {
   department_id?: number;
@@ -49,11 +23,37 @@ export interface SectorReportSlice {
   isLoading: boolean;
   error: string | null;
 
-  fetchReports: (filters?: SectorReportFilters) => Promise<void>;
+  fetchReports: (filters?: SectorReportFilters) => Promise<SectorReport[]>;
   fetchReportById: (id: number) => Promise<void>;
   createReport: (data: any) => Promise<void>;
   updateReport: (id: number, data: any) => Promise<void>;
   deleteReport: (id: number) => Promise<void>;
+
+  /**
+   * Fetch today's existing report for a department + employee.
+   * Returns subLocation, disciplines array, and extra discipline-like
+   * flat fields (e.g. discipline_other_count, other1_count, …) as
+   * key/label/value items.
+   */
+  fetchEmployeeTodayReport: (
+    departmentId: number,
+    empCode: string,
+  ) => Promise<EmployeeTodayReport>;
+
+  /**
+   * Fetch all distinct discipline types (key + label only) from across all reports.
+   * Deduplicates by key — no values, no ids.
+   */
+  fetchDistinctDisciplineTypes: () => Promise<DistinctDiscipline[]>;
+
+  /**
+   * Fetch today's unique sub_location values for a department + employee.
+   * Returns sorted array of sub_location strings from today's reports.
+   */
+  fetchEmployeeTodayReportSubLocations: (
+    departmentId: number,
+    empCode: string,
+  ) => Promise<string[]>;
 }
 
 export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
@@ -66,11 +66,14 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
 
   fetchReports: async (filters?: SectorReportFilters) => {
     set({ isLoading: true, error: null });
+    console.log("SectorReportSlice: Fetching with filters:", filters);
     try {
       const reports = await sectorReportService.getAll(filters);
       set({ reports, isLoading: false });
+      return reports;
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
+      throw error;
     }
   },
 
@@ -81,6 +84,7 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
       set({ currentReport, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
+      throw error;
     }
   },
 
@@ -94,6 +98,7 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
       }));
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
+      throw error;
     }
   },
 
@@ -109,6 +114,7 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
       }));
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
+      throw error;
     }
   },
 
@@ -124,6 +130,50 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
       }));
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  fetchEmployeeTodayReport: async (departmentId, empCode) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await sectorReportService.getEmployeeTodayReport(
+        departmentId,
+        empCode,
+      );
+      set({ isLoading: false });
+      return result;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  fetchEmployeeTodayReportSubLocations: async (departmentId, empCode) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result =
+        await sectorReportService.getEmployeeTodayReportSubLocations(
+          departmentId,
+          empCode,
+        );
+      set({ isLoading: false });
+      return result;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  fetchDistinctDisciplineTypes: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await sectorReportService.getDistinctDisciplineTypes();
+      set({ isLoading: false });
+      return result;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
     }
   },
 });

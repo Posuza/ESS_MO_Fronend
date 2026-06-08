@@ -1,15 +1,23 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
-  ChevronRight,
-  Home,
   Search,
-  CheckCircle2,
-  Clock3,
-  XCircle,
+  PinIcon,
+  ArrowLeft,
+  HomeIcon,
+  FlagTriangleRightIcon,
+  Table2Icon,
+  Share2,
+  FileDown,
 } from "lucide-react";
-import styles from "./MoHome.module.css";
+import { BsFillFileEarmarkPdfFill } from "react-icons/bs";
+import styles from "./MoReportPage.module.css";
 import { useStore } from "../../store/store";
 import type { SectorReport } from "../../store/store";
+import MoSectorGroupDetailForm from "../../components/dev.Mo/MoSummariesForm";
+import MoSectorDetailForm from "../../components/dev.Mo/MoSectorDetailForm";
+import MoPdfViewer, {
+  type MoPdfViewerHandle,
+} from "../../components/dev.Mo/MoPdfViewer";
 
 type ReportListItem = SectorReport & {
   location?: string;
@@ -20,68 +28,62 @@ type ReportListItem = SectorReport & {
 };
 
 type Props = {
-  empCode?: string;
   onCancel: () => void;
   onOpenDetail: (item: SectorReport) => void;
+  initialDeptId?: number;
+  initialDate?: string;
 };
 
 export default function MoReportPage({
-  empCode,
   onCancel,
-  onOpenDetail,
+  initialDeptId,
+  initialDate,
 }: Props) {
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
-  const [searchSubmitted, setSearchSubmitted] = useState(false);
-  const [searchFilters, setSearchFilters] = useState({
-    location: "",
-    date: "",
+  const authEmployee = useStore((s) => s.authEmployee);
+  const empCode = authEmployee?.employee_code;
+  const [selectedDate, setSelectedDate] = useState(initialDate ?? "");
+
+  // currentDept holds a simple id/name object for the currently selected department
+  const [currentDept, setCurrentDept] = useState<{
+    id: number;
+    name: string;
+  } | null>(() => {
+    if (initialDeptId) {
+      return {
+        id: initialDeptId,
+        name: (authEmployee && Number(authEmployee.department_id) === initialDeptId)
+          ? authEmployee.department_name
+          : `ฝ่ายปฏิบัติการภาค ${initialDeptId}`,
+      };
+    }
+    return { id: 9, name: "ฝ่ายปฏิบัติการภาค 9" };
   });
+
+  // selectedLocation is a string (matches select option values). Initialize from currentDept if available.
+  const [selectedLocation, setSelectedLocation] = useState<string>(
+    currentDept?.name ?? "",
+  );
 
   const reports = useStore((state) => state.reports);
   const currentEmployee = useStore((state) => state.authEmployee);
   const fetchReports = useStore((state) => state.fetchReports);
 
-  function toApprovalStatus(value?: string): "PENDING" | "APPROVED" | "REJECT" {
-    if (value === "APPROVED" || value === "REJECT" || value === "PENDING") {
-      return value;
+  // Sync department name from reports slice when data loads
+  useEffect(() => {
+    if (reports.length > 0 && currentDept && currentDept.name.includes(String(currentDept.id))) {
+      const match = reports.find(r => Number(r.department_id) === currentDept.id);
+      const deptName = (match as any)?.department_name || (match as any)?.departmentName;
+      if (deptName) {
+        setCurrentDept(prev => prev ? { ...prev, name: deptName } : null);
+      }
     }
-    return "PENDING";
-  }
+  }, [reports, currentDept]);
 
-  function approvalStatusLabel(value?: string): string {
-    const status = toApprovalStatus(value);
-    if (status === "APPROVED") return "อนุมัติ";
-    if (status === "REJECT") return "ไม่อนุมัติ";
-    return "รออนุมัติ";
-  }
-
-  function approvalStatusClass(value?: string): string {
-    const status = toApprovalStatus(value);
-    if (status === "APPROVED") return styles["item-status-approved"];
-    if (status === "REJECT") return styles["item-status-reject"];
-    return styles["item-status-pending"];
-  }
-
-  function ApprovalStatusIcon({
-    value,
-  }: {
-    value?: "PENDING" | "APPROVED" | "REJECT" | string;
-  }) {
-    const status = toApprovalStatus(value);
-    if (status === "APPROVED") {
-      return <CheckCircle2 size={12} strokeWidth={2.2} />;
-    }
-    if (status === "REJECT") {
-      return <XCircle size={12} strokeWidth={2.2} />;
-    }
-    return <Clock3 size={12} strokeWidth={2.2} />;
-  }
+  const [viewMode, setViewMode] = useState<"table" | "pdf">("table");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const pdfViewerRef = useRef<MoPdfViewerHandle>(null);
 
   function submitSearch() {
-    setSearchSubmitted(true);
-    setSearchFilters({ location: selectedLocation, date: selectedDate });
-
     if (selectedDate) {
       const targetSectorId = selectedLocation
         ? currentEmployee?.department_id
@@ -95,9 +97,32 @@ export default function MoReportPage({
     }
   }
 
-  const employeeLocations = currentEmployee?.department_name
-    ? [currentEmployee.department_name]
-    : [];
+  const employeeLocations = useMemo(
+    () =>
+      currentEmployee?.department_name ? [currentEmployee.department_name] : [],
+    [currentEmployee?.department_name],
+  );
+
+  /* derive department -> location mapping from fixture (matches component logic) */
+  const derivedLocations = useMemo(() => {
+    try {
+      const rows = reports;
+      const map: Record<string, Set<string>> = {};
+      rows.forEach((r: any) => {
+        const id = Number(r.department_id) || 0;
+        const sub = (r.sub_location ? String(r.sub_location) : "").trim();
+        if (!map[id]) map[id] = new Set();
+        if (sub) map[id].add(sub);
+      });
+      return Object.keys(map).map((k) => ({
+        id: Number(k),
+        location: `Department ${k}`,
+        sub_locations: Array.from(map[k]),
+      }));
+    } catch (e) {
+      return [] as any;
+    }
+  }, [reports]);
 
   const mappedReports: ReportListItem[] = reports.map((r: SectorReport) => ({
     ...r,
@@ -105,7 +130,9 @@ export default function MoReportPage({
       r.department_id === currentEmployee?.department_id &&
       currentEmployee?.department_name
         ? currentEmployee.department_name
-        : `Department ${r.department_id}`,
+        : (r as any).department_name ||
+          (r as any).departmentName ||
+          `ภาค ${r.department_id}`,
     create_at: r.created_at,
     user_id: r.created_by,
   }));
@@ -116,160 +143,258 @@ export default function MoReportPage({
     new Set(allSectorRecords.map((r) => r.location).filter(Boolean)),
   ).sort() as string[];
 
-  const filteredData = !searchSubmitted
-    ? []
-    : allSectorRecords.filter((r) => {
-        const locationMatch =
-          !searchFilters.location || r.location === searchFilters.location;
-        const dateMatch =
-          !searchFilters.date || r.create_at?.startsWith(searchFilters.date);
-        return locationMatch && dateMatch;
-      });
+  /* Decide which location options to show in the top select:
+     - If empCode is true, prefer the employee's locations; if none, fall back to derivedLocations.
+     - Otherwise, use uniqueLocations from reports. */
+  const locationOptions = useMemo(() => {
+    // Build combined options: department-only and department + sub_location entries
+    const derivedCombined = derivedLocations.flatMap(
+      (d) =>
+        [
+          d.location,
+          ...d.sub_locations.map((s) => `${d.location} | ${s}`),
+        ] as string[],
+    );
+
+    if (empCode) {
+      if (employeeLocations.length > 0) return employeeLocations;
+      return derivedCombined.length > 0 ? derivedCombined : uniqueLocations;
+    }
+
+    // Default: prefer derivedCombined if available, otherwise fall back to uniqueLocations
+    return derivedCombined.length > 0 ? derivedCombined : uniqueLocations;
+  }, [empCode, employeeLocations, derivedLocations, uniqueLocations]);
+
+  const selectedSectorName =
+    selectedLocation || currentEmployee?.department_name || "";
+
+  /* find selected department id (if any) so we can compute transactionIds */
+  const selectedSectorId = useMemo(() => {
+    const found = derivedLocations.find(
+      (d) => d.location === selectedSectorName,
+    );
+    if (found) return found.id;
+    return currentEmployee?.department_id ?? null;
+  }, [derivedLocations, selectedSectorName, currentEmployee]);
+
+  const transactionIds = useMemo(() => {
+    const rows = reports;
+    if (!Array.isArray(rows) || !selectedSectorId) return [] as number[];
+    const filtered = rows.filter(
+      (r: any) => Number(r.department_id) === Number(selectedSectorId),
+    );
+    const ids = Array.from(
+      new Set(filtered.map((r: any) => r.id || r.mo_daily_transaction_id)),
+    ).filter(Boolean);
+    return ids as number[];
+  }, [selectedSectorId, reports]);
+
+  const [selectedTransactionId, setSelectedTransactionId] = useState<
+    number | null
+  >(transactionIds[0] ?? null);
+
+  /* build a simple table like MoHome for department->transaction mapping */
+  const locationTable = useMemo(() => {
+    return reports.map((t: any) => ({
+      id: t.id || t.mo_daily_transaction_id,
+      department_id: t.department_id,
+      sub_location: t.sub_location,
+      approved_status: t.approved_status,
+    }));
+  }, [reports]);
+
+  const selectedTransactionRow = useMemo(() => {
+    if (!selectedTransactionId) return null;
+    return (
+      locationTable.find(
+        (r) => String(r.id) === String(selectedTransactionId),
+      ) || null
+    );
+  }, [locationTable, selectedTransactionId]);
+
+  const currentReport = useMemo(() => {
+    if (selectedTransactionId) {
+      const matched = reports.find(
+        (r) =>
+          r.mo_daily_transaction_id === selectedTransactionId ||
+          r.id === selectedTransactionId ||
+          r.department_id === selectedTransactionRow?.department_id,
+      );
+      if (matched) return matched;
+    }
+    if (selectedSectorId) {
+      const matched = reports.find((r) => r.department_id === selectedSectorId);
+      if (matched) return matched;
+    }
+    return (
+      reports[0] ||
+      ({
+        id: selectedTransactionId ?? 1,
+        mo_daily_transaction_id: selectedTransactionId ?? 1,
+        department_id: selectedSectorId ?? 1,
+        created_at: new Date().toISOString(),
+        created_by: currentEmployee?.employee_code || "ADMIN",
+      } as SectorReport)
+    );
+  }, [
+    reports,
+    selectedTransactionId,
+    selectedTransactionRow,
+    selectedSectorId,
+    currentEmployee,
+  ]);
+
+  const sectorNameForPdf = useMemo(() => {
+    if (selectedTransactionRow) {
+      return `ฝ่ายปฏิบัติการภาค ${selectedTransactionRow.department_id} ${selectedTransactionRow.sub_location}`;
+    }
+    return selectedSectorName || "ฝ่ายปฏิบัติการภาค 9";
+  }, [selectedTransactionRow, selectedSectorName]);
 
   return (
     <>
-      <div className={styles["mo-search"]}>
-        <select
-          value={selectedLocation}
-          onChange={(e) => {
-            setSelectedLocation(e.target.value);
-            setSearchSubmitted(false);
-          }}
-          className={styles["guts-mo-search-input"]}
-        >
-          <option value="">ทั้งหมด (ภาค)</option>
-          {(empCode ? employeeLocations : uniqueLocations).map(
-            (location: string) => (
-              <option key={location} value={location}>
-                {location}
-              </option>
-            ),
-          )}
-        </select>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => {
-            setSelectedDate(e.target.value);
-            setSearchSubmitted(false);
-          }}
-          className={styles["guts-mo-search-input"]}
-          max={new Date().toISOString().split("T")[0]}
-        />
-        <button
-          className={styles["mo-search-clear"]}
-          aria-label="Search"
-          onClick={submitSearch}
-          type="button"
-          disabled={!selectedLocation || !selectedDate}
-        >
-          <Search />
-        </button>
-      </div>
-
-      <div className={styles["location-list"]}>
-        <div className={styles["location-header"]}>
-          บันทึก ({Math.min(5, filteredData.length)} รายการ)
-        </div>
-        {filteredData.slice(0, 4).map((r, idx: number) => {
-          const leaveTotal =
-            (Number(r.leave_sick_count) || 0) +
-            (Number(r.leave_business_count) || 0) +
-            (Number(r.leave_other_count) || 0) +
-            (Number(r.absent_count) || 0);
-          const workTotal =
-            (Number(r.shift_18_count) || 0) +
-            (Number(r.shift_24_count) || 0) +
-            (Number(r.shift_36_count) || 0);
-          const wearTotal =
-            (Number(r.wear_hat_count) || 0) +
-            (Number(r.wear_shirt_count) || 0) +
-            (Number(r.wear_pants_count ?? r.wear_pant_count) || 0) +
-            (Number(r.wear_shoes_count ?? r.wear_shoe_count) || 0);
-          const key = r.id ?? r.user_id ?? idx;
-          return (
-            <div
-              className={styles["search-result"]}
-              key={String(key) + "-search"}
-              onClick={() => onOpenDetail(r)}
-            >
-              <div className={styles["result-avatar"]}>
-                <Home />
-              </div>
-              <div className={styles["result-body-col"]}>
-                <div className={styles["result-top-row"]}>
-                  <div className={styles["item-title-wrap"]}>
-                    <div className={styles["result-title"]}>
-                      {r.location ?? "-"}
-                    </div>
-                    <span
-                      className={[
-                        styles["item-status-badge"],
-                        approvalStatusClass(r.approved_status),
-                      ].join(" ")}
-                    >
-                      <ApprovalStatusIcon value={r.approved_status} />
-                      {approvalStatusLabel(r.approved_status)}
-                    </span>
-                  </div>
-                  <p className={styles["result-date"]}>
-                    {r.create_at
-                      ? new Date(r.create_at).toLocaleDateString("th-TH")
-                      : "วันนี้"}
-                  </p>
-                </div>
-                <div className={styles["result-bottom-row"]}>
-                  <div className={styles["result-lines"]}>
-                    <div className={styles["result-sub"]}>
-                      ลา: {leaveTotal} คน &nbsp; กำลังพล: {workTotal} คน
-                    </div>
-                    <div className={styles["result-sub"]}>
-                      เครื่องแต่งกาย: {wearTotal} คน
-                    </div>
-                    {r.other_job
-                      ? (() => {
-                          const otherJob = String(r.other_job || "");
-                          const otherShort =
-                            otherJob.length > 20
-                              ? otherJob.slice(0, 40) + "…"
-                              : otherJob;
-                          return (
-                            <div
-                              className={styles["result-sub"]}
-                              title={otherJob}
-                            >
-                              อื่น: {otherShort}
-                            </div>
-                          );
-                        })()
-                      : null}
-                  </div>
-                  <button
-                    className={styles["mo-item-open"]}
-                    aria-label="Open item"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenDetail(r);
-                    }}
-                  >
-                    <ChevronRight />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className={styles["guts-back-outer"]}>
+      <div className={styles["mo-back-outer"]}>
         <button
           type="button"
-          className={[styles["guts-btn"], styles["guts-back-btn"]].join(" ")}
+          className={styles["mo-back-btn"]}
           onClick={onCancel}
         >
-          Back
+          <ArrowLeft size={18} />
         </button>
       </div>
+
+      {/* หน่วยงาน / Sector row */}
+
+      <div className={styles["sector-table-wrapper"]}>
+        <table className={styles["mo-table"]}>
+          <thead>
+            <tr>
+              <th
+                colSpan={4}
+                className={`${styles["location-table-header"]} ${styles["no-border"]}`}
+              >
+                <div className={styles["sector-header-fullwidth"]}>
+                  <HomeIcon />
+
+                  <select
+                    className={styles["sector-cell-select"]}
+                    value={selectedTransactionId ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") setSelectedTransactionId(null);
+                      else setSelectedTransactionId(Number(v));
+                    }}
+                  >
+                    {/* Department-only option: selecting this shows the group form */}
+                    {selectedSectorId ? (
+                      <option value="">{String(selectedSectorId)}</option>
+                    ) : (
+                      <option value="">{currentDept?.name ?? "ทั้งหมด"}</option>
+                    )}
+
+                    {/* Show each transaction as "department_id sub_location" */}
+                    {locationTable.map((row) => (
+                      <option key={String(row.id)} value={String(row.id)}>
+                        {`${currentDept?.name ?? ""} ${row.sub_location}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          {selectedTransactionRow && (
+            <tbody>
+              <tr>
+                <td colSpan={1} className={`${styles["first-column-cell"]}`}>
+                  {/*<PinIcon className={styles["pin-icon"]} />*/}
+                  <FlagTriangleRightIcon className={styles["pin-icon"]} />
+                </td>
+                <td colSpan={3} className={styles["sector-cell-bodytext"]}>
+                  {currentDept?.name ||
+                    (selectedTransactionRow.department_id
+                      ? `ฝ่ายปฏิบัติการภาค ${selectedTransactionRow.department_id}`
+                      : "")}{" "}
+                  {selectedTransactionRow.sub_location}
+                </td>
+              </tr>
+            </tbody>
+          )}
+        </table>
+      </div>
+      <div className={styles["toolbar"]}>
+        <div className={styles["toolbar-left"]}>
+          <div
+            className={`${styles["toggle-btn"]} ${viewMode === "table" ? styles["active"] : ""}`}
+            onClick={() => setViewMode("table")}
+            title="ดูตารางรายการ"
+          >
+            <Table2Icon size={26} />
+          </div>
+          <div
+            className={`${styles["pdf-icon-container"]} ${styles["toggle-btn"]} ${viewMode === "pdf" ? styles["active"] : ""}`}
+            onClick={() => setViewMode("pdf")}
+            title="ดูรายงาน PDF"
+          >
+            <BsFillFileEarmarkPdfFill className={styles["pdf-icon"]} />
+            {selectedTransactionRow && (
+              <FlagTriangleRightIcon className={styles["pin-icon-on-pdf"]} />
+            )}
+          </div>
+        </div>
+        {viewMode === "pdf" && (
+          <div className={styles["toolbar-right"]}>
+            <button
+              type="button"
+              className={styles["toolbar-action-btn"]}
+              onClick={async () => {
+                setPdfLoading(true);
+                try {
+                  await pdfViewerRef.current?.downloadPdf();
+                } finally {
+                  setPdfLoading(false);
+                }
+              }}
+              disabled={pdfLoading}
+              title="ดาวน์โหลด PDF"
+            >
+              {pdfLoading ? "..." : <FileDown size={23} />}
+            </button>
+            <button
+              type="button"
+              className={styles["toolbar-action-btn"]}
+              onClick={async () => {
+                setPdfLoading(true);
+                try {
+                  await pdfViewerRef.current?.sharePdf();
+                } finally {
+                  setPdfLoading(false);
+                }
+              }}
+              disabled={pdfLoading}
+              title="แชร์ PDF"
+            >
+              <Share2 size={22} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {viewMode === "table" ? (
+        selectedTransactionId ? (
+          <MoSectorDetailForm selectedTransactionId={selectedTransactionId} />
+        ) : (
+          <MoSectorGroupDetailForm />
+        )
+      ) : (
+        <MoPdfViewer
+          ref={pdfViewerRef}
+          item={currentReport}
+          sectorName={sectorNameForPdf}
+          onCancel={() => setViewMode("table")}
+          isSector={!!selectedTransactionId}
+        />
+      )}
     </>
   );
 }

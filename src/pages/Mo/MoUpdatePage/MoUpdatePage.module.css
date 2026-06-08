@@ -1126,3 +1126,65 @@ textarea::placeholder {
   color: #475569;
   min-height: 20px;
 }
+
+/* --- Modal Table Styles for Disciplines --- */
+.mo-table-wrapper {
+  margin: 12px 0;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.mo-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.mo-table th, .mo-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.mo-table-header-red {
+  background-color: #9b111e;
+  color: #ffffff;
+}
+
+.mo-header-red-text {
+  color: #ffffff;
+  font-weight: 700;
+  margin: 0;
+}
+
+.first-column-cell {
+  width: 35px;
+  text-align: center;
+  background-color: #f1f5f9;
+  font-weight: 700;
+  color: #475569;
+}
+
+.second-column-cell {
+  text-align: left !important; /* Aligned text to left as requested */
+  background-color: #f8fafc;
+  font-weight: 700;
+  color: #334155;
+}
+
+.textarea-cell {
+  padding: 0 !important;
+}
+
+.third-column-cell {
+  width: 80px;
+  text-align: center;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.fourth-column-cell {
+  width: 45px;
+}

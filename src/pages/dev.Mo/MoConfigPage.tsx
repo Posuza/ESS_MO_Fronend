@@ -2,11 +2,10 @@ import styles from "./MoHome.module.css";
 import type { ReactNode } from "react";
 
 type Props = {
-  empCode?: string;
   onCancel: () => void;
 };
 
-export default function MoConfigPage({ empCode, onCancel }: Props) {
+export default function MoConfigPage({ onCancel }: Props) {
   return (
     <>
       <div className={styles["location-list"]}>

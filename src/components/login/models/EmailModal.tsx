@@ -1,22 +1,24 @@
 import { useEffect } from "react";
-import { AlertCircle } from "lucide-react";
-import styles from "./LoginModal.module.css";
+import { Check, AlertCircle } from "lucide-react";
+import styles from "./EmailModal.module.css";
 
 type Props = {
   open: boolean;
-  message?: string;
-  errorKey?: string | null;
+  success: boolean;
+  message: string;
   contacts?: Array<{ team?: string; email?: string }>;
+  onOk: () => void;
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
   onClose?: () => void;
 };
 
-export default function LoginModal({
+export default function EmailModal({
   open,
-  message = "",
-  errorKey,
+  success,
+  message,
   contacts,
+  onOk,
   closeOnBackdrop = false,
   closeOnEsc = true,
   onClose,
@@ -32,16 +34,12 @@ export default function LoginModal({
 
   if (!open) return null;
 
-  // Do not show contact box if it's just a wrong password (INVALID_CREDENTIALS)
-  const showContacts =
-    contacts && contacts.length > 0 && errorKey !== "INVALID_CREDENTIALS";
-
   return (
     <div
       className={styles.backdrop}
       role="dialog"
       aria-modal="true"
-      aria-label="เข้าสู่ระบบไม่สำเร็จ"
+      aria-label={success ? "ส่งอีเมลสำเร็จ" : "ส่งอีเมลไม่สำเร็จ"}
       onClick={() => {
         if (!closeOnBackdrop) return;
         onClose?.();
@@ -50,9 +48,17 @@ export default function LoginModal({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.badge} aria-hidden="true">
-            <AlertCircle size={24} aria-hidden="true" />
+            {success ? (
+              <Check size={24} aria-hidden="true" />
+            ) : (
+              <AlertCircle size={24} aria-hidden="true" />
+            )}
           </div>
-          <div className={styles.title}>เข้าสู่ระบบไม่สำเร็จ</div>
+
+          <div className={styles.title}>
+            {success ? "ส่งอีเมลสำเร็จ" : "ส่งอีเมลไม่สำเร็จ"}
+          </div>
+
           <button
             className={styles.closeBtn}
             type="button"
@@ -62,12 +68,12 @@ export default function LoginModal({
             ×
           </button>
         </div>
-        <div className={styles.body}>
-          {message.split("\n").map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
 
-          {showContacts && (
+        <div className={styles.body}>
+          {/* Render message as a single line like TimingMessagePopUp */}
+          <div>{message ? message.replace(/\s*\n\s*/g, " ") : ""}</div>
+
+          {!success && contacts && contacts.length > 0 && (
             <div className={styles.contacts}>
               {contacts.map((c, idx) => (
                 <div key={idx} className={styles.contact}>

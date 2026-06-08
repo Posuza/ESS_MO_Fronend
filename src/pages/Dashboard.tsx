@@ -1,10 +1,12 @@
 // src/pages/Dashboard.tsx
+import { useStore } from "../store/store";
+
 type Props = {
-  empCode: string;
   onLogout: () => void;
 };
 
-export default function Dashboard({ empCode, onLogout }: Props) {
+export default function Dashboard({ onLogout }: Props) {
+  const empCode = useStore((s) => s.authEmployee?.employee_code) || "";
   const items = [
     {
       title: "ลงเวลา (เข้า–ออก) งาน",

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { User, X, MailCheck } from "lucide-react";
 import styles from "./ForgotPasswordModal.module.css";
-import EmailModal from "./EmailModal";
+import TimingMessagePopUp from "../popup/TimingMessagePopUp";
+import BigIconSuccessSmsPopUp from "../popup/BigIconSuccessSmsPopUp";
 
 type Props = {
   open: boolean;
@@ -25,10 +27,10 @@ export default function ForgotPasswordModal({
   const empValid = /^\d{6}$/.test(empCode);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailSuccess, setEmailSuccess] = useState(false);
-  const [emailMessage, setEmailMessage] = useState("");
-  const [emailContacts, setEmailContacts] = useState<
+  const [showResult, setShowResult] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
+  const [resultContacts, setResultContacts] = useState<
     Array<{ team?: string; email?: string }> | undefined
   >(undefined);
 
@@ -36,9 +38,9 @@ export default function ForgotPasswordModal({
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 0);
       // Reset states when modal opens
-      setShowEmailModal(false);
-      setEmailSuccess(false);
-      setEmailMessage("");
+      setShowResult(false);
+      setResultSuccess(false);
+      setResultMessage("");
       setLoading(false);
     }
   }, [open]);
@@ -56,24 +58,28 @@ export default function ForgotPasswordModal({
     setLoading(true);
     try {
       const result = await onSend();
-      setEmailSuccess(result.success);
-      setEmailMessage(
-        result.message ||
-          (result.success ? "ส่งรหัสผ่านสำเร็จ" : "เกิดข้อผิดพลาด"),
-      );
-      setEmailContacts(result.contacts);
-      setShowEmailModal(true);
-
+      setResultSuccess(result.success);
       if (result.success) {
-        // Do NOT auto-close the forgot-password modal; user will dismiss manually
+        setResultMessage("ระบบได้ส่งรหัสผ่านไปยังอีเมลที่ลงทะเบียนไว้แล้ว");
+      } else {
+        setResultMessage(result.message || "เกิดข้อผิดพลาด");
+        setResultContacts(result.contacts);
       }
+      setShowResult(true);
     } catch (err) {
-      setEmailSuccess(false);
-      setEmailMessage("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งหรือติดต่อฝ่ายบุคคล");
-      setShowEmailModal(true);
+      setResultSuccess(false);
+      setResultMessage(
+        "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งหรือติดต่อฝ่ายบุคคล",
+      );
+      setShowResult(true);
     } finally {
       setLoading(false);
     }
+  };
+
+  const closeResult = () => {
+    setShowResult(false);
+    setResultSuccess(false);
   };
 
   if (!open) return null;
@@ -92,15 +98,12 @@ export default function ForgotPasswordModal({
         <div className={styles.head}>
           <h3 className={styles.title}>ลืมรหัสผ่าน</h3>
 
-          <button
-            className={styles.closeBtn}
-            type="button"
+          <X
+            size={35}
+            strokeWidth={2.5}
             onClick={onClose}
-            aria-label="Close"
-            disabled={loading}
-          >
-            ×
-          </button>
+            className={styles.closeBtn}
+          />
         </div>
 
         <>
@@ -111,17 +114,22 @@ export default function ForgotPasswordModal({
 
           <div className={styles.form}>
             <div className={styles.label}>รหัสพนักงาน (6 หลัก)</div>
-            <input
-              ref={inputRef}
-              className={styles.input}
-              value={empCode}
-              onChange={(e) => {
-                onChangeEmp(e.target.value);
-              }}
-              inputMode="numeric"
-              autoComplete="off"
-              disabled={loading}
-            />
+            <div className={styles.field}>
+              <span className={styles.iconLeft} aria-hidden="true">
+                <User size={18} />
+              </span>
+              <input
+                ref={inputRef}
+                className={styles.inputWithIcon}
+                value={empCode}
+                onChange={(e) => {
+                  onChangeEmp(e.target.value);
+                }}
+                inputMode="numeric"
+                autoComplete="off"
+                disabled={loading}
+              />
+            </div>
           </div>
 
           <div className={styles.actions}>
@@ -144,27 +152,39 @@ export default function ForgotPasswordModal({
             </button>
           </div>
 
-          <div className={styles.warn} style={{ marginTop: 10 }}>
+          {/*<div className={styles.warn} style={{ marginTop: 10 }}>
             **ระบบจะส่งรหัสไปอีเมลที่ลงทะเบียนไว้
             <br />
             หากไม่ได้รับอีเมล กรุณาติดต่อฝ่ายบุคคล
-          </div>
+          </div>*/}
         </>
       </div>
 
-      {/* Email Result Modal */}
-      <EmailModal
-        open={showEmailModal}
-        success={emailSuccess}
-        message={emailMessage}
-        contacts={emailContacts}
-        closeOnBackdrop={false}
-        closeOnEsc={false}
-        onOk={() => {
-          setShowEmailModal(false);
-        }}
-        onClose={() => setShowEmailModal(false)}
-      />
+      {resultSuccess ? (
+        <BigIconSuccessSmsPopUp
+          open={showResult}
+          icon={<MailCheck size={80} />}
+          iconColor="gray"
+          title="กรุณาตรวจสอบรหัสผ่านของคุณในอีเมล์"
+          subText={resultMessage}
+          onClose={() => {
+            setShowResult(false);
+            setResultSuccess(false);
+            onClose();
+          }}
+        />
+      ) : (
+        <TimingMessagePopUp
+          open={showResult}
+          variant="warning"
+          message={resultMessage}
+          errorKey={null}
+          contacts={resultContacts}
+          closeOnBackdrop={true}
+          closeOnEsc={true}
+          onClose={closeResult}
+        />
+      )}
     </div>
   );
 }

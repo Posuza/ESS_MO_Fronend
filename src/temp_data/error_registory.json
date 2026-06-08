@@ -92,7 +92,7 @@
       "ER_AUTH_1009": {
         "http_status": 404,
         "error": "EMPLOYEE_NOT_FOUND",
-        "message": "ไม่พบรหัสพนักงานในระบบ โปรดติดต่อฝ่ายทรัพยากรบุคคล.",
+        "message": "ไม่พบรหัสพนักงานในระบบ กรุณาติดต่อฝ่ายทรัพยากรบุคคล.",
         "contacts": [
           {
             "team": "HR_OPS",
@@ -121,6 +121,16 @@
             "email": "hr@gutsess.com"
           }
         ]
+      },
+      "ER_AUTH_1012": {
+        "http_status": 400,
+        "error": "SAME_PASSWORD",
+        "message": "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม."
+      },
+      "ER_AUTH_1013": {
+        "http_status": 400,
+        "error": "INCORRECT_OLD_PASSWORD",
+        "message": "รหัสผ่านเดิมไม่ถูกต้อง."
       }
     },
     "CLIENT": {
