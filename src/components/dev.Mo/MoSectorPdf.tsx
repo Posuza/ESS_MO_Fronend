@@ -1222,14 +1222,26 @@ export default function MoSectorPdf({
                                         : ""
                                     }`}
                                   >
-                                    <div
-                                      className={styles["third-column-text"]}
-                                    >
-                                      {val} proejfdt lable 
-                                    </div>
+                                    </td>
+                                                          <td className={styles["group3-second-column-cell"]}>
+                                                            {r.label}
+                                                          </td>
                                   </td>
                                 ))}
-                               
+                                <td
+                                                className={`${styles["group3-third-column-cell"]} ${styles[`status-${r.status ?? statusOptions[rowStatus[String(itemIdx)] ?? 0].key}`]} `}
+                                              >
+                                                {(() => {
+                                                  const key =
+                                                    r.status ??
+                                                    statusOptions[rowStatus[String(itemIdx)] ?? 0]
+                                                      .key;
+                                                  const opt =
+                                                    statusOptions.find((s) => s.key === key) ??
+                                                    statusOptions[0];
+                                                  return opt.label;
+                                                })()}
+                                              </td>
                               </tr>
                             );
                           })}
