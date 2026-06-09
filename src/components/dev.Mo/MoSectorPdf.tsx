@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import html2pdf from "html2pdf.js";
-import { MapPin, ArrowLeft, Share2, FlagTriangleLeftIcon } from "lucide-react";
+import { ArrowLeft, Share2, MapPin } from "lucide-react";
 import styles from "./MoSectorPdf.module.css";
+import logoPng from "@/assets/logo/logo_guts.png"; // Direct import of PNG image
 
 import type { SectorReport } from "../../store/store";
-import newCaseData from "../../temp_data/NewCase/newCase.json";
 import SharePdfModal from "../Mo/SharePdfModal";
 
 type Props = {
@@ -24,8 +24,11 @@ export default function MoSectorPdf({
 
   // Date formatting
   let displayDate = "";
-  if (data.created_at) {
-    const d = new Date(data.created_at);
+  const rawDate = data.report_date || data.created_at;
+  if (rawDate) {
+    const d = new Date(
+      String(rawDate).includes("T") ? String(rawDate) : `${rawDate}T00:00:00`,
+    );
     const day = d.getDate();
     const months = [
       "มกราคม",
@@ -47,6 +50,8 @@ export default function MoSectorPdf({
     const mins = String(d.getMinutes()).padStart(2, "0");
     displayDate = `วันที่ ${day} เดือน ${month} พ.ศ. ${year} เวลา ${hours}:${mins} น.`;
   }
+
+  // No need for logoBase64 state or useEffect for SVG conversion anymore
 
   const PDF_WIDTH = 800;
   const PDF_HEIGHT = 1100;
@@ -236,7 +241,7 @@ export default function MoSectorPdf({
   const scaledWidth = PDF_WIDTH * scale;
   const scaledHeight = PDF_HEIGHT * scale;
 
-  // ─── Table layout data (mirrors MoSectorDetailForm) ────────────────────
+  // ─── Table data: read directly from SectorReport fields (like MoUpdatePage) ──
   const selectedSector = (data as any).department_id ?? 1;
 
   interface PdfGroupItem {
@@ -246,6 +251,7 @@ export default function MoSectorPdf({
     detail?: string;
     status?: string;
     note?: string;
+    value?: string | number;
   }
   interface PdfGroup {
     key: string;
@@ -255,181 +261,194 @@ export default function MoSectorPdf({
 
   const group1: PdfGroup[] = [
     {
-      key: "1",
+      key: "dept",
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
-        { key: "1.1", label: "จุดรักษาการณ์ :", unit: "หน่วยงาน" },
-        { key: "1.2", label: "กำลังพลปัจจุบัน :", unit: "คน" },
-        { key: "1.3", label: "ขาดตัวประจำ :", unit: "หน่วยงาน" },
-        { key: "1.4", label: "ขาดกำลังพล :", unit: "คน" },
-        { key: "1.5", label: "จัดกำลังพลเสริมพิเศษ :", unit: "คน" },
-        { key: "1.6", label: "สรรหาผู้สมัครงานใหม่ :", unit: "คน" },
-        { key: "1.7", label: "จำนวนหน่วยงานสำรองเวร :", unit: "หน่วย" },
-        { key: "1.8", label: "จำนวนกำลังพลสำรองเวร :", unit: "นาย" },
+        {
+          key: "dept_guard_post_count",
+          label: "จุดรักษาการณ์ :",
+          unit: "หน่วยงาน",
+        },
+        {
+          key: "dept_current_personnel_count",
+          label: "กำลังพลปัจจุบัน :",
+          unit: "คน",
+        },
+        {
+          key: "dept_missing_regular_count",
+          label: "ขาดตัวประจำ :",
+          unit: "หน่วยงาน",
+        },
+        {
+          key: "dept_missing_personnel_count",
+          label: "ขาดกำลังพล :",
+          unit: "คน",
+        },
+        {
+          key: "dept_supplement_count",
+          label: "จัดกำลังพลเสริมพิเศษ :",
+          unit: "คน",
+        },
+        {
+          key: "dept_recruitment_count",
+          label: "สรรหาผู้สมัครงานใหม่ :",
+          unit: "คน",
+        },
+        {
+          key: "dept_reserve_units_count",
+          label: "จำนวนหน่วยงานสำรองเวร :",
+          unit: "หน่วย",
+        },
+        {
+          key: "dept_reserve_personnel_count",
+          label: "จำนวนกำลังพลสำรองเวร :",
+          unit: "นาย",
+        },
       ],
     },
     {
-      key: "2",
+      key: "leave",
       title: "การลา",
       items: [
-        { key: "2.1", label: "ลากิจ :", unit: "คน" },
-        { key: "2.2", label: "ลาป่วย :", unit: "คน" },
-        { key: "2.3", label: "ขาดงาน :", unit: "คน" },
-        { key: "2.4", label: "หนีหาย :", unit: "คน" },
-        { key: "2.5", label: "ลาออก :", unit: "คน" },
-        { key: "2.6", label: "ไล่ออก :", unit: "คน" },
+        { key: "leave_personal_count", label: "ลากิจ :", unit: "คน" },
+        { key: "leave_sick_count", label: "ลาป่วย :", unit: "คน" },
+        { key: "leave_absent_count", label: "ขาดงาน :", unit: "คน" },
+        { key: "leave_deserted_count", label: "หนีหาย :", unit: "คน" },
+        { key: "leave_resigned_count", label: "ลาออก :", unit: "คน" },
+        { key: "leave_terminated_count", label: "ไล่ออก :", unit: "คน" },
       ],
     },
     {
-      key: "3",
+      key: "shift",
       title: "การบริหารการควงเวร",
       items: [
-        { key: "3.1", label: "18 ชั่วโมง :", unit: "คน" },
-        { key: "3.2", label: "24 ชั่วโมง :", unit: "คน" },
-        { key: "3.3", label: "36 ชั่วโมง :", unit: "คน" },
+        { key: "shift_18_count", label: "18 ชั่วโมง :", unit: "คน" },
+        { key: "shift_24_count", label: "24 ชั่วโมง :", unit: "คน" },
+        { key: "shift_36_count", label: "36 ชั่วโมง :", unit: "คน" },
       ],
     },
     {
-      key: "4",
+      key: "training",
       title: "อบรมและควบคุมหน้าที่งาน",
       items: [
-        { key: "4.1", label: "อบรมเปลี่ยนผลัด :", unit: "หน่วยงาน" },
-        { key: "4.2", label: "อบรมตามแผนงานที่กำหนด :", unit: "หน่วยงาน" },
-        { key: "4.3", label: "ควบคุมหน้าที่งาน :", unit: "หน่วยงาน" },
+        {
+          key: "training_shift_change_count",
+          label: "อบรมเปลี่ยนผลัด :",
+          unit: "หน่วยงาน",
+        },
+        {
+          key: "training_planned_count",
+          label: "อบรมตามแผนงานที่กำหนด :",
+          unit: "หน่วยงาน",
+        },
+        {
+          key: "training_duty_control_count",
+          label: "ควบคุมหน้าที่งาน :",
+          unit: "หน่วยงาน",
+        },
       ],
     },
   ];
 
-  const debugLog = (label: string, obj: any) => {
-    try {
-      if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
-        console.debug("MoSectorPdf DEBUG:", label, obj);
-      }
-    } catch (_) {
-      // ignore
-    }
-  };
-
-  const getCols = () => {
-    const table1Rows = (newCaseData as any)?.table1 ?? [];
-    // Prefer filtering by transaction id when available (more specific),
-    // otherwise fall back to department_id.
-    const txId = (data as any)?.mo_daily_transaction_id ?? null;
-    if (txId) {
-      const colsByTx = table1Rows.filter(
-        (row: any) => Number(row.mo_daily_transaction_id) === Number(txId),
-      );
-      if (colsByTx.length > 0) return colsByTx;
-    }
-    return table1Rows.filter(
-      (row: any) => Number(row.department_id) === Number(selectedSector),
-    );
-  };
-
-  const dynamicGroup2: PdfGroup[] = [
-    {
-      key: "5",
-      title: "วินัยและการลงโทษ",
-      items: [
-        { key: "5.1", label: "เล่นโทรศัพท์มือถือ :", unit: "คน" },
-        { key: "5.2", label: "ไม่มีเข็มขัด :", unit: "คน" },
-        { key: "5.3", label: "ไม่แขวนบัตร :", unit: "คน" },
-        { key: "5.4", label: "ชุดชำรุดเก่า :", unit: "คน" },
-      ],
-    },
-  ];
-
-  const statusOptions = [
-    { label: "ปกติ", key: "normal" },
-    { label: "ผิดปกติ", key: "warning" },
-    { label: "จุดเด่น", key: "danger" },
-  ];
-
-  const rowStatus: Record<string, number> = {};
-
-  const group3Static: PdfGroup[] = [
-    {
-      key: "6",
-      title: "เข้าพบผู้ว่าจ้าง",
-      items: [
-        { key: "6.1", label: "" },
-        { key: "6.2", label: "" },
-        { key: "6.3", label: "" },
-      ],
-    },
-  ];
-
-  const group3Data: PdfGroup[] = (() => {
-    try {
-      const table4 = (newCaseData as any)?.table4 ?? [];
-      const txId = (data as any).mo_daily_transaction_id ?? null;
-      const filtered =
-        Array.isArray(table4) && txId
-          ? table4.filter((it: any) => it.mo_daily_transaction_id === txId)
-          : [];
-      if (filtered.length > 0) {
-        return [
+  // Build group 2 (วินัยและการลงโทษ) from data.disciplines array (with static fallback)
+  const group2Disciplines: PdfGroup[] = (() => {
+    const items = (data as any).disciplines ?? [];
+    const disciplineItems =
+      Array.isArray(items) && items.length > 0
+        ? items
+        : [
           {
-            key: "6",
-            title: "เข้าพบผู้ว่าจ้าง",
-            items: filtered.map((it: any) => ({
-              key: it.key,
-              label: it.label ?? `รายการ ${it.key}`,
-              detail: it.detail ?? "",
-              status: it.status ?? "normal",
-              note: it.note ?? "",
-            })),
+            key: "discipline_phone_count",
+            label: "เล่นโทรศัพท์มือถือ :",
+            value: 0,
           },
-        ] as PdfGroup[];
-      }
-    } catch (_) {
-      /* ignore */
-    }
-    return group3Static;
+          { key: "discipline_belt_count", label: "ไม่มีเข็มขัด :", value: 0 },
+          { key: "discipline_badge_count", label: "ไม่แขวนบัตร :", value: 0 },
+          {
+            key: "discipline_uniform_count",
+            label: "ชุดชำรุดเก่า :",
+            value: 0,
+          },
+        ];
+    return [
+      {
+        key: "discipline",
+        title: "วินัยและการลงโทษ",
+        items: disciplineItems.map((d: any) => ({
+          key: d.key ?? d.label,
+          label: d.label ?? "-",
+          unit: "คน",
+          value: d.value ?? 0,
+        })),
+      },
+    ];
   })();
 
-  if (contentOnly) {
-    return (
-      <>
-        {/* Top Header Section */}
-        <div className={styles["pdf-header-row"]}>
-          <div className={styles["logo-section"]}>
-            <span className={styles["logo-guts"]}>GUTS</span>
-            <span className={styles["logo-ess"]}>ESS</span>
-          </div>
-          <div className={styles["header-divider"]} />
-          <div className={styles["header-text-block"]}>
-            <div className={styles["header-text-en"]}>
-              Employee Self Service
-            </div>
-            <div className={styles["header-text-th"]}>ระบบบริการตนเอง</div>
-            <div className={styles["header-text-sub"]}>
-              สำหรับพนักงานสำนักงานและสายตรวจ
-            </div>
-          </div>
-        </div>
+  // Build group 3 (เข้าพบผู้ว่าจ้าง) from data.projects array
+  const group3Projects: PdfGroup[] = (() => {
+    const items = (data as any).projects ?? [];
+    if (!Array.isArray(items) || items.length === 0) return [];
+    return [
+      {
+        key: "meeting",
+        title: "เข้าพบผู้ว่าจ้าง",
+        items: items.map((p: any) => ({
+          key: p.id ?? p.label,
+          label: p.label ?? "-",
+          detail: p.detail ?? "",
+          status: p.status ?? "normal",
+          note: p.note ?? "",
+        })),
+      },
+    ];
+  })();
 
-        {/* Title Bar */}
-        <div className={styles["pdf-title-bar"]}>
-          MO-รายงานประจำวันฝ่ายปฏิบัติการ (รายละเอียดภาค)
+  const renderPageHeader = (pageNo: number): JSX.Element => (
+    <>
+      <div className={styles["pdf-header-row"]}>
+        <div className={styles["logo-section"]}>
+          <img className={styles["pdf-logo"]} src={logoPng} alt="GUTS ESS" />
         </div>
-
-        {/* Meta Data Row */}
-        <div className={styles["pdf-meta-row"]}>
-          <div className={styles["meta-location"]}>
-            <FlagTriangleLeftIcon size={18} strokeWidth={2.5} />
-            <span>{sectorName || "-"}</span>
+        <div className={styles["header-divider"]} />
+        <div className={styles["header-text-block"]}>
+          <div className={styles["header-text-en"]}>
+            <span className={styles["first-letter"]}>E</span>mployee{" "}
+            <span className={styles["first-letter"]}>S</span>elf{" "}
+            <span className={styles["first-letter"]}>S</span>ervice
           </div>
-          <div className={styles["meta-date"]}>{displayDate}</div>
+          <div className={styles["header-text-th"]}>ระบบบริการตนเอง</div>
+          <div className={styles["header-text-sub"]}>
+            สำหรับพนักงานสำนักงานและสายตรวจ
+          </div>
         </div>
+      </div>
+
+      <div className={styles["pdf-title-bar"]}>
+        รายงานประจำวันฝ่ายปฏิบัติการ (รายละเอียดภาค)
+      </div>
+
+      <div className={styles["pdf-meta-row"]}>
+        <div className={styles["page-number-badge"]}>
+          <span className={styles["page-num"]}>หน้าที่ {pageNo}</span>
+        </div>
+        <div className={styles["meta-location"]}>
+          <span style={{ fontSize: "23px" }}>{sectorName || "-"}</span>
+        </div>
+        <div className={styles["meta-date"]}>{displayDate}</div>
+      </div>
+    </>
+  );
+
+  const pdfBody = (
+    <>
+      {/* pag1 */}
+      <div className={styles["pdf-page"]}>
+        {renderPageHeader(1)}
 
         <div className={styles["mo-tables-wrapper"]}>
           {/* ── group1 ── */}
           {group1.map((g, idx) => {
-            const cols = getCols();
-            debugLog("group1 cols", { selectedSector, cols, colsLength: cols.length });
-            const headerColSpan = cols.length + 3;
+            const headerColSpan = 3;
             return (
               <div
                 key={g.key}
@@ -458,35 +477,19 @@ export default function MoSectorPdf({
                     </tr>
                   </thead>
                   <tbody>
-
-
-                    {g.items.map((r) => {
-                      const perLocVals = cols.map((c: any) => {
-                        const t2rows = (newCaseData as any)?.table2 ?? [];
-                        const match = (t2rows as any[]).find(
-                          (t) =>
-                            Number(t.mo_daily_transaction_id) ===
-                            Number(c.mo_daily_transaction_id),
-                        );
-                        // Add existence check to prevent undefined values
-                        return match && match[r.key] !== undefined ? String(match[r.key]) : "0";
-                      });
-                      const total = perLocVals.reduce(
-                        (acc, v) => acc + (Number(v) || 0),
-                        0,
-                      );
+                    {g.items.map((r, itemIdx) => {
+                      const val = String((data as any)[r.key] ?? "0");
                       return (
                         <tr key={r.key}>
                           <td className={styles["first-column-cell"]}>
-                            {r.key}
+                            {idx + 1}.{itemIdx + 1}
                           </td>
                           <td className={styles["second-column-cell"]}>
                             {r.label}
                           </td>
-
                           <td className={styles["third-column-cell"]}>
                             <div className={styles["third-column-text"]}>
-                              {String(total)}
+                              {val}
                             </div>
                           </td>
                           <td className={styles["fourth-column-cell"]}>
@@ -501,11 +504,9 @@ export default function MoSectorPdf({
             );
           })}
 
-          {/* ── group2 ── */}
-          {dynamicGroup2.map((g, idx) => {
-            const cols = getCols();
-            debugLog("dynamicGroup2 cols", { selectedSector, cols, colsLength: cols.length });
-            const headerColSpan = cols.length + 3;
+          {/* ── group2 (วินัยและการลงโทษ) ── */}
+          {group2Disciplines.map((g, idx) => {
+            const headerColSpan = 3;
             return (
               <div
                 key={g.key}
@@ -521,110 +522,11 @@ export default function MoSectorPdf({
                         colSpan={1}
                         className={`${styles["first-column-cell"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
                       >
-                        {idx + 1}.
+                        5
                       </th>
                       <th
                         colSpan={headerColSpan}
                         className={`${styles["mo-table-header"]} ${styles["mo-table-header-red"]} ${styles["no-border"]}`}
-                      >
-                        <div className={styles["mo-header"]}>
-                          <p
-                            className={
-                              g.key === "5" ? styles["mo-header-red-text"] : ""
-                            }
-                          >
-                            {g.title}
-                          </p>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-
-                    {g.items.map((r) => {
-                      let perLocVals = cols.map((c: any) => {
-                        const t3rows = (newCaseData as any)?.table3 ?? [];
-                        const match = (t3rows as any[]).find(
-                          (t) =>
-                            Number(t.mo_daily_transaction_id) ===
-                            Number(c.mo_daily_transaction_id) &&
-                            String(t.key) === String(r.key),
-                        );
-                        // Add existence check to prevent undefined values
-                        return match && match.value !== undefined ? String(match.value) : "0";
-                      });
-
-                      if (cols.length === 0) {
-                        const mapKeyToField: Record<string, keyof typeof data | undefined> = {
-                          "2.1": "leave_business_count",
-                          "2.2": "leave_sick_count",
-                          "2.3": "absent_count",
-                          "2.4": "leave_other_count",
-                          "2.5": undefined,
-                          "2.6": undefined,
-                        };
-                        const field = mapKeyToField[r.key];
-                        const fallback = field ? String((data as any)[field] ?? "0") : "0";
-                        perLocVals = [fallback];
-                      }
-
-                      const totalFromTable = perLocVals.reduce(
-                        (acc, v) => acc + (Number(v) || 0),
-                        0,
-                      );
-                      return (
-                        <tr key={r.key}>
-                          <td className={styles["first-column-cell"]}>
-                            {r.key}
-                          </td>
-                          <td className={styles["second-column-cell"]}>
-                            {r.label}
-                          </td>
-
-                          <td className={styles["third-column-cell"]}>
-                            <div className={styles["third-column-text"]}>
-                              {String(totalFromTable)}
-                            </div>
-                          </td>
-                          <td
-                            className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-danger"]}`}
-                          >
-                            {r.unit}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })}
-
-          {/* ── group3 ── */}
-          {group3Data.map((g) => {
-            const cols = getCols();
-            debugLog("group3Data cols", { selectedSector, cols, colsLength: cols.length });
-            const headerColSpan = cols.length + 1;
-            return (
-              <div
-                key={g.key}
-                id={`mo-table-${g.key}`}
-                data-section={g.key}
-                aria-label={`MO table ${g.title}`}
-                className={styles["mo-table-wrapper"]}
-              >
-                <table className={styles["mo-table"]}>
-                  <thead>
-                    <tr>
-                      <th
-                        colSpan={1}
-                        className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
-                      >
-                        {g.key}.
-                      </th>
-                      <th
-                        colSpan={headerColSpan}
-                        className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
                       >
                         <div className={styles["mo-header"]}>
                           <p className={styles["mo-header-red-text"]}>
@@ -635,72 +537,46 @@ export default function MoSectorPdf({
                     </tr>
                   </thead>
                   <tbody>
-                    {g.items.map((it, ii) => {
-                      const rowKey = it.key;
-                      const table4Rows = (newCaseData as any)?.table4 ?? [];
-                      const perLocVals = cols.map((c: any) => {
-                        const match = (table4Rows as any[]).find(
-                          (t) =>
-                            Number(t.mo_daily_transaction_id) ===
-                            Number(c.mo_daily_transaction_id) &&
-                            String(t.key) === String(it.key)
-                        );
-                        return match ? "1" : "0";
-                      });
-
-                      const totalForStatus = perLocVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
-                      return (
-                        <tr key={rowKey}>
-                          <td className={styles["first-column-cell"]}>
-                            {rowKey}
-                          </td>
-                          <td
-                            className={`${styles["group3-second-column-cell"]} ${styles[`status-${it.status || "normal"}`]}`}
-                          >
-                            {it.label}
-                          </td>
-                          {perLocVals.map((val, i) => (
-                            <td
-                              key={i}
-                              className={`${styles["third-column-cell"]} ${String(val).length > 4
-                                ? styles["third-column-wrap-cell"]
-                                : ""
-                                }`}
-                            >
-                              <div className={styles["third-column-text"]}>
-                                {val}
-                              </div>
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
+                    {g.items.map((r, itemIdx) => (
+                      <tr key={r.key}>
+                        <td className={styles["first-column-cell"]}>
+                          5.{itemIdx + 1}
+                        </td>
+                        <td className={styles["second-column-cell"]}>
+                          {r.label}
+                        </td>
+                        <td className={styles["third-column-cell"]}>
+                          <div className={styles["third-column-text"]}>
+                            {String(r.value ?? 0)}
+                          </div>
+                        </td>
+                        <td className={styles["fourth-column-cell"]}>
+                          {r.unit}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
             );
+             {/* ── group3 (	เข้าพบผู้ว่าจ้าง) ── only show lable and  staus coumn wti status bgcolor like */} 
+
           })}
+
         </div>
+      </div>
+
+      {/* Page2 */}
+      <div className={styles["pdf-page"]}>
+        {renderPageHeader(2)}
 
         {/* ── group3 Detail Items ── */}
-        {group3Data.map((g) => {
-          const cols = getCols();
-          const deptTxIds = Array.isArray(cols)
-            ? Array.from(new Set(cols.map((r: any) => r.mo_daily_transaction_id))).filter(Boolean)
-            : [];
-          debugLog("group3 detail deptTxIds", { gKey: g.key, deptTxIds });
-
-          const table4 = (newCaseData as any)?.table4 ?? [];
-          const detailItems: any[] =
-            Array.isArray(table4) && deptTxIds.length > 0
-              ? table4.filter(
-                (it: any) =>
-                  deptTxIds.includes(it.mo_daily_transaction_id) &&
-                  String(it.key).startsWith(g.key + "."),
-              )
-              : [];
-
-          if (detailItems.length === 0) return null;
+        {(() => {
+          const g =
+            group3Projects.length > 0
+              ? group3Projects[0]
+              : { key: "meeting", title: "เข้าพบผู้ว่าจ้าง", items: [] };
+          const detailItems = g.items;
 
           return (
             <div
@@ -715,7 +591,7 @@ export default function MoSectorPdf({
                       colSpan={1}
                       className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
                     >
-                      {g.key}.
+                      6
                     </th>
                     <th
                       colSpan={5}
@@ -730,128 +606,155 @@ export default function MoSectorPdf({
                   </tr>
                 </thead>
                 <tbody>
-                  {detailItems.map((it: any) => (
-                    <tr key={it.key}>
-                      <td className={styles["first-column-cell"]}>{it.key}</td>
-                      <td className={styles["group3-second-column-cell"]}>
-                        {it.label ?? it.detail ?? `รายการ ${it.key}`}
-                      </td>
+                  {detailItems.length === 0 ? (
+                    <tr>
                       <td
-                        className={styles["third-column-cell"]}
+                        colSpan={6}
                         style={{
-                          minWidth: "120px",
-                          width: "auto",
-                          textAlign: "left",
-                          padding: "4px 6px",
-                        }}
-                      >
-                        {it.detail || "-"}
-                      </td>
-                      <td
-                        className={`${styles["group3-second-column-cell"]} ${styles["status-" + (it.status || "normal")]}`}
-                        style={{
-                          color: "#fff",
-                          fontWeight: 700,
                           textAlign: "center",
+                          padding: "20px",
+                          color: "#888",
                         }}
                       >
-                        {{
-                          normal: "ปกติ",
-                          warning: "ผิดปกติ",
-                          danger: "จุดเด่น",
-                        }[it.status || "normal"] || "ปกติ"}
+                        ยังไม่มีข้อมูลโครงการ
                       </td>
-                      <td
-                        className={styles["third-column-cell"]}
-                        style={{
-                          minWidth: "120px",
-                          width: "auto",
-                          textAlign: "left",
-                          padding: "4px 6px",
-                        }}
-                      >
-                        {it.note || "-"}
-                      </td>
-                      <td className={styles["fourth-column-cell"]}>หน่วยงาน</td>
                     </tr>
-                  ))}
+                  ) : (
+                    detailItems.map((it: any, itemIdx: number) => (
+                      <Fragment key={it.key}>
+                        {/* ── Item header: number + label (โครงการ) ── */}
+                        <tr>
+                          <td
+                            className={styles["first-column-cell"]}
+                            style={{ fontWeight: 700, verticalAlign: "middle" }}
+                          >
+                            6.{itemIdx + 1}
+                          </td>
+                          <td
+                            colSpan={5}
+                            style={{
+                              fontWeight: 700,
+                              fontSize: "14px",
+                              padding: "4px 6px",
+                              textAlign: "left",
+                            }}
+                          >
+                            {it.label ?? `รายการ ${it.key}`}
+                          </td>
+                        </tr>
+                        {/* ── Detail (รายละเอียด) ── */}
+                        <tr>
+                          <td
+                            style={{
+                              fontWeight: 600,
+                              background: "#f5f5f5",
+                              padding: "4px 6px",
+                              textAlign: "center",
+                              fontSize: "12px",
+                              borderRight: "1px solid #e5e7eb",
+                            }}
+                          >
+                            รายละเอียด
+                          </td>
+                          <td
+                            colSpan={5}
+                            style={{ padding: "4px 6px", textAlign: "left" }}
+                          >
+                            {it.detail || "-"}
+                          </td>
+                        </tr>
+                        {/* ── Status (สถานะ) ── */}
+                        <tr>
+                          <td
+                            style={{
+                              fontWeight: 600,
+                              background: "#f5f5f5",
+                              padding: "4px 6px",
+                              textAlign: "center",
+                              fontSize: "12px",
+                              borderRight: "1px solid #e5e7eb",
+                            }}
+                          >
+                            สถานะ
+                          </td>
+                          <td
+                            colSpan={5}
+                            style={{
+                              color: "#fff",
+                              fontWeight: 700,
+                              textAlign: "center",
+                              padding: "4px 6px",
+                              fontSize: "13px",
+                              background:
+                                it.status === "normal"
+                                  ? "#4caf50"
+                                  : it.status === "warning"
+                                    ? "#ff9800"
+                                    : it.status === "danger"
+                                      ? "#b71c1c"
+                                      : "#4caf50",
+                            }}
+                          >
+                            {{
+                              normal: "ปกติ",
+                              warning: "ผิดปกติ",
+                              danger: "ฉุกเฉิน",
+                            }[it.status || "normal"] || "ปกติ"}
+                          </td>
+                        </tr>
+                        {/* ── Note (หมายเหตุ) ── */}
+                        <tr>
+                          <td
+                            style={{
+                              fontWeight: 600,
+                              background: "#f5f5f5",
+                              padding: "4px 6px",
+                              textAlign: "center",
+                              fontSize: "12px",
+                              borderRight: "1px solid #e5e7eb",
+                            }}
+                          >
+                            หมายเหตุ
+                          </td>
+                          <td
+                            colSpan={5}
+                            style={{ padding: "4px 6px", textAlign: "left" }}
+                          >
+                            {it.note || "-"}
+                          </td>
+                        </tr>
+                        {/* ── Separator between items ── */}
+                        {itemIdx < detailItems.length - 1 && (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              style={{
+                                borderBottom: "1px dashed #ccc",
+                                height: "4px",
+                                padding: 0,
+                              }}
+                            ></td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           );
-        })}
+        })()}
+      </div>
 
-        {/* APPROVAL REMARK SECTION */}
-        <div className={styles["approval-divider"]}>
-          <div className={styles["approval-divider-line"]}></div>
-          <div className={styles["approval-divider-text"]}>การอนุมัติ</div>
-          <div className={styles["approval-divider-line"]}></div>
-        </div>
+    </>
+  );
 
-        <div className={styles["approval-content"]}>
-          <p className={styles["approval-text"]}>
-            {data.approved_remark
-              ? `• ${data.approved_remark}`
-              : "• วันที่ 5 เดือน"}
-          </p>
-        </div>
-
-        {/* SIGNATURE SECTIONS */}
-        <div className={styles["pdf-signatures"]}>
-          <div className={styles["signature-slot"]}>
-            <div className={styles["signature-title"]}>ผู้ บันทึก</div>
-            <div className={styles["signature-line"]}>
-              {data.created_by || "ADMIN"}
-            </div>
-          </div>
-          <div className={styles["signature-slot"]}>
-            <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
-            <div className={styles["signature-line"]}>
-              {data.approved_by || "\u00A0"}
-            </div>
-          </div>
-        </div>
-      </>
-    );
+  if (contentOnly) {
+    return pdfBody;
   }
 
   return (
     <>
-      {/* ACTION BAR - Outside wrapper to prevent overflow conflicts */}
-      <div className={styles["btns-box"]}>
-        <button
-          className={styles["gut-back-icon"]}
-          onClick={onCancel}
-          aria-label="Back"
-        >
-          <ArrowLeft size={18} />
-        </button>
-
-        <div className={styles["guts-action-icons"]} aria-hidden={false}>
-          <button
-            type="button"
-            className={styles["guts-icon-btn"]}
-            title="Download PDF"
-            aria-label="Download PDF"
-            onClick={handleDownloadPdf}
-            disabled={pdfLoading}
-            style={{ marginRight: 8 }}
-          >
-            {pdfLoading ? "..." : "PDF"}
-          </button>
-          <button
-            type="button"
-            className={styles["guts-icon-btn"]}
-            title="Share PDF"
-            aria-label="Share PDF"
-            onClick={handleSharePdf}
-            disabled={pdfLoading}
-          >
-            {pdfLoading ? "..." : <Share2 size={18} />}
-          </button>
-        </div>
-      </div>
-
       {/* PDF VIEWER WRAPPER */}
       <div className={styles["pdf-viewer-wrapper"]}>
         {/* CANVAS VIEWPORT */}
@@ -867,7 +770,7 @@ export default function MoSectorPdf({
             }}
           >
             <div
-              className={styles["pdf-page"]}
+
               id="guts-pdf-content"
               style={{
                 position: "absolute",
@@ -877,521 +780,10 @@ export default function MoSectorPdf({
                 transformOrigin: "top left",
               }}
             >
-              {/* Top Header Section */}
-              <div className={styles["pdf-header-row"]}>
-                <div className={styles["logo-section"]}>
-                  <span className={styles["logo-guts"]}>GUTS</span>
-                  <span className={styles["logo-ess"]}>ESS</span>
-                </div>
-                <div className={styles["header-divider"]} />
-                <div className={styles["header-text-block"]}>
-                  <div className={styles["header-text-en"]}>
-                    Employee Self Service
-                  </div>
-                  <div className={styles["header-text-th"]}>
-                    ระบบบริการตนเอง
-                  </div>
-                  <div className={styles["header-text-sub"]}>
-                    สำหรับพนักงานสำนักงานและสายตรวจ
-                  </div>
-                </div>
-              </div>
-
-              {/* Title Bar */}
-              <div className={styles["pdf-title-bar"]}>
-                MO-รายงานประจำวันฝ่ายปฏิบัติการ
-              </div>
-
-              {/* Meta Data Row */}
-              <div className={styles["pdf-meta-row"]}>
-                <div className={styles["meta-location"]}>
-                  <MapPin size={18} strokeWidth={2.5} />
-                  <span>{sectorName || "-"}</span>
-                </div>
-                <div className={styles["meta-date"]}>{displayDate}</div>
-              </div>
-
-              {/* Tables Section — mirrors MoSectorDetailForm layout */}
-              <div className={styles["mo-tables-wrapper"]}>
-                {/* ── group1 ── */}
-                {group1.map((g, idx) => {
-                  const cols = getCols();
-                  debugLog("group1 cols (main)", { selectedSector, colsLength: cols.length });
-                  const headerColSpan = cols.length + 3;
-                  return (
-                    <div
-                      key={g.key}
-                      id={`mo-table-${g.key}`}
-                      data-section={g.key}
-                      aria-label={`MO table ${g.title}`}
-                      className={styles["mo-table-wrapper"]}
-                    >
-                      <table className={styles["mo-table"]}>
-                        <thead>
-                          <tr>
-                            <th
-                              colSpan={1}
-                              className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
-                            >
-                              {idx + 1}.
-                            </th>
-                            <th
-                              colSpan={headerColSpan}
-                              className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
-                            >
-                              <div className={styles["mo-header"]}>
-                                <p>{g.title}</p>
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {/* location header row */}
-                          <tr key={`loc-header-${g.key}`}>
-                            <td
-                              colSpan={2}
-                              className={` ${styles["second-column-header-cell"]} `}
-                            >
-                              <strong>หัวข้อ</strong>
-                            </td>
-                            {cols.map((c: any) => (
-                              <td
-                                key={String(c.mo_daily_transaction_id)}
-                                className={`${styles["third-column-header1-cell"]}`}
-                              >
-                                <strong>{c.sub_location}</strong>
-                              </td>
-                            ))}
-                            <td
-                              className={`${styles["third-column-header2-cell"]}`}
-                            >
-                              <strong>รวม</strong>
-                            </td>
-                            <td
-                              className={`${styles["fourth-column-header-cell"]}`}
-                            ></td>
-                          </tr>
-                          {g.items.map((r) => {
-                            const perLocVals = cols.map((c: any) => {
-                              const t2rows = (newCaseData as any)?.table2 ?? [];
-                              const match = (t2rows as any[]).find(
-                                (t) =>
-                                  Number(t.mo_daily_transaction_id) ===
-                                  Number(c.mo_daily_transaction_id),
-                              );
-                              return match ? String(match[r.key] ?? "0") : "0";
-                            });
-                            const total = perLocVals.reduce(
-                              (acc, v) => acc + (Number(v) || 0),
-                              0,
-                            );
-                            return (
-                              <tr key={r.key}>
-                                <td className={styles["first-column-cell"]}>
-                                  {r.key}
-                                </td>
-                                <td className={styles["second-column-cell"]}>
-                                  {r.label}
-                                </td>
-                                {perLocVals.map((val, i) => (
-                                  <td
-                                    key={i}
-                                    className={`${styles["third-column-cell"]} ${String(val).length > 4
-                                      ? styles["third-column-wrap-cell"]
-                                      : ""
-                                      }`}
-                                  >
-                                    <div
-                                      className={styles["third-column-text"]}
-                                    >
-                                      {val}
-                                    </div>
-                                  </td>
-                                ))}
-                                <td className={styles["third-column-cell"]}>
-                                  <div className={styles["third-column-text"]}>
-                                    {String(total)}
-                                  </div>
-                                </td>
-                                <td className={styles["fourth-column-cell"]}>
-                                  {r.unit}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })}
-
-                {/* ── group2 ── */}
-                {dynamicGroup2.map((g, idx) => {
-                  const cols = getCols();
-                  debugLog("dynamicGroup2 cols", { selectedSector, cols, colsLength: cols.length });
-                  const headerColSpan = cols.length + 3;
-                  return (
-                    <div
-                      key={g.key}
-                      id={`mo-table-${g.key}`}
-                      data-section={g.key}
-                      aria-label={`MO table ${g.title}`}
-                      className={styles["mo-table-wrapper"]}
-                    >
-                      <table className={styles["mo-table"]}>
-                        <thead>
-                          <tr>
-                            <th
-                              colSpan={1}
-                              className={`${styles["first-column-cell"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
-                            >
-                              {idx + 1}.
-                            </th>
-                            <th
-                              colSpan={headerColSpan}
-                              className={`${styles["mo-table-header"]} ${styles["mo-table-header-red"]} ${styles["no-border"]}`}
-                            >
-                              <div className={styles["mo-header"]}>
-                                <p
-                                  className={
-                                    g.key === "5"
-                                      ? styles["mo-header-red-text"]
-                                      : ""
-                                  }
-                                >
-                                  {g.title}
-                                </p>
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {/* location header row */}
-                          <tr key={`loc-header-${g.key}`}>
-                            <td
-                              colSpan={2}
-                              className={` ${styles["second-column-header-cell"]} `}
-                            >
-                              <strong>หัวข้อ</strong>
-                            </td>
-                            {cols.map((c: any) => (
-                              <td
-                                key={String(c.mo_daily_transaction_id)}
-                                className={`${styles["third-column-header1-cell"]}`}
-                              >
-                                <strong>{c.sub_location}</strong>
-                              </td>
-                            ))}
-                            <td
-                              className={`${styles["third-column-header2-cell"]}`}
-                            >
-                              <strong>รวม</strong>
-                            </td>
-                            <td
-                              className={`${styles["fourth-column-header-cell"]}`}
-                            ></td>
-                          </tr>
-                          {g.items.map((r) => {
-                            const perLocVals = cols.map((c: any) => {
-                              const t3rows = (newCaseData as any)?.table3 ?? [];
-                              const match = (t3rows as any[]).find(
-                                (t) =>
-                                  Number(t.mo_daily_transaction_id) ===
-                                  Number(c.mo_daily_transaction_id) &&
-                                  String(t.key) === String(r.key),
-                              );
-                              return match ? String(match.value ?? "0") : "0";
-                            });
-                            const totalFromTable = perLocVals.reduce(
-                              (acc, v) => acc + (Number(v) || 0),
-                              0,
-                            );
-                            return (
-                              <tr key={r.key}>
-                                <td className={styles["first-column-cell"]}>
-                                  {r.key}
-                                </td>
-                                <td className={styles["second-column-cell"]}>
-                                  {r.label}
-                                </td>
-                                {perLocVals.map((val, i) => (
-                                  <td
-                                    key={i}
-                                    className={`${styles["third-column-cell"]} ${String(val).length > 4
-                                      ? styles["third-column-wrap-cell"]
-                                      : ""
-                                      }`}
-                                  >
-                                    <div
-                                      className={styles["third-column-text"]}
-                                    >
-                                      {val}
-                                    </div>
-                                  </td>
-                                ))}
-                                <td className={styles["third-column-cell"]}>
-                                  <div className={styles["third-column-text"]}>
-                                    {String(totalFromTable)}
-                                  </div>
-                                </td>
-                                <td
-                                  className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-danger"]}`}
-                                >
-                                  {r.unit}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })}
-
-                {/* ── group3 ── */}
-                {group3Data.map((g) => {
-                  const cols = getCols();
-                  debugLog("group3Data cols", { selectedSector, cols, colsLength: cols.length });
-                  const headerColSpan = cols.length + 1;
-                  return (
-                    <div
-                      key={g.key}
-                      id={`mo-table-${g.key}`}
-                      data-section={g.key}
-                      aria-label={`MO table ${g.title}`}
-                      className={styles["mo-table-wrapper"]}
-                    >
-                      <table className={styles["mo-table"]}>
-                        <thead>
-                          <tr>
-                            <th
-                              colSpan={1}
-                              className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
-                            >
-                              {g.key}.
-                            </th>
-                            <th
-                              colSpan={headerColSpan}
-                              className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
-                            >
-                              <div className={styles["mo-header"]}>
-                                <p className={styles["mo-header-red-text"]}>
-                                  {g.title}
-                                </p>
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {statusOptions.map((s, si) => {
-                            const rowKey = `${g.key}.${si + 1}`;
-                            const table4Rows =
-                              (newCaseData as any)?.table4 ?? [];
-                            const perLocVals = cols.map((c: any) => {
-                              const matches = (table4Rows as any[]).filter(
-                                (t) =>
-                                  Number(t.mo_daily_transaction_id) ===
-                                  Number(c.mo_daily_transaction_id) &&
-                                  String(t.key).startsWith(`${g.key}.`) &&
-                                  (t.status ??
-                                    statusOptions[rowStatus[t.key] ?? 0]
-                                      .key) === s.key,
-                              );
-                              return String(matches.length ?? 0);
-                            });
-                            const totalForStatus = perLocVals.reduce(
-                              (acc, v) => acc + (Number(v) || 0),
-                              0,
-                            );
-                            return (
-                              <tr key={rowKey}>
-                                <td className={styles["first-column-cell"]}>
-                                  {rowKey}
-                                </td>
-                                <td
-                                  className={`${styles["group3-second-column-cell"]} ${styles[`status-${s.key}`]}`}
-                                >
-                                  {s.label}
-                                </td>
-                                {perLocVals.map((val, i) => (
-                                  <td
-                                    key={i}
-                                    className={`${styles["third-column-cell"]} ${
-                                      String(val).length > 4
-                                        ? styles["third-column-wrap-cell"]
-                                        : ""
-                                    }`}
-                                  >
-                                    </td>
-                                                          <td className={styles["group3-second-column-cell"]}>
-                                                            {r.label}
-                                                          </td>
-                                  </td>
-                                ))}
-                                <td
-                                                className={`${styles["group3-third-column-cell"]} ${styles[`status-${r.status ?? statusOptions[rowStatus[String(itemIdx)] ?? 0].key}`]} `}
-                                              >
-                                                {(() => {
-                                                  const key =
-                                                    r.status ??
-                                                    statusOptions[rowStatus[String(itemIdx)] ?? 0]
-                                                      .key;
-                                                  const opt =
-                                                    statusOptions.find((s) => s.key === key) ??
-                                                    statusOptions[0];
-                                                  return opt.label;
-                                                })()}
-                                              </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })}
-
-
-              </div>
-
-              {/* ── group3 Detail Items ── */}
-              {group3Data.map((g) => {
-                // Derive transaction IDs from the resolved cols (prefer txId)
-                const cols = getCols();
-                const deptTxIds = Array.isArray(cols)
-                  ? Array.from(new Set(cols.map((r: any) => r.mo_daily_transaction_id))).filter(Boolean)
-                  : [];
-                debugLog("group3 detail deptTxIds (main)", { gKey: g.key, deptTxIds });
-
-                const table4 = (newCaseData as any)?.table4 ?? [];
-                const detailItems: any[] =
-                  Array.isArray(table4) && deptTxIds.length > 0
-                    ? table4.filter(
-                      (it: any) =>
-                        deptTxIds.includes(it.mo_daily_transaction_id) &&
-                        String(it.key).startsWith(g.key + "."),
-                    )
-                    : [];
-
-                if (detailItems.length === 0) return null;
-
-                return (
-                  <div
-                    key={g.key}
-                    id={`mo-table-${g.key}-details`}
-                    className={styles["mo-table-wrapper"]}
-                  >
-                    <table className={styles["mo-table"]}>
-                      <thead>
-                        <tr>
-                          <th
-                            colSpan={1}
-                            className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
-                          >
-                            {g.key}.
-                          </th>
-                          <th
-                            colSpan={5}
-                            className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
-                          >
-                            <div className={`${styles["mo-header"]}`}>
-                              <p className={styles["mo-header-red-text"]}>
-                                {g.title} (รายละเอียด)
-                              </p>
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-
-                        {/* {detailItems.map((it: any) => (
-                          <tr key={it.key} className={styles["no-border"]}>
-                            <td className={styles["first-column-cell"]}>
-                              {it.key}
-                            </td>
-                            <td className={styles["group3-second-column-cell"]}>
-                              {it.label ?? it.detail ?? `รายการ ${it.key}`}
-                            </td>
-                            <td
-                              className={styles["third-column-cell"]}
-                              style={{
-                                minWidth: "120px",
-                                width: "auto",
-                                textAlign: "left",
-                                padding: "4px 6px",
-                              }}
-                            >
-                              {it.detail || "-"}
-                            </td>
-                            <td
-                              className={`${styles["group3-second-column-cell"]} ${styles["status-" + (it.status || "normal")]}`}
-                              style={{
-                                color: "#fff",
-                                fontWeight: 700,
-                                textAlign: "center",
-                              }}
-                            >
-                              {{
-                                normal: "ปกติ",
-                                warning: "ผิดปกติ",
-                                danger: "จุดเด่น",
-                              }[it.status || "normal"] || "ปกติ"}
-                            </td>
-                            <td
-                              className={styles["third-column-cell"]}
-                              style={{
-                                minWidth: "120px",
-                                width: "auto",
-                                textAlign: "left",
-                                padding: "4px 6px",
-                              }}
-                            >
-                              {it.note || "-"}
-                            </td>
-                            <td className={styles["fourth-column-cell"]}>
-                              หน่วยงาน
-                            </td>
-                          </tr>
-                        ))} */}
-                      </tbody>
-                    </table>
-                  </div>
-                );
-              })}
-
-              {/* APPROVAL REMARK SECTION */}
-              <div className={styles["approval-divider"]}>
-                <div className={styles["approval-divider-line"]}></div>
-                <div className={styles["approval-divider-text"]}>
-                  การอนุมัติ
-                </div>
-                <div className={styles["approval-divider-line"]}></div>
-              </div>
-
-              <div className={styles["approval-content"]}>
-                <p className={styles["approval-text"]}>
-                  {data.approved_remark
-                    ? `• ${data.approved_remark}`
-                    : "• วันที่ 5 เดือน"}
-                </p>
-              </div>
-
-              {/* SIGNATURE SECTIONS */}
-              <div className={styles["pdf-signatures"]}>
-                <div className={styles["signature-slot"]}>
-                  <div className={styles["signature-title"]}>ผู้ บันทึก</div>
-                  <div className={styles["signature-line"]}>
-                    {data.created_by || "ADMIN"}
-                  </div>
-                </div>
-                <div className={styles["signature-slot"]}>
-                  <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
-                  <div className={styles["signature-line"]}>
-                    {data.approved_by || "\u00A0"}
-                  </div>
-                </div>
-              </div>
+              {pdfBody}
             </div>
+
+
           </div>
         </div>
       </div>

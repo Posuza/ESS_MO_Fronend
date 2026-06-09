@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
-// import { authService } from "@/services.dev/auth.Service";
-import { authService } from "@/services/auth.Service";
+import { authService } from "@/services.dev/auth.Service";
+// import { authService } from "@/services/auth.Service";
 
 export interface AuthEmployee {
   employee_code: string;

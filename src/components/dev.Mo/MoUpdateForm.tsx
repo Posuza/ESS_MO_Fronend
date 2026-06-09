@@ -2210,85 +2210,34 @@ export default function MoUpdateForm(props: Props) {
         
       </form>
       
-      {/* Approval Section */}
-      <div className={styles["approval-section"]}>
-        <div className={styles["approval-header"]}>
-          <h3 className={styles["approval-title"]}>
-            การอนุมัติ
-          </h3>
-        </div>
-        <div
-          className={[
-            styles["approval-remark-section"],
-            approvalStatus === "APPROVED"
-              ? styles["approval-remark-approved"]
-              : approvalStatus === "REJECT"
-                ? styles["approval-remark-reject"]
-                : styles["approval-remark-pending"],
-          ].join(" ")}
-        >
-          {isManager ? (
-            <div className={styles["approval-status-row"]}>
-              <label className={styles["approval-status-label"]}>
-                การอนุมัติ:
-              </label>
-              <select
-                className={[
-                  styles["approval-select"],
-                  approvalStatus === "APPROVED"
-                    ? styles["approval-select-approved"]
-                    : approvalStatus === "REJECT"
-                      ? styles["approval-select-reject"]
-                      : styles["approval-select-pending"],
-                ].join(" ")}
-                value={approvalStatus}
-                disabled={!props.isEditing}
-                onChange={(e) =>
-                  setApprovalStatus(e.target.value as "PENDING" | "APPROVED" | "REJECT")
-                }
-              >
-                <option value="PENDING">รออนุมัติ</option>
-                <option value="APPROVED">อนุมัติแล้ว</option>
-                <option value="REJECT">ไม่อนุมัติ</option>
-              </select>
-            </div>
-          ) : null}
-          <div className={styles["approval-content"]}>
-            <AutoResizeTextarea
-              className={styles["approval-textarea"]}
-              rows={3}
-              value={approvalRemark}
-              disabled={!props.isEditing || !isManager}
-              onChange={(e) => setApprovalRemark(e.target.value)}
-              placeholder="หมายเหตุการอนุมัติ/ไม่อนุมัติ"
-            />
-          </div>
-        </div>
-      </div>
       <div className={styles["signature-section"]}>
-        <div className={styles["signature-slot"]}>
-          <div className={styles["signature-title"]}>ผู้ บันทึก</div>
+        <div className={styles["signature-slot-left"]}>
+          <div className={styles["signature-title"]}>ผู้ บันทึก:</div>
           <div className={styles["signature-line"]}>
             {reportItem?.created_by || "ADMIN"}
           </div>
         </div>
-        <div className={styles["signature-slot"]}>
-          <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
+        <div className={styles["signature-slot-right"]}>
+          <div className={styles["signature-title"]}>ผู้ อำนวยงาน:</div>
           <div className={styles["signature-line"]}>
-            {reportItem?.approved_by || "\u00A0"}
+            {reportItem?.approved_by || "--------"}
           </div>
         </div>
       </div>
       
       <div
-        className={`${styles["guts-Mo-actions"]} ${styles["guts-actions-line"]}`}
+        className={`${styles["guts-Mo-actions"]} `}
       >
         {props.isEditing && (
           <>
             {/* ── บันทึกรายงาน ── shown for all editing users */}
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '10px' }}>
+
             <button
               type="button"
-              className={styles["guts-save-report-btn"]}
+              className={`${styles["guts-save-report-btn"]} ${getApprovalStatusClass(
+                props.reportData?.approved_status as string,
+              )}`}
               disabled={!isDirty}
               style={!isDirty ? { opacity: 0.35, cursor: "not-allowed" } : {}}
               onClick={() => {
@@ -2297,41 +2246,55 @@ export default function MoUpdateForm(props: Props) {
             >
               บันทึกรายงาน
             </button>
-
-            {/* ── Manager-only buttons ── */}
-            {isManager && (
-              <>
-                {/* อนุมัติรายงาน: teal filled, saves with approve flag */}
-                <button
-                  type="button"
-                  className={styles["guts-approve-btn"]}
-                  onClick={async () => {
-                    setApprovalStatus("APPROVED");
-                    await doSave({ approve: true });
-                  }}
-                >
-                  อนุมัติรายงาน
-                </button>
-
-                {/* ส่งกลับแก้ไข หลังอนุมัติ: yellow, only active when currently APPROVED */}
-                <button
-                  type="button"
-                  className={styles["guts-sendback-btn"]}
-                  disabled={approvalStatus !== "APPROVED"}
-                  style={approvalStatus !== "APPROVED" ? { opacity: 0.4, cursor: "not-allowed" } : {}}
-                  onClick={async () => {
-                    setApprovalStatus("REJECT");
-                    await doSave();
-                  }}
-                >
-                  ส่งกลับแก้ไข
-                  <br />
-                  หลังอนุมัติ
-                </button>
-              </>
-            )}
+            {/* ── บันทึกรายงาน ── shown for all editing users */}
+            <button
+              type="button"
+              className={styles["guts-cancel-btn"]}
+              disabled={!isDirty}
+              onClick={() => {
+                if (isDirty) {
+                  setShowConfirmCancel(true);
+                } else if (props.onCancel) {
+                  props.onCancel();
+                }
+              }}
+            >
+              ยกเลิก 
+            </button>
+            </div>
           </>
         )}
+        {/* ── Manager-only buttons ── */}
+        {/* {isManager && ( */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* อนุมัติรายงาน: teal filled, saves with approve flag */}
+            <button
+              type="button"
+              className={styles["guts-approve-btn"]}
+              onClick={async () => {
+                setApprovalStatus("APPROVED");
+                await doSave({ approve: true });
+              }}
+            >
+              อนุมัติรายงาน
+            </button>
+
+            {/* ส่งกลับแก้ไข หลังอนุมัติ: yellow, only active when currently APPROVED */}
+            <button
+              type="button"
+              className={styles["guts-sendback-btn"]}
+              disabled={approvalStatus !== "APPROVED"}
+              style={approvalStatus !== "APPROVED" ? { opacity: 0.4, cursor: "not-allowed" } : {}}
+              onClick={async () => {
+                setApprovalStatus("REJECT");
+                await doSave();
+              }}
+            >
+              ส่งกลับแก้ไข หลังอนุมัติ
+            </button>
+          </div>
+        {/* )} */}
+
       </div>
 
       <ConfirmCancelDialog

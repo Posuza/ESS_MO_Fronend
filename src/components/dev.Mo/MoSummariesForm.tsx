@@ -378,7 +378,9 @@ export default function MoNewForm(props: Props) {
       const table4 = (newCaseData as any)?.table4 ?? [];
       const filtered = Array.isArray(table4)
         ? table4.filter(
-            (it: any) => it.mo_daily_transaction_id === selectedTransactionId,
+            (it: any) =>
+              Number(it.mo_daily_transaction_id) ===
+              Number(selectedTransactionId),
           )
         : [];
 
@@ -396,7 +398,7 @@ export default function MoNewForm(props: Props) {
       setDynamicGroup3(group3);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTransactionId]);
+  }, [selectedTransactionId, newCaseData]);
 
   // Load data from newCase.json and initialize counts (will be populated when selectedTransactionId changes)
   const [counts, setCounts] = useState<CountState>({});
@@ -412,7 +414,8 @@ export default function MoNewForm(props: Props) {
     // group1 values come from table2 rows matching the transaction id (take first match)
     const table2Rows = (newCaseData as any)?.table2 ?? [];
     const t2match = table2Rows.find(
-      (r: any) => r.mo_daily_transaction_id === selectedTransactionId,
+      (r: any) =>
+        Number(r.mo_daily_transaction_id) === Number(selectedTransactionId),
     );
     if (t2match) {
       group1.forEach((g) => {
@@ -425,7 +428,10 @@ export default function MoNewForm(props: Props) {
     // group2 numeric values from table3 where mo_daily_transaction_id matches
     const table3Rows = (newCaseData as any)?.table3 ?? [];
     (table3Rows as any[])
-      .filter((r) => r.mo_daily_transaction_id === selectedTransactionId)
+      .filter(
+        (r) =>
+          Number(r.mo_daily_transaction_id) === Number(selectedTransactionId),
+      )
       .forEach((item) => {
         acc[item.key] = item.value || "0";
       });
@@ -433,13 +439,16 @@ export default function MoNewForm(props: Props) {
     // group3 keys: set to "0" (status handled separately)
     const table4Rows = (newCaseData as any)?.table4 ?? [];
     (table4Rows as any[])
-      .filter((r) => r.mo_daily_transaction_id === selectedTransactionId)
+      .filter(
+        (r) =>
+          Number(r.mo_daily_transaction_id) === Number(selectedTransactionId),
+      )
       .forEach((item) => {
         acc[item.key] = acc[item.key] ?? "0";
       });
 
     setCounts(acc);
-  }, [selectedTransactionId]);
+  }, [selectedTransactionId, newCaseData]);
 
   // group3Data: prefer JSON-backed table4 filtered by selectedTransactionId, otherwise fallback to static group3
   const group3Data = useMemo(() => {
@@ -447,7 +456,9 @@ export default function MoNewForm(props: Props) {
       const table4 = (newCaseData as any)?.table4 ?? [];
       const filtered = Array.isArray(table4)
         ? table4.filter(
-            (it: any) => it.mo_daily_transaction_id === selectedTransactionId,
+            (it: any) =>
+              Number(it.mo_daily_transaction_id) ===
+              Number(selectedTransactionId),
           )
         : [];
       if (filtered.length > 0) {
@@ -467,7 +478,7 @@ export default function MoNewForm(props: Props) {
       // ignore and fall back
     }
     return group3;
-  }, [selectedTransactionId]);
+  }, [selectedTransactionId, newCaseData]);
 
   // groupedCounts: derived mapping of group title -> { key: value }
   const groupedCounts = useMemo(() => {

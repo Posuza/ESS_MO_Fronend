@@ -32,8 +32,11 @@ const MoPdfViewer = forwardRef<MoPdfViewerHandle, Props>(function MoPdfViewer(
 
   // Date formatting
   let displayDate = "";
-  if (data.created_at) {
-    const d = new Date(data.created_at);
+  const rawDate = data.report_date || data.created_at;
+  if (rawDate) {
+    const d = new Date(
+      String(rawDate).includes("T") ? String(rawDate) : `${rawDate}T00:00:00`,
+    );
     const day = d.getDate();
     const months = [
       "มกราคม",
@@ -116,8 +119,8 @@ const MoPdfViewer = forwardRef<MoPdfViewerHandle, Props>(function MoPdfViewer(
     (pdfElement as HTMLElement).style.transform = "none";
     (pdfElement as HTMLElement).style.position = "static";
 
-    // Wait for DOM to update
-    await new Promise((res) => setTimeout(res, 150));
+    // Wait for DOM to update and images to render
+    await new Promise((res) => setTimeout(res, 300));
     try {
       const opt = {
         margin: 0,
@@ -160,7 +163,7 @@ const MoPdfViewer = forwardRef<MoPdfViewerHandle, Props>(function MoPdfViewer(
     (pdfElement as HTMLElement).style.transform = "none";
     (pdfElement as HTMLElement).style.position = "static";
 
-    await new Promise((res) => setTimeout(res, 150));
+    await new Promise((res) => setTimeout(res, 300));
     try {
       const opt = {
         margin: 0,
@@ -288,7 +291,6 @@ const MoPdfViewer = forwardRef<MoPdfViewerHandle, Props>(function MoPdfViewer(
             }}
           >
             <div
-              className={styles["pdf-page"]}
               id="guts-pdf-content"
               style={{
                 position: "absolute",

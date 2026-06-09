@@ -68,6 +68,12 @@ export default function MoReportPage({
   const currentEmployee = useStore((state) => state.authEmployee);
   const fetchReports = useStore((state) => state.fetchReports);
 
+  useEffect(() => {
+    if (initialDate !== undefined) {
+      setSelectedDate(initialDate);
+    }
+  }, [initialDate]);
+
   // Sync department name from reports slice when data loads
   useEffect(() => {
     if (reports.length > 0 && currentDept && currentDept.name.includes(String(currentDept.id))) {
@@ -85,9 +91,7 @@ export default function MoReportPage({
 
   function submitSearch() {
     if (selectedDate) {
-      const targetSectorId = selectedLocation
-        ? currentEmployee?.department_id
-        : undefined;
+      const targetSectorId = selectedSectorId ?? undefined;
 
       fetchReports({
         department_id: targetSectorId ?? undefined,
@@ -128,11 +132,11 @@ export default function MoReportPage({
     ...r,
     location:
       r.department_id === currentEmployee?.department_id &&
-      currentEmployee?.department_name
+        currentEmployee?.department_name
         ? currentEmployee.department_name
         : (r as any).department_name ||
-          (r as any).departmentName ||
-          `ภาค ${r.department_id}`,
+        (r as any).departmentName ||
+        `ภาค ${r.department_id}`,
     create_at: r.created_at,
     user_id: r.created_by,
   }));
@@ -174,11 +178,30 @@ export default function MoReportPage({
       (d) => d.location === selectedSectorName,
     );
     if (found) return found.id;
-    return currentEmployee?.department_id ?? null;
-  }, [derivedLocations, selectedSectorName, currentEmployee]);
+    return currentDept?.id ?? currentEmployee?.department_id ?? null;
+  }, [derivedLocations, selectedSectorName, currentDept, currentEmployee]);
+
+  const selectedReportDate = selectedDate || initialDate || "";
+
+  const visibleReports = useMemo(() => {
+    const byDept = selectedSectorId
+      ? reports.filter(
+        (r) => Number(r.department_id) === Number(selectedSectorId),
+      )
+      : reports;
+
+    if (!selectedReportDate) return byDept;
+
+    return byDept.filter((r) => {
+      const reportDate =
+        r.report_date ??
+        (r.created_at ? r.created_at.slice(0, 10) : "");
+      return reportDate === selectedReportDate;
+    });
+  }, [reports, selectedSectorId, selectedReportDate]);
 
   const transactionIds = useMemo(() => {
-    const rows = reports;
+    const rows = visibleReports;
     if (!Array.isArray(rows) || !selectedSectorId) return [] as number[];
     const filtered = rows.filter(
       (r: any) => Number(r.department_id) === Number(selectedSectorId),
@@ -187,21 +210,33 @@ export default function MoReportPage({
       new Set(filtered.map((r: any) => r.id || r.mo_daily_transaction_id)),
     ).filter(Boolean);
     return ids as number[];
-  }, [selectedSectorId, reports]);
+  }, [selectedSectorId, visibleReports]);
 
   const [selectedTransactionId, setSelectedTransactionId] = useState<
     number | null
-  >(transactionIds[0] ?? null);
+  >(null);
+
+  useEffect(() => {
+    if (transactionIds.length > 0) {
+      setSelectedTransactionId((prev) =>
+        prev && transactionIds.includes(prev) ? prev : transactionIds[0],
+      );
+    } else {
+      setSelectedTransactionId(null);
+    }
+  }, [transactionIds]);
 
   /* build a simple table like MoHome for department->transaction mapping */
   const locationTable = useMemo(() => {
-    return reports.map((t: any) => ({
+    return visibleReports.map((t: any) => ({
       id: t.id || t.mo_daily_transaction_id,
       department_id: t.department_id,
       sub_location: t.sub_location,
       approved_status: t.approved_status,
+      report_date: t.report_date,
+      created_at: t.created_at,
     }));
-  }, [reports]);
+  }, [visibleReports]);
 
   const selectedTransactionRow = useMemo(() => {
     if (!selectedTransactionId) return null;
@@ -214,20 +249,22 @@ export default function MoReportPage({
 
   const currentReport = useMemo(() => {
     if (selectedTransactionId) {
-      const matched = reports.find(
+      const matched = visibleReports.find(
         (r) =>
-          r.mo_daily_transaction_id === selectedTransactionId ||
+          (r as any).mo_daily_transaction_id === selectedTransactionId ||
           r.id === selectedTransactionId ||
           r.department_id === selectedTransactionRow?.department_id,
       );
       if (matched) return matched;
     }
     if (selectedSectorId) {
-      const matched = reports.find((r) => r.department_id === selectedSectorId);
+      const matched = visibleReports.find(
+        (r) => r.department_id === selectedSectorId,
+      );
       if (matched) return matched;
     }
     return (
-      reports[0] ||
+      visibleReports[0] ||
       ({
         id: selectedTransactionId ?? 1,
         mo_daily_transaction_id: selectedTransactionId ?? 1,
@@ -242,6 +279,7 @@ export default function MoReportPage({
     selectedTransactionRow,
     selectedSectorId,
     currentEmployee,
+    visibleReports,
   ]);
 
   const sectorNameForPdf = useMemo(() => {

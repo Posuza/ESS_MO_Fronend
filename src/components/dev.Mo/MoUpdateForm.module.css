@@ -442,8 +442,8 @@
     vertical-align: middle;
 }
 
-/* Zebra striping */
-.mo-table tbody tr:nth-child(even) td {
+/* Zebra striping — exclude status-colored cells so their bg shows through */
+.mo-table tbody tr:nth-child(even) td:not([class*="status-"]) {
     background-color: #eff1f3 !important;
 }
 
@@ -1210,25 +1210,28 @@ textarea.approval-textarea:focus,
 .guts-Mo-actions .guts-save-report-btn {
     min-width: 0;
     flex: 1;
-    padding: 14px 24px;
+    padding: 8px 16px;
     height: auto;
-    border-radius: 999px;
-    font-size: 16px;
+    border-radius: 5px;
+    font-size: 14px;
     letter-spacing: 0.4px;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #f0f2f5;
-    color: #4a5568;
-    border: 2px solid #c7cdd8;
+    background: var(--brandDark, #024b76);
+    color: #fff;
+    border: 2px solid var(--brandDark, #024b76);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        background 0.12s ease;
     cursor: pointer;
 }
 .guts-Mo-actions .guts-save-report-btn:hover:not(:disabled) {
-    background: #e2e6ea;
+    background: #013a5c;
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
@@ -1236,11 +1239,68 @@ textarea.approval-textarea:focus,
     transform: translateY(1px);
 }
 
+/* Dynamic status colors for save button overrides */
+.guts-Mo-actions .guts-save-report-btn.status-done {
+    background: #08a99f;
+    border-color: #08a99f;
+}
+.guts-Mo-actions .guts-save-report-btn.status-undergo {
+    background: #e67e22;
+    border-color: #e67e22;
+}
+.guts-Mo-actions .guts-save-report-btn.status-waited {
+    background: #ff9800;
+    border-color: #ff9800;
+}
+.guts-Mo-actions .guts-save-report-btn.status-rejected {
+    background: #b71c1c;
+    border-color: #b71c1c;
+}
+.guts-Mo-actions .guts-save-report-btn.status-rejected:hover:not(:disabled) {
+    background: #a01919; /* Slightly darker red */
+    border-color: #a01919;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* ── ยกเลิก ── cancel button with dark blue border (all editing users) */
+.guts-Mo-actions .guts-cancel-btn {
+    min-width: 0;
+    flex: 1;
+    padding: 8px 16px;
+    height: auto;
+    border-radius: 5px;
+    font-size: 14px;
+    letter-spacing: 0.4px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--brandDark, #024b76);
+    border: 2px solid var(--brandDark, #024b76);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        background 0.12s ease;
+    cursor: pointer;
+}
+.guts-Mo-actions .guts-cancel-btn:hover:not(:disabled) {
+    background: #f0f7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+.guts-Mo-actions .guts-cancel-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
 /* ── อนุมัติรายงาน ── teal filled pill (manager only) */
 .guts-Mo-actions .guts-approve-btn {
     min-width: 0;
     flex: 1;
-    padding: 14px 24px;
+    padding: 10px 24px; /* Reduced vertical padding from 14px to 10px */
     height: auto;
     border-radius: 999px;
     font-size: 16px;
@@ -1254,7 +1314,10 @@ textarea.approval-textarea:focus,
     color: #fff;
     border: 0;
     box-shadow: 0 8px 20px rgba(0, 168, 150, 0.35);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        filter 0.12s ease;
     cursor: pointer;
 }
 .guts-Mo-actions .guts-approve-btn:hover:not(:disabled) {
@@ -1270,7 +1333,7 @@ textarea.approval-textarea:focus,
 .guts-Mo-actions .guts-sendback-btn {
     min-width: 0;
     flex: 1;
-    padding: 14px 24px;
+    padding: 10px 24px; /* Reduced vertical padding from 14px to 10px */
     height: auto;
     border-radius: 999px;
     font-size: 14px;
@@ -1286,7 +1349,10 @@ textarea.approval-textarea:focus,
     color: #5a3e00;
     border: 0;
     box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        filter 0.12s ease;
     cursor: pointer;
 }
 .guts-Mo-actions .guts-sendback-btn:hover:not(:disabled) {
@@ -1302,35 +1368,51 @@ textarea.approval-textarea:focus,
 .signature-section {
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
-    margin-top: 6px;
-    padding: 2px 0 0;
+    justify-content: space-between;
+    margin-top: 4px;
     margin-bottom: 0;
+    padding: 0 2px; /* Adding horizontal padding */
+    width: 100%;
 }
 
 .signature-slot {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 1px;
+    white-space: nowrap;
+}
+
+.signature-slot-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1px;
+    white-space: nowrap;
+    justify-content: flex-start;
+}
+
+.signature-slot-right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1px;
+    white-space: nowrap;
+    justify-content: flex-end;
 }
 
 .signature-title {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 9px; /* Reduced from 11px */
+    font-weight: 400;
     color: #1b2b4a;
-    letter-spacing: 0.3px;
+    flex-shrink: 0;
 }
 
 .signature-line {
-    width: 80%;
-    border-bottom: 2px solid #1b2b4a;
-    text-align: center;
-    padding: 4px 8px;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 10px; /* Reduced from 12px */
+    font-weight: 400;
     color: #475569;
-    min-height: 20px;
+    flex-shrink: 0;
 }
 
 .mo-table td.add-row-cell {
@@ -1352,4 +1434,23 @@ textarea.approval-textarea:focus,
     background-color: #fff1f2 !important; /* Light red tint for index */
     color: #e11d48 !important; /* Dark red text */
     text-align: left !important;
+}
+
+/* ── status colors for group3 dynamic items ── */
+.status-normal {
+    background: #4caf50 !important;
+    border-color: #3a8a3a !important;
+    color: #fff !important;
+}
+
+.status-warning {
+    background: #ff9800 !important;
+    border-color: #e07a00 !important;
+    color: #fff !important;
+}
+
+.status-danger {
+    background: #b71c1c !important;
+    border-color: #7f0f0f !important;
+    color: #fff !important;
 }

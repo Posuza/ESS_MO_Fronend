@@ -33,6 +33,8 @@ export default function MoHome(props: Props) {
     props.initialView === "search" ? "report" : "main",
   );
   const [selectedItem, setSelectedItem] = useState<SectorReport | null>(null);
+  const [reportInitialDeptId, setReportInitialDeptId] = useState<number | undefined>();
+  const [reportInitialDate, setReportInitialDate] = useState<string | undefined>();
 
   const currentEmployee = useStore((state) => state.authEmployee);
   const reports = useStore((state) => state.reports);
@@ -150,7 +152,9 @@ export default function MoHome(props: Props) {
           setSelectedItem(item);
           setSubView("detail");
         }}
-        onOpenReport={() => {
+        onOpenReport={(deptId, date) => {
+          setReportInitialDeptId(deptId);
+          setReportInitialDate(date);
           setSubView("report");
         }}
       />
@@ -178,6 +182,8 @@ export default function MoHome(props: Props) {
   if (subView === "report") {
     return (
       <MoReportPage
+        initialDeptId={reportInitialDeptId}
+        initialDate={reportInitialDate}
         onCancel={() => {
           setSubView("main");
           if (currentEmployee?.department_id) {

@@ -79,7 +79,7 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
   // PDF generation loading state
   const [pdfLoading, setPdfLoading] = useState(false);
   // Share modal state
-  const [sharePdfBlob, setSharePdfBlob] = useState<Blob|null>(null);
+  const [sharePdfBlob, setSharePdfBlob] = useState<Blob | null>(null);
 
   // Generate PDF as Blob (for sharing)
   // Utility to close overlays and set scale to 1 for PDF generation
@@ -101,13 +101,13 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     setPdfLoading(true);
     // Prepare: close overlays and set scale to 1
     const prevScale = prepareForPdf();
-    
+
     // Temporarily remove transform and position styles for PDF generation
     const originalTransform = (pdfElement as HTMLElement).style.transform;
     const originalPosition = (pdfElement as HTMLElement).style.position;
     (pdfElement as HTMLElement).style.transform = 'none';
     (pdfElement as HTMLElement).style.position = 'static';
-    
+
     // Wait for DOM to update
     await new Promise(res => setTimeout(res, 150));
     try {
@@ -141,13 +141,13 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
     setPdfLoading(true);
     // Prepare: close overlays and set scale to 1
     const prevScale = prepareForPdf();
-    
+
     // Temporarily remove transform and position styles for PDF generation
     const originalTransform = (pdfElement as HTMLElement).style.transform;
     const originalPosition = (pdfElement as HTMLElement).style.position;
     (pdfElement as HTMLElement).style.transform = 'none';
     (pdfElement as HTMLElement).style.position = 'static';
-    
+
     await new Promise(res => setTimeout(res, 150));
     try {
       const opt = {
@@ -291,270 +291,270 @@ export default function MoPdfViewer({ item, sectorName, onCancel }: Props) {
       <div className={styles["pdf-viewer-wrapper"]}>
         {/* CANVAS VIEWPORT */}
         <div className={styles["pdf-container"]} ref={containerRef}>
-        {/* Sized wrapper so layout height tracks the scaled size */}
-        <div style={{ width: scaledWidth, height: scaledHeight, minHeight: '100%', position: 'relative', flexShrink: 0 }}>
-          <div
-            className={styles["pdf-page"]}
-            id="guts-pdf-content"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            }}
-          >
-          {/* Top Header Section */}
-          <div className={styles["pdf-header-row"]}>
-            <div className={styles["logo-section"]}>
-              <span className={styles["logo-guts"]}>GUTS</span>
-              <span className={styles["logo-ess"]}>ESS</span>
-            </div>
-            <div className={styles["header-divider"]} />
-            <div className={styles["header-text-block"]}>
-              <div className={styles["header-text-en"]}>
-                Employee Self Service
-              </div>
-              <div className={styles["header-text-th"]}>ระบบบริการตนเอง</div>
-              <div className={styles["header-text-sub"]}>
-                สำหรับพนักงานสำนักงานและสายตรวจ
-              </div>
-            </div>
-          </div>
-
-          {/* Title Bar */}
-          <div className={styles["pdf-title-bar"]}>
-            MO-รายงานประจำวันฝ่ายปฏิบัติการ
-          </div>
-
-          {/* Meta Data Row */}
-          <div className={styles["pdf-meta-row"]}>
-            <div className={styles["meta-location"]}>
-              <MapPin size={18} strokeWidth={2.5} />
-              <span>{sectorName || "-"}</span>
-            </div>
-            <div className={styles["meta-date"]}>{displayDate}</div>
-          </div>
-
-          {/* Two Columns Grid */}
-          <div className={styles["pdf-grid-body"]}>
-            {/* LEFT COLUMN */}
-            <div className={styles["pdf-grid-col"]}>
-              {/* ລາ (Leave) */}
-              <div className={styles["pdf-section-block"]}>
-                <div className={styles["pdf-block-header"]}>
-                    <img src={LeaveIcon} alt="Leave" className={styles["block-icon"]} style={{width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)'}} />
-                  <div>
-                    <span className={styles["block-title"]}>ลา:</span>
-                    <span className={styles["block-total"]}>
-                      {" "}
-                      {leaveTotal} คน
-                    </span>
-                  </div>
+          {/* Sized wrapper so layout height tracks the scaled size */}
+          <div style={{ width: scaledWidth, height: scaledHeight, minHeight: '100%', position: 'relative', flexShrink: 0 }}>
+            <div
+              className={styles["pdf-page"]}
+              id="guts-pdf-content"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              {/* Top Header Section */}
+              <div className={styles["pdf-header-row"]}>
+                <div className={styles["logo-section"]}>
+                  <span className={styles["logo-guts"]}>GUTS</span>
+                  <span className={styles["logo-ess"]}>ESS</span>
                 </div>
-                <div className={styles["pdf-list"]}>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>ลาป่วย:</span>
-                    <span>{data.leave_sick_count || 0} คน</span>
+                <div className={styles["header-divider"]} />
+                <div className={styles["header-text-block"]}>
+                  <div className={styles["header-text-en"]}>
+                    Employee Self Service
                   </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>ลากิจ :</span>
-                    <span>{data.leave_business_count || 0} คน</span>
-                  </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>ลาอื่น ๆ:</span>
-                    <span>{data.leave_other_count || 0} คน</span>
+                  <div className={styles["header-text-th"]}>ระบบบริการตนเอง</div>
+                  <div className={styles["header-text-sub"]}>
+                    สำหรับพนักงานสำนักงานและสายตรวจ
                   </div>
                 </div>
               </div>
 
-              {/* กำลังพล (Manpower) */}
-              <div className={styles["pdf-section-block"]}>
-                <div className={styles["pdf-block-header"]}>
-                    <img src={TimeIcon} alt="Time" className={styles["block-icon"]} style={{width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)'}} />
-                  <div>
-                    <span className={styles["block-title"]}>กำลังพล:</span>
-                    <span className={styles["block-total"]}>
-                      {" "}
-                      {shiftTotal} คน
-                    </span>
+              {/* Title Bar */}
+              <div className={styles["pdf-title-bar"]}>
+                MO-รายงานประจำวันฝ่ายปฏิบัติการ
+              </div>
+
+              {/* Meta Data Row */}
+              <div className={styles["pdf-meta-row"]}>
+                <div className={styles["meta-location"]}>
+                  <MapPin size={18} strokeWidth={2.5} />
+                  <span>{sectorName || "-"}</span>
+                </div>
+                <div className={styles["meta-date"]}>{displayDate}</div>
+              </div>
+
+              {/* Two Columns Grid */}
+              <div className={styles["pdf-grid-body"]}>
+                {/* LEFT COLUMN */}
+                <div className={styles["pdf-grid-col"]}>
+                  {/* ລາ (Leave) */}
+                  <div className={styles["pdf-section-block"]}>
+                    <div className={styles["pdf-block-header"]}>
+                      <img src={LeaveIcon} alt="Leave" className={styles["block-icon"]} style={{ width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)' }} />
+                      <div>
+                        <span className={styles["block-title"]}>ลา:</span>
+                        <span className={styles["block-total"]}>
+                          {" "}
+                          {leaveTotal} คน
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles["pdf-list"]}>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>ลาป่วย:</span>
+                        <span>{data.leave_sick_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>ลากิจ :</span>
+                        <span>{data.leave_business_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>ลาอื่น ๆ:</span>
+                        <span>{data.leave_other_count || 0} คน</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* กำลังพล (Manpower) */}
+                  <div className={styles["pdf-section-block"]}>
+                    <div className={styles["pdf-block-header"]}>
+                      <img src={TimeIcon} alt="Time" className={styles["block-icon"]} style={{ width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)' }} />
+                      <div>
+                        <span className={styles["block-title"]}>กำลังพล:</span>
+                        <span className={styles["block-total"]}>
+                          {" "}
+                          {shiftTotal} คน
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles["pdf-list"]}>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>
+                          จัด <span className={styles["text-danger"]}>18</span>{" "}
+                          ชั่วโมง:
+                        </span>
+                        <span>{data.shift_18_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>
+                          จัด <span className={styles["text-danger"]}>24</span>{" "}
+                          ชั่วโมง:
+                        </span>
+                        <span>{data.shift_24_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>
+                          จัด <span className={styles["text-danger"]}>36</span>{" "}
+                          ชั่วโมง:
+                        </span>
+                        <span>{data.shift_36_count || 0} คน</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className={styles["pdf-list"]}>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>
-                      จัด <span className={styles["text-danger"]}>18</span>{" "}
-                      ชั่วโมง:
-                    </span>
-                    <span>{data.shift_18_count || 0} คน</span>
+
+                {/* Vertical Divider */}
+                <div className={styles["pdf-col-divider"]} />
+
+                {/* RIGHT COLUMN */}
+                <div className={styles["pdf-grid-col"]}>
+                  {/* เครื่องแต่งกาย (Uniform) */}
+                  <div className={styles["pdf-section-block"]}>
+                    <div className={styles["pdf-block-header"]}>
+                      <img src={ClothIcon} alt="Cloth" className={styles["block-icon"]} style={{ width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)' }} />
+                      <div>
+                        <span className={styles["block-title"]}>
+                          เครื่องแต่งกาย:
+                        </span>
+                        <span className={styles["block-total"]}>
+                          {" "}
+                          {uniformTotal} คน
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles["pdf-list"]}>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>หมวก เก่า:</span>
+                        <span>{data.wear_hat_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>เสื้อ เก่า:</span>
+                        <span>{data.wear_shirt_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>กางเกง เก่า:</span>
+                        <span>{data.wear_pant_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>รองเท้า เก่า:</span>
+                        <span>{data.wear_shoe_count || 0} คน</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>
-                      จัด <span className={styles["text-danger"]}>24</span>{" "}
-                      ชั่วโมง:
-                    </span>
-                    <span>{data.shift_24_count || 0} คน</span>
+
+                  {/* ผิดข้อปฏิบัติ (Discipline) */}
+                  <div className={styles["pdf-section-block"]}>
+                    <div className={styles["pdf-block-header"]}>
+                      <img src={WarningIcon} alt="Warning" className={styles["block-icon-danger"]} style={{ width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)' }} />
+                      <div>
+                        <span className={styles["block-title"]}>
+                          ผิดข้อปฏิบัติ:
+                        </span>
+                        <span className={styles["block-total"]}>
+                          {" "}
+                          {ruleTotal} คน
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles["pdf-list"]}>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>หลับเวร:</span>
+                        <span>{data.rule_sleep_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>เล่นโทรศัพท์:</span>
+                        <span>{data.rule_use_phone_count || 0} คน</span>
+                      </div>
+                      <div className={styles["pdf-list-item"]}>
+                        <span>ไม่แขวนบัตร:</span>
+                        <span>{data.rule_no_card_count || 0} คน</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>
-                      จัด <span className={styles["text-danger"]}>36</span>{" "}
-                      ชั่วโมง:
-                    </span>
-                    <span>{data.shift_36_count || 0} คน</span>
+
+                  {/* การตักเตือน (Warning Box) */}
+                  <div className={styles["pdf-blue-box"]}>
+                    <div className={styles["pdf-blue-heading"]}>การตักเตือน</div>
+                    <div className={styles["pdf-blue-content"]}>
+                      {data.warning ? (
+                        <p>• {data.warning}</p>
+                      ) : (
+                        <p className={styles["empty-text"]}>
+                          - ไม่มีบันทึกการตักเตือน -
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Vertical Divider */}
-            <div className={styles["pdf-col-divider"]} />
+              {/* BOTTOM SECTION (Others) */}
+              <div className={styles["pdf-blue-box-full"]}>
+                <div className={styles["pdf-blue-heading"]}>อื่น ๆ</div>
 
-            {/* RIGHT COLUMN */}
-            <div className={styles["pdf-grid-col"]}>
-              {/* เครื่องแต่งกาย (Uniform) */}
-              <div className={styles["pdf-section-block"]}>
-                <div className={styles["pdf-block-header"]}>
-                    <img src={ClothIcon} alt="Cloth" className={styles["block-icon"]} style={{width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)'}} />
-                  <div>
-                    <span className={styles["block-title"]}>
-                      เครื่องแต่งกาย:
-                    </span>
-                    <span className={styles["block-total"]}>
-                      {" "}
-                      {uniformTotal} คน
-                    </span>
-                  </div>
-                </div>
-                <div className={styles["pdf-list"]}>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>หมวก เก่า:</span>
-                    <span>{data.wear_hat_count || 0} คน</span>
-                  </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>เสื้อ เก่า:</span>
-                    <span>{data.wear_shirt_count || 0} คน</span>
-                  </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>กางเกง เก่า:</span>
-                    <span>{data.wear_pant_count || 0} คน</span>
-                  </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>รองเท้า เก่า:</span>
-                    <span>{data.wear_shoe_count || 0} คน</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* ผิดข้อปฏิบัติ (Discipline) */}
-              <div className={styles["pdf-section-block"]}>
-                <div className={styles["pdf-block-header"]}>
-                    <img src={WarningIcon} alt="Warning" className={styles["block-icon-danger"]} style={{width: 40, height: 40, objectFit: 'cover', transform: 'scale(1.5)'}} />
-                  <div>
-                    <span className={styles["block-title"]}>
-                      ผิดข้อปฏิบัติ:
-                    </span>
-                    <span className={styles["block-total"]}>
-                      {" "}
-                      {ruleTotal} คน
-                    </span>
-                  </div>
-                </div>
-                <div className={styles["pdf-list"]}>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>หลับเวร:</span>
-                    <span>{data.rule_sleep_count || 0} คน</span>
-                  </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>เล่นโทรศัพท์:</span>
-                    <span>{data.rule_use_phone_count || 0} คน</span>
-                  </div>
-                  <div className={styles["pdf-list-item"]}>
-                    <span>ไม่แขวนบัตร:</span>
-                    <span>{data.rule_no_card_count || 0} คน</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* การตักเตือน (Warning Box) */}
-              <div className={styles["pdf-blue-box"]}>
-                <div className={styles["pdf-blue-heading"]}>การตักเตือน</div>
-                <div className={styles["pdf-blue-content"]}>
-                  {data.warning ? (
-                    <p>• {data.warning}</p>
-                  ) : (
-                    <p className={styles["empty-text"]}>
-                      - ไม่มีบันทึกการตักเตือน -
+                <div className={styles["pdf-other-content"]}>
+                  <div className={styles["other-subsection"]}>
+                    <div className={styles["subsection-title"]}>
+                      พบผู้ว่าจ้าง: <span>{data.other_job_count || 0} จุด</span>
+                    </div>
+                    <p className={styles["subsection-desc"]}>
+                      {data.other_job ? `• ${data.other_job}` : "-"}
                     </p>
-                  )}
+                  </div>
+
+                  <div className={styles["other-subsection"]}>
+                    <div className={styles["subsection-title"]}>
+                      อบรม: <span>{data.other_training_count || 0} จุด</span>
+                    </div>
+                    <p className={styles["subsection-desc"]}>
+                      {data.other_training ? `• ${data.other_training}` : "-"}
+                    </p>
+                  </div>
+
+                  <div className={styles["other-subsection"]}>
+                    <div className={styles["subsection-title"]}>เพิ่มเติม:</div>
+                    <p className={styles["subsection-desc"]}>
+                      {data.other_extral ? `• ${data.other_extral}` : "-"}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* BOTTOM SECTION (Others) */}
-          <div className={styles["pdf-blue-box-full"]}>
-            <div className={styles["pdf-blue-heading"]}>อื่น ๆ</div>
+              {/* APPROVAL REMARK SECTION */}
+              <div className={styles["approval-divider"]}>
+                <div className={styles["approval-divider-line"]}></div>
+                <div className={styles["approval-divider-text"]}>การอนุมัติ</div>
+                <div className={styles["approval-divider-line"]}></div>
+              </div>
 
-            <div className={styles["pdf-other-content"]}>
-              <div className={styles["other-subsection"]}>
-                <div className={styles["subsection-title"]}>
-                  พบผู้ว่าจ้าง: <span>{data.other_job_count || 0} จุด</span>
-                </div>
-                <p className={styles["subsection-desc"]}>
-                  {data.other_job ? `• ${data.other_job}` : "-"}
+              <div className={styles["approval-content"]}>
+                <p className={styles["approval-text"]}>
+                  {data.approved_remark ? `• ${data.approved_remark}` : "• วันที่ 5 เดือน"}
                 </p>
               </div>
 
-              <div className={styles["other-subsection"]}>
-                <div className={styles["subsection-title"]}>
-                  อบรม: <span>{data.other_training_count || 0} จุด</span>
+              {/* SIGNATURE SECTIONS */}
+              <div className={styles["pdf-signatures"]}>
+                <div className={styles["signature-slot"]}>
+                  <div className={styles["signature-title"]}>ผู้ บันทึก</div>
+                  <div className={styles["signature-line"]}>
+                    {data.created_by || "ADMIN"}
+                  </div>
                 </div>
-                <p className={styles["subsection-desc"]}>
-                  {data.other_training ? `• ${data.other_training}` : "-"}
-                </p>
-              </div>
-
-              <div className={styles["other-subsection"]}>
-                <div className={styles["subsection-title"]}>เพิ่มเติม:</div>
-                <p className={styles["subsection-desc"]}>
-                  {data.other_extral ? `• ${data.other_extral}` : "-"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* APPROVAL REMARK SECTION */}
-          <div className={styles["approval-divider"]}>
-            <div className={styles["approval-divider-line"]}></div>
-            <div className={styles["approval-divider-text"]}>การอนุมัติ</div>
-            <div className={styles["approval-divider-line"]}></div>
-          </div>
-
-          <div className={styles["approval-content"]}>
-            <p className={styles["approval-text"]}>
-              {data.approved_remark ? `• ${data.approved_remark}` : "• วันที่ 5 เดือน"}
-            </p>
-          </div>
-
-          {/* SIGNATURE SECTIONS */}
-          <div className={styles["pdf-signatures"]}>
-            <div className={styles["signature-slot"]}>
-              <div className={styles["signature-title"]}>ผู้ บันทึก</div>
-              <div className={styles["signature-line"]}>
-                {data.created_by || "ADMIN"}
-              </div>
-            </div>
-            <div className={styles["signature-slot"]}>
-              <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
-              <div className={styles["signature-line"]}>
-                {data.approved_by || "\u00A0"}
+                <div className={styles["signature-slot"]}>
+                  <div className={styles["signature-title"]}>ผู้ อำนวยงาน</div>
+                  <div className={styles["signature-line"]}>
+                    {data.approved_by || "\u00A0"}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
       {/* Show SharePdfModal with only PDF share if sharePdfBlob is set */}
       <SharePdfModal

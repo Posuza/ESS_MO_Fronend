@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { MapPin, ArrowLeft, Share2, HomeIcon } from "lucide-react";
 import styles from "./MoSummeriesPdf.module.css";
-import type { SectorReport } from "../../store/store";
-import newCaseData from "../../temp_data/NewCase/newCase.json";
+import { useStore } from "../../store/store";
+import type { SectorReport } from "../../services.dev/moDailyTransaction.Service";
 import SharePdfModal from "../Mo/SharePdfModal";
 
 type Props = {
@@ -20,11 +20,16 @@ export default function MoSummeriesPdf({
   contentOnly,
 }: Props) {
   const data = item;
+  const reports = useStore((state) => state.reports);
+  const formStyles = styles;
 
   // Date formatting
   let displayDate = "";
-  if (data.created_at) {
-    const d = new Date(data.created_at);
+  const rawDate = data.report_date || data.created_at;
+  if (rawDate) {
+    const d = new Date(
+      String(rawDate).includes("T") ? String(rawDate) : `${rawDate}T00:00:00`,
+    );
     const day = d.getDate();
     const months = [
       "มกราคม",
@@ -46,28 +51,6 @@ export default function MoSummeriesPdf({
     const mins = String(d.getMinutes()).padStart(2, "0");
     displayDate = `วันที่ ${day} เดือน ${month} พ.ศ. ${year} เวลา ${hours}:${mins} น.`;
   }
-
-  // Calculated Totals
-  const leaveTotal =
-    (Number(data.leave_sick_count) || 0) +
-    (Number(data.leave_business_count) || 0) +
-    (Number(data.leave_other_count) || 0);
-
-  const shiftTotal =
-    (Number(data.shift_18_count) || 0) +
-    (Number(data.shift_24_count) || 0) +
-    (Number(data.shift_36_count) || 0);
-
-  const uniformTotal =
-    (Number(data.wear_hat_count) || 0) +
-    (Number(data.wear_shirt_count) || 0) +
-    (Number(data.wear_pant_count) || 0) +
-    (Number(data.wear_shoe_count) || 0);
-
-  const ruleTotal =
-    (Number(data.rule_sleep_count) || 0) +
-    (Number(data.rule_use_phone_count) || 0) +
-    (Number(data.rule_no_card_count) || 0);
 
   const PDF_WIDTH = 800;
   const PDF_HEIGHT = 1100;
@@ -261,11 +244,15 @@ export default function MoSummeriesPdf({
 
   // ─── Table layout data (mirrors MoSummariesForm) ──────────────────────
   const selectedSector = (data as any).department_id ?? 1;
+  const selectedReportDate =
+    data.report_date ?? (data.created_at ? data.created_at.slice(0, 10) : "");
 
   interface PdfGroupItem {
     key: string;
+    displayKey?: string;
     label: string;
     unit?: string;
+    status?: string;
   }
   interface PdfGroup {
     key: string;
@@ -273,49 +260,71 @@ export default function MoSummeriesPdf({
     items: PdfGroupItem[];
   }
 
+  type SummaryColumn = {
+    id: number | string;
+    sub_location: string;
+    report: SectorReport;
+  };
+
+  const summaryReports = useMemo(() => {
+    const byDepartment = (reports || []).filter(
+      (report) =>
+        Number(report.department_id) === Number(selectedSector),
+    );
+
+    if (!selectedReportDate) return byDepartment;
+
+    return byDepartment.filter((report) => {
+      const reportDate =
+        report.report_date ??
+        (report.created_at ? report.created_at.slice(0, 10) : "");
+      return reportDate === selectedReportDate;
+    });
+  }, [reports, selectedSector, selectedReportDate]);
+
   const group1: PdfGroup[] = [
     {
       key: "1",
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
-        { key: "1.1", label: "จุดรักษาการณ์ :", unit: "หน่วยงาน" },
-        { key: "1.2", label: "กำลังพลปัจจุบัน :", unit: "คน" },
-        { key: "1.3", label: "ขาดตัวประจำ :", unit: "หน่วยงาน" },
-        { key: "1.4", label: "ขาดกำลังพล :", unit: "คน" },
-        { key: "1.5", label: "จัดกำลังพลเสริมพิเศษ :", unit: "คน" },
-        { key: "1.6", label: "สรรหาผู้สมัครงานใหม่ :", unit: "คน" },
-        { key: "1.7", label: "จำนวนหน่วยงานสำรองเวร :", unit: "หน่วย" },
-        { key: "1.8", label: "จำนวนกำลังพลสำรองเวร :", unit: "นาย" },
+        { key: "dept_guard_post_count", displayKey: "1.1", label: "จุดรักษาการณ์ :", unit: "หน่วยงาน" },
+        { key: "dept_current_personnel_count", displayKey: "1.2", label: "กำลังพลปัจจุบัน :", unit: "คน" },
+        { key: "dept_missing_regular_count", displayKey: "1.3", label: "ขาดตัวประจำ :", unit: "หน่วยงาน" },
+        { key: "dept_missing_personnel_count", displayKey: "1.4", label: "ขาดกำลังพล :", unit: "คน" },
+        { key: "dept_supplement_count", displayKey: "1.5", label: "จัดกำลังพลเสริมพิเศษ :", unit: "คน" },
+        { key: "dept_recruitment_count", displayKey: "1.6", label: "สรรหาผู้สมัครงานใหม่ :", unit: "คน" },
+        { key: "dept_reserve_units_count", displayKey: "1.7", label: "จำนวนหน่วยงานสำรองเวร :", unit: "หน่วย" },
+        { key: "dept_reserve_personnel_count", displayKey: "1.8", label: "จำนวนกำลังพลสำรองเวร :", unit: "นาย" },
       ],
     },
     {
       key: "2",
       title: "การลา",
       items: [
-        { key: "2.1", label: "ลากิจ :", unit: "คน" },
-        { key: "2.2", label: "ลาป่วย :", unit: "คน" },
-        { key: "2.3", label: "ขาดงาน :", unit: "คน" },
-        { key: "2.4", label: "หนีหาย :", unit: "คน" },
-        { key: "2.5", label: "ลาออก :", unit: "คน" },
-        { key: "2.6", label: "ไล่ออก :", unit: "คน" },
+        { key: "leave_personal_count", displayKey: "2.1", label: "ลากิจ :", unit: "คน" },
+        { key: "leave_sick_count", displayKey: "2.2", label: "ลาป่วย :", unit: "คน" },
+        { key: "leave_absent_count", displayKey: "2.3", label: "ขาดงาน :", unit: "คน" },
+        { key: "leave_deserted_count", displayKey: "2.4", label: "หนีหาย :", unit: "คน" },
+        { key: "leave_resigned_count", displayKey: "2.5", label: "ลาออก :", unit: "คน" },
+        { key: "leave_terminated_count", displayKey: "2.6", label: "ไล่ออก :", unit: "คน" },
       ],
     },
     {
       key: "3",
       title: "การบริหารการควงเวร",
       items: [
-        { key: "3.1", label: "18 ชั่วโมง :", unit: "คน" },
-        { key: "3.2", label: "24 ชั่วโมง :", unit: "คน" },
-        { key: "3.3", label: "36 ชั่วโมง :", unit: "คน" },
+        { key: "shift_18_count", displayKey: "3.1", label: "18 ชั่วโมง :", unit: "คน" },
+        { key: "shift_24_count", displayKey: "3.2", label: "24 ชั่วโมง :", unit: "คน" },
+        { key: "shift_36_count", displayKey: "3.3", label: "36 ชั่วโมง :", unit: "คน" },
       ],
     },
     {
       key: "4",
       title: "อบรมและควบคุมหน้าที่งาน",
       items: [
-        { key: "4.1", label: "อบรมเปลี่ยนผลัด :", unit: "หน่วยงาน" },
-        { key: "4.2", label: "อบรมตามแผนงานที่กำหนด :", unit: "หน่วยงาน" },
-        { key: "4.3", label: "ควบคุมหน้าที่งาน :", unit: "หน่วยงาน" },
+        { key: "training_shift_change_count", displayKey: "4.1", label: "อบรมเปลี่ยนผลัด :", unit: "หน่วยงาน" },
+        { key: "training_planned_count", displayKey: "4.2", label: "อบรมตามแผนงานที่กำหนด :", unit: "หน่วยงาน" },
+        { key: "training_duty_control_count", displayKey: "4.3", label: "ควบคุมหน้าที่งาน :", unit: "หน่วยงาน" },
       ],
     },
   ];
@@ -325,85 +334,60 @@ export default function MoSummeriesPdf({
       key: "5",
       title: "วินัยและการลงโทษ",
       items: [
-        { key: "5.1", label: "เล่นโทรศัพท์มือถือ :", unit: "คน" },
-        { key: "5.2", label: "ไม่มีเข็มขัด :", unit: "คน" },
-        { key: "5.3", label: "ไม่แขวนบัตร :", unit: "คน" },
-        { key: "5.4", label: "ชุดชำรุดเก่า :", unit: "คน" },
+        { key: "discipline_phone_count", displayKey: "5.1", label: "เล่นโทรศัพท์มือถือ :", unit: "คน" },
+        { key: "discipline_belt_count", displayKey: "5.2", label: "ไม่มีเข็มขัด :", unit: "คน" },
+        { key: "discipline_badge_count", displayKey: "5.3", label: "ไม่แขวนบัตร :", unit: "คน" },
+        { key: "discipline_uniform_count", displayKey: "5.4", label: "ชุดชำรุดเก่า :", unit: "คน" },
       ],
     },
   ];
-
-  const statusOptions = [
-    { label: "ปกติ", key: "normal" },
-    { label: "ผิดปกติ", key: "warning" },
-    { label: "จุดเด่น", key: "danger" },
-  ];
-
-  const rowStatus: Record<string, number> = {};
 
   const group3Static: PdfGroup[] = [
     {
       key: "6",
       title: "เข้าพบผู้ว่าจ้าง",
       items: [
-        { key: "6.1", label: "" },
-        { key: "6.2", label: "" },
-        { key: "6.3", label: "" },
+        { key: "normal", displayKey: "6.1", label: "ปกติ", status: "normal" },
+        { key: "warning", displayKey: "6.2", label: "ผิดปกติ", status: "warning" },
+        { key: "danger", displayKey: "6.3", label: "จุดเด่น", status: "danger" },
       ],
     },
   ];
 
-  const group3Data: PdfGroup[] = (() => {
-    try {
-      const table4 = (newCaseData as any)?.table4 ?? [];
-      const txId = (data as any)?.mo_daily_transaction_id ?? (data as any)?.id ?? null;
-      const filtered =
-        Array.isArray(table4) && txId
-          ? table4.filter((it: any) => it.mo_daily_transaction_id === txId)
-          : [];
-      if (filtered.length > 0) {
-        return [
-          {
-            key: "6",
-            title: "เข้าพบผู้ว่าจ้าง",
-            items: filtered.map((it: any) => ({
-              key: it.key,
-              label: it.label ?? it.detail ?? it.note ?? `รายการ ${it.key}`,
-              status: it.status ?? "normal",
-            })),
-          },
-        ] as PdfGroup[];
-      }
-    } catch (_) {
-      /* ignore */
-    }
-    return group3Static;
-  })();
+  const group3Data: PdfGroup[] = group3Static;
+
+  const disciplineValue = (report: SectorReport, key: string) => {
+    const fromArray = report.disciplines?.find((item) => item.key === key);
+    if (fromArray) return Number(fromArray.value) || 0;
+    return Number((report as any)[key]) || 0;
+  };
+
+  const projectStatusCount = (report: SectorReport, status: string) =>
+    (report.projects || []).filter(
+      (project) => (project.status || "normal") === status,
+    ).length;
+
+  const itemValue = (report: SectorReport, groupKey: string, key: string) => {
+    if (groupKey === "5") return disciplineValue(report, key);
+    return Number((report as any)[key]) || 0;
+  };
+
   const debugLog = (label: string, obj: any) => {
     try {
-      if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
-        console.debug("MoSummariesPdf DEBUG:", label, obj);
-      }
+      // eslint-disable-next-line no-console
+      console.debug("MoSummariesPdf DEBUG:", label, obj);
     } catch (_) {
       // ignore
     }
   };
 
-  const getCols = () => {
-    const table1Rows = (newCaseData as any)?.table1 ?? [];
-    // Prefer sub-locations for the selected department. If none match,
-    // fall back to returning all available sub-locations so the table
-    // still displays columns (useful for fixtures where department ids differ).
-    const byDept = table1Rows.filter(
-      (row: any) => Number(row.department_id) === Number(selectedSector),
-    );
-    if (byDept.length > 0) return byDept;
-    debugLog("getCols fallback: no dept match, returning all table1", {
-      selectedSector,
-      table1Length: table1Rows.length,
-    });
-    return table1Rows;
+  const getCols = (): SummaryColumn[] => {
+    const source = summaryReports.length > 0 ? summaryReports : [data];
+    return source.map((report) => ({
+      id: report.id || (report as any).mo_daily_transaction_id,
+      sub_location: report.sub_location || "-",
+      report,
+    }));
   };
   // ──────────────────────────────────────────────────────────────────────
 
@@ -495,7 +479,7 @@ export default function MoSummeriesPdf({
                       </td>
                       {cols.map((c: any) => (
                         <td
-                          key={String(c.mo_daily_transaction_id)}
+                          key={String(c.id)}
                           className={`${styles["third-column-header1-cell"]}`}
                         >
                           <strong>{c.sub_location}</strong>
@@ -510,16 +494,9 @@ export default function MoSummeriesPdf({
                     </tr>
 
                     {g.items.map((r) => {
-                      // collect per-location values and compute total
-                      const perLocVals = cols.map((c: any) => {
-                        const t2rows = (newCaseData as any)?.table2 ?? [];
-                        const match = (t2rows as any[]).find(
-                          (t) =>
-                            Number(t.mo_daily_transaction_id) ===
-                            Number(c.mo_daily_transaction_id),
-                        );
-                        return match ? String(match[r.key] ?? "0") : "0";
-                      });
+                      const perLocVals = cols.map((c) =>
+                        String(itemValue(c.report, g.key, r.key)),
+                      );
 
                       const total = perLocVals.reduce((acc, v) => {
                         const n = Number(v) || 0;
@@ -529,7 +506,7 @@ export default function MoSummeriesPdf({
                       return (
                         <tr key={r.key}>
                           <td className={styles["first-column-cell"]}>
-                            {r.key}
+                            {r.displayKey ?? r.key}
                           </td>
                           <td className={styles["second-column-cell"]}>
                             {r.label}
@@ -614,7 +591,7 @@ export default function MoSummeriesPdf({
                       </td>
                       {cols.map((c: any) => (
                         <td
-                          key={String(c.mo_daily_transaction_id)}
+                          key={String(c.id)}
                           className={`${styles["third-column-header1-cell"]}`}
                         >
                           <strong>{c.sub_location}</strong>
@@ -629,17 +606,9 @@ export default function MoSummeriesPdf({
                     </tr>
 
                     {g.items.map((r) => {
-                      // collect per-location values from table3 (dynamic group uses table3 fixture)
-                      const perLocVals = cols.map((c: any) => {
-                        const t3rows = (newCaseData as any)?.table3 ?? [];
-                        const match = (t3rows as any[]).find(
-                          (t) =>
-                            Number(t.mo_daily_transaction_id) ===
-                              Number(c.mo_daily_transaction_id) &&
-                            String(t.key) === String(r.key),
-                        );
-                        return match ? String(match.value ?? "0") : "0";
-                      });
+                      const perLocVals = cols.map((c) =>
+                        String(itemValue(c.report, g.key, r.key)),
+                      );
 
                       // total is either existing count (editable) or sum of perLocVals if no count present
                       const totalFromTable = perLocVals.reduce(
@@ -650,7 +619,7 @@ export default function MoSummeriesPdf({
                       return (
                         <tr key={r.key}>
                           <td className={styles["first-column-cell"]}>
-                            {r.key}
+                            {r.displayKey ?? r.key}
                           </td>
                           <td className={styles["second-column-cell"]}>
                             {r.label}
@@ -733,7 +702,7 @@ export default function MoSummeriesPdf({
                       </td>
                       {cols.map((c: any) => (
                         <td
-                          key={String(c.mo_daily_transaction_id)}
+                          key={String(c.id)}
                           className={`${styles["third-column-header1-cell"]}`}
                         >
                           <strong>{c.sub_location}</strong>
@@ -747,27 +716,18 @@ export default function MoSummeriesPdf({
                       ></td>
                     </tr>
 
-                    {g.items.map((it, ii) => {
+                    {g.items.map((it) => {
                       const rowKey = it.key;
-
-                      const table4Rows = (newCaseData as any)?.table4 ?? [];
-                      // count how many table4 rows for each sub-location column have this status
-                      const perLocVals = cols.map((c: any) => {
-                        const match = (table4Rows as any[]).find(
-                          (t) =>
-                            Number(t.mo_daily_transaction_id) ===
-                              Number(c.mo_daily_transaction_id) &&
-                            String(t.key) === String(it.key)
-                        );
-                        return match ? "1" : "0";
-                      });
+                      const perLocVals = cols.map((c) =>
+                        String(projectStatusCount(c.report, it.status || it.key)),
+                      );
 
                       const totalForStatus = perLocVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
 
                       return (
                         <tr key={rowKey}>
                           <td className={styles["first-column-cell"]}>
-                            {rowKey}
+                            {it.displayKey ?? rowKey}
                           </td>
 
                           <td
@@ -976,7 +936,7 @@ export default function MoSummeriesPdf({
                             </td>
                             {cols.map((c: any) => (
                               <td
-                                key={String(c.mo_daily_transaction_id)}
+                                key={String(c.id)}
                                 className={
                                   formStyles["third-column-header1-cell"]
                                 }
@@ -999,15 +959,9 @@ export default function MoSummeriesPdf({
                           </tr>
 
                           {g.items.map((r) => {
-                            const perLocVals = cols.map((c: any) => {
-                              const t2rows = (newCaseData as any)?.table2 ?? [];
-                              const match = (t2rows as any[]).find(
-                                (t) =>
-                                  Number(t.mo_daily_transaction_id) ===
-                                  Number(c.mo_daily_transaction_id),
-                              );
-                              return match ? String(match[r.key] ?? "0") : "0";
-                            });
+                            const perLocVals = cols.map((c) =>
+                              String(itemValue(c.report, g.key, r.key)),
+                            );
                             const total = perLocVals.reduce(
                               (acc, v) => acc + (Number(v) || 0),
                               0,
@@ -1015,7 +969,7 @@ export default function MoSummeriesPdf({
                             return (
                               <tr key={r.key}>
                                 <td className={formStyles["first-column-cell"]}>
-                                  {r.key}
+                                  {r.displayKey ?? r.key}
                                 </td>
                                 <td
                                   className={formStyles["second-column-cell"]}
@@ -1106,7 +1060,7 @@ export default function MoSummeriesPdf({
                             </td>
                             {cols.map((c: any) => (
                               <td
-                                key={String(c.mo_daily_transaction_id)}
+                                key={String(c.id)}
                                 className={
                                   formStyles["third-column-header1-cell"]
                                 }
@@ -1129,16 +1083,9 @@ export default function MoSummeriesPdf({
                           </tr>
 
                           {g.items.map((r) => {
-                            const perLocVals = cols.map((c: any) => {
-                              const t3rows = (newCaseData as any)?.table3 ?? [];
-                              const match = (t3rows as any[]).find(
-                                (t) =>
-                                  Number(t.mo_daily_transaction_id) ===
-                                    Number(c.mo_daily_transaction_id) &&
-                                  String(t.key) === String(r.key),
-                              );
-                              return match ? String(match.value ?? "0") : "0";
-                            });
+                            const perLocVals = cols.map((c) =>
+                              String(itemValue(c.report, g.key, r.key)),
+                            );
                             const totalFromTable = perLocVals.reduce(
                               (acc, v) => acc + (Number(v) || 0),
                               0,
@@ -1146,7 +1093,7 @@ export default function MoSummeriesPdf({
                             return (
                               <tr key={r.key}>
                                 <td className={formStyles["first-column-cell"]}>
-                                  {r.key}
+                                  {r.displayKey ?? r.key}
                                 </td>
                                 <td
                                   className={formStyles["second-column-cell"]}
@@ -1194,11 +1141,7 @@ export default function MoSummeriesPdf({
 
                 {/* ── group3 ── */}
                 {group3Data.map((g) => {
-                  const table1Rows = (newCaseData as any)?.table1 ?? [];
-                  const cols = table1Rows.filter(
-                    (row: any) =>
-                      Number(row.department_id) === Number(selectedSector),
-                  );
+                  const cols = getCols();
                   const headerColSpan = cols.length + 3 + 2;
                   return (
                     <div key={g.key} className={formStyles["mo-table-wrapper"]}>
@@ -1235,7 +1178,7 @@ export default function MoSummeriesPdf({
                             </td>
                             {cols.map((c: any) => (
                               <td
-                                key={String(c.mo_daily_transaction_id)}
+                                key={String(c.id)}
                                 className={
                                   formStyles["third-column-header1-cell"]
                                 }
@@ -1257,24 +1200,16 @@ export default function MoSummeriesPdf({
                             />
                           </tr>
 
-                          {g.items.map((it, ii) => {
+                          {g.items.map((it) => {
                             const rowKey = it.key;
-                            const table4Rows =
-                              (newCaseData as any)?.table4 ?? [];
-                            const perLocVals = cols.map((c: any) => {
-                              const match = (table4Rows as any[]).find(
-                                (t) =>
-                                  Number(t.mo_daily_transaction_id) ===
-                                    Number(c.mo_daily_transaction_id) &&
-                                  String(t.key) === String(it.key)
-                              );
-                              return match ? "1" : "0";
-                            });
+                            const perLocVals = cols.map((c) =>
+                              String(projectStatusCount(c.report, it.status || it.key)),
+                            );
                             const totalForStatus = perLocVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
                             return (
                               <tr key={rowKey}>
                                 <td className={formStyles["first-column-cell"]}>
-                                  {rowKey}
+                                  {it.displayKey ?? rowKey}
                                 </td>
                                 <td
                                   className={`${formStyles["group3-second-column-cell"]} ${formStyles[`status-${it.status || "normal"}`]}`}
