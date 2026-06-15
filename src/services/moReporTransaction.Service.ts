@@ -11,7 +11,7 @@ export interface SectorReportDiscipline {
 
 export interface SectorReportProject {
   id: string;
-  label: string;
+  name: string;
   detail: string;
   status: string;
   note: string;
@@ -20,7 +20,9 @@ export interface SectorReportProject {
 export interface SectorReport {
   id: number;
   department_id: number;
-  sub_location: string;
+  department_name: string;
+  division_id: number;
+  division_name: string;
   report_date: string;
   status: string;
   approved_status?: string;
@@ -70,12 +72,50 @@ export interface SectorReport {
 
 export interface SectorReportFilters {
   department_id?: number;
+  division_id?: number;
+  created_by?: string;
   start_date?: string;
   end_date?: string;
-  status?: string;
+  approved_status?: string;
+}
+
+/** Shape returned by getDistinctDisciplineTypes(). Only key + label, no value. */
+export interface DistinctDiscipline {
+  key: string;
+  label: string;
+}
+
+/**
+ * Shape returned by getEmployeeTodayReport().
+ */
+export interface EmployeeTodayReport {
+  hasReport: boolean;
+  divisionName: string;
+  disciplines: SectorReportDiscipline[];
+  disciplineExtraFields: Array<{
+    key: string;
+    label: string;
+    value: number;
+  }>;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+/** Map frontend filter keys to backend query params. */
+function toQuery(filters?: SectorReportFilters): string {
+  if (!filters) return "";
+  const params = new URLSearchParams();
+  if (filters.department_id != null)
+    params.set("department_id", String(filters.department_id));
+  if (filters.division_id != null)
+    params.set("division_id", String(filters.division_id));
+  if (filters.created_by) params.set("created_by", filters.created_by);
+  if (filters.start_date) params.set("start_date", filters.start_date);
+  if (filters.end_date) params.set("end_date", filters.end_date);
+  if (filters.approved_status) params.set("status", filters.approved_status);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_URL}/mo-daily-transactions${path}`;
@@ -115,16 +155,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const sectorReportService = {
   async getAll(filters?: SectorReportFilters): Promise<SectorReport[]> {
-    const params = new URLSearchParams();
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, String(value));
-        }
-      });
-    }
-    const qs = params.toString();
-    return request<SectorReport[]>(`/${qs ? `?${qs}` : ""}`);
+    return request<SectorReport[]>(`/${toQuery(filters)}`);
   },
 
   async getById(id: number): Promise<SectorReport> {
@@ -147,5 +178,123 @@ export const sectorReportService = {
 
   async delete(id: number): Promise<void> {
     await request<void>(`/${id}`, { method: "DELETE" });
+  },
+
+  // ── Derived / convenience methods ────────────────────────────────────────
+
+  /**
+   * Fetch ALL distinct discipline types (key + label) from across all reports.
+   */
+  async getDistinctDisciplineTypes(): Promise<DistinctDiscipline[]> {
+    // Start with the 4 standard discipline types as baseline
+    const standardMap = new Map<string, DistinctDiscipline>([
+      [
+        "discipline_phone_count",
+        { key: "discipline_phone_count", label: "เล่นโทรศัพท์มือถือ :" },
+      ],
+      [
+        "discipline_belt_count",
+        { key: "discipline_belt_count", label: "ไม่มีเข็มขัด :" },
+      ],
+      [
+        "discipline_badge_count",
+        { key: "discipline_badge_count", label: "ไม่แขวนบัตร :" },
+      ],
+      [
+        "discipline_uniform_count",
+        { key: "discipline_uniform_count", label: "ชุดชำรุดเก่า :" },
+      ],
+    ]);
+
+    // Merge with any additional types found in existing reports
+    try {
+      const allReports = await this.getAll();
+      const customSeen = new Set<string>();
+      const custom: { key: string; label: string }[] = [];
+
+      for (const report of allReports) {
+        for (const d of report.disciplines ?? []) {
+          if (d.key === "discipline_other_count") {
+            if (!customSeen.has(d.label)) {
+              customSeen.add(d.label);
+              custom.push({ key: "", label: d.label });
+            }
+          } else if (d.key && d.label) {
+            // Update or add standard/custom types from reports
+            standardMap.set(d.key, { key: d.key, label: d.label });
+          }
+        }
+      }
+
+      const result = Array.from(standardMap.values());
+      custom.forEach((c, i) => {
+        result.push({ key: `discipline_custom_${i + 1}`, label: c.label });
+      });
+      return result;
+    } catch {
+      // If fetching reports fails, return at least the standard types
+      return Array.from(standardMap.values());
+    }
+  },
+
+  /**
+   * Fetch today's reports for a department.
+   */
+  async getTodayDepartmentReportDivisions(
+    departmentId: number,
+  ): Promise<{ division_id: number; division_name: string }[]> {
+    const today = new Date().toISOString().slice(0, 10);
+    const reports = await this.getAll({
+      department_id: departmentId,
+      start_date: today,
+      end_date: today,
+    });
+
+    const seen = new Set<number>();
+    const result: { division_id: number; division_name: string }[] = [];
+    for (const r of reports) {
+      if (r.division_id && !seen.has(r.division_id)) {
+        seen.add(r.division_id);
+        result.push({
+          division_id: r.division_id,
+          division_name: r.division_name,
+        });
+      }
+    }
+    return result;
+  },
+
+  /**
+   * Fetch today's report for a specific employee in their department.
+   */
+  async getEmployeeTodayReport(
+    departmentId: number,
+    empCode: string,
+  ): Promise<EmployeeTodayReport> {
+    const today = new Date().toISOString().slice(0, 10);
+    const reports = await this.getAll({
+      department_id: departmentId,
+      created_by: empCode,
+      start_date: today,
+      end_date: today,
+    });
+
+    if (reports.length === 0) {
+      return {
+        hasReport: false,
+        divisionName: "",
+        disciplines: [],
+        disciplineExtraFields: [],
+      };
+    }
+
+    const report = reports[0];
+
+    return {
+      hasReport: true,
+      divisionName: report.division_name ?? "",
+      disciplines: report.disciplines ?? [],
+      disciplineExtraFields: [],
+    };
   },
 };

@@ -27,9 +27,7 @@ export const authService = {
   /**
    * Send forgot password request - sends password to employee's registered email
    */
-  async forgotPassword(
-    employee_code: string,
-  ): Promise<{
+  async forgotPassword(employee_code: string): Promise<{
     success: boolean;
     message: string;
     error?: string;
@@ -66,10 +64,12 @@ export const authService = {
             errorData.detail.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
           const error_key = errorData.detail.error;
           const contacts = Array.isArray(errorData.detail.contacts)
-            ? errorData.detail.contacts.map((c: { team?: string; email?: string }) => ({
-                team: c.team,
-                email: c.email,
-              }))
+            ? errorData.detail.contacts.map(
+                (c: { team?: string; email?: string }) => ({
+                  team: c.team,
+                  email: c.email,
+                }),
+              )
             : undefined;
           return { success: false, message: msg, error: error_key, contacts };
         }
@@ -105,11 +105,19 @@ export const authService = {
   /**
    * Logout and record audit on backend (fire-and-forget)
    */
-  async logout(employee_code: string): Promise<void> {
-    await fetch(`${API_BASE_URL}/auth/logout?employee_code=${employee_code}`, {
-      method: "POST",
-      headers: { ..._geoHeaders() },
-    }).catch(() => {});
+  async logout(employee_code: string): Promise<{ success: boolean }> {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/auth/logout?employee_code=${employee_code}`,
+        {
+          method: "POST",
+          headers: { ..._geoHeaders() },
+        },
+      );
+      return { success: res.ok };
+    } catch {
+      return { success: false };
+    }
   },
 
   /**

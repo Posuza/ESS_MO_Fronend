@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Header from "@/layout/Header";
-import ForgotPasswordModal from "@/components/login/models/ForgotPasswordModal";
-import ChangePasswordModal from "@/components/login/models/ChangePasswordModal";
-import TimingMessagePopUp from "@/components/login/popup/TimingMessagePopUp";
-import FirstLoginModal from "@/components/login/models/FirstLoginModal";
+import ForgotPasswordModal from "@/components/auth/models/ForgotPasswordModal";
+import ChangePasswordModal from "@/components/auth/models/ChangePasswordModal";
+import TimingMessagePopUp from "@/components/auth/popup/TimingMessagePopUp";
+import FirstLoginModal from "@/components/auth/models/FirstLoginModal";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useStore } from "@/store/store";
 import styles from "./Login.module.css";

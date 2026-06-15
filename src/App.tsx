@@ -1,9 +1,12 @@
 // src/App.tsx
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useCallback, useRef, useState } from "react";
 import { useStore } from "./store/store";
+import LogoutPopUp, {
+  type LogoutStatus,
+} from "./components/auth/popup/LogoutPopUp";
 const Login = lazy(() => import("./pages/Login"));
 const Home = lazy(() => import("./pages/Home"));
-const Mo = lazy(() => import("./pages/dev.Mo/Mo"));
+const Mo = lazy(() => import("./pages/Mo/Mo"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CheckInOut = lazy(() => import("./pages/Attendance/CheckInOut"));
 const FaceVerify = lazy(() => import("./pages/Attendance/FaceVerify"));
@@ -26,6 +29,10 @@ export default function App() {
 
   const [punchType, setPunchType] = useState<PunchType>("in");
 
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+  const [logoutStatus, setLogoutStatus] = useState<LogoutStatus>("attempt");
+  const logoutPromiseRef = useRef<Promise<boolean> | null>(null);
+
   // ===== Navigation helpers =====
   const reset = (r: Route) => setStack([r]);
 
@@ -35,12 +42,42 @@ export default function App() {
   const back = () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
 
   async function onLogout() {
+    setLogoutStatus("attempt");
+    setShowLogoutPopup(true);
+
+    // Start logout in background — popup waits
     const code = localStorage.getItem("emp_code");
-    if (code) {
-      useStore.getState().logout(code);
+    const p = useStore.getState().logout(code || "");
+    logoutPromiseRef.current = p;
+
+    const ok = await p;
+    if (ok) {
+      // Small delay so user sees the attempt state briefly
+      setTimeout(() => setLogoutStatus("success"), 600);
+    } else {
+      setLogoutStatus("fail");
     }
-    reset("login");
   }
+
+  const onLogoutPopupClose = useCallback(async () => {
+    setShowLogoutPopup(false);
+    reset("login");
+  }, []);
+
+  const onLogoutRetry = useCallback(() => {
+    setLogoutStatus("attempt");
+    // Re-run logout
+    const code = localStorage.getItem("emp_code");
+    const p = useStore.getState().logout(code || "");
+    logoutPromiseRef.current = p;
+    p.then((ok) => {
+      if (ok) {
+        setTimeout(() => setLogoutStatus("success"), 600);
+      } else {
+        setLogoutStatus("fail");
+      }
+    });
+  }, []);
 
   function goFaceVerify(type: PunchType) {
     setPunchType(type);
@@ -115,6 +152,14 @@ export default function App() {
         )}
         {route === "mo" && <Mo onBackHome={() => reset("home")} />}
         {route === "dashboard" && <Dashboard onLogout={onLogout} />}
+
+        {/* Logout popup overlay */}
+        <LogoutPopUp
+          open={showLogoutPopup}
+          status={logoutStatus}
+          onClose={onLogoutPopupClose}
+          onRetry={onLogoutRetry}
+        />
       </>
     </Suspense>
   );

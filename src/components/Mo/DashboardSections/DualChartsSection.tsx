@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import "./DualChartsSection.css";
-import RankedBarList from "../charts/RankedBarList";
-import DonutChartCard from "../charts/DonutChart";
+import RankedBarList from "./charts/RankedBarList";
+import DonutChartCard from "./charts/DonutChart";
 import caseData from "@/temp_data/case.json";
 
 const BAR_CATEGORIES = [

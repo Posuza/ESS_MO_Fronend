@@ -1,0 +1,10 @@
+/* ═══════════════════════════════════════════════════════════
+   secotorDetailContent.css — all styles are inline in TSX
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Data row borders ───────────────────────────────── */
+table tbody td {
+    border-left: 1px solid #e5e7eb;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+}

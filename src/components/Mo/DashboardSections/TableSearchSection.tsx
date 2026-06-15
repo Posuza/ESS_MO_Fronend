@@ -1,17 +1,17 @@
 import React, { useState, useMemo, useCallback } from "react";
 import "./TableSearchSection.css";
 import caseData from "../../../temp_data/case.json";
-import ConfirmDeleteDialog from "../ConfirmDeleteDialog";
-import { 
-  Check, 
-  X, 
-  Edit, 
-  Trash2, 
-  Search, 
+import { ConfirmDeleteDialog } from "../popup";
+import {
+  Check,
+  X,
+  Edit,
+  Trash2,
+  Search,
   RotateCcw,
   Eye,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 
 /* ── Types ── */
@@ -75,36 +75,52 @@ function getDeptName(id: number): string {
 }
 
 function getLeaveTotal(r: CaseRow): number {
-  return (r.leave_sick_count || 0) + (r.leave_business_count || 0) + (r.leave_other_count || 0) + (r.absent_count || 0);
+  return (
+    (r.leave_sick_count || 0) +
+    (r.leave_business_count || 0) +
+    (r.leave_other_count || 0) +
+    (r.absent_count || 0)
+  );
 }
 
 function getManpower(r: CaseRow): number {
-  return (r.shift_18_count || 0) + (r.shift_24_count || 0) + (r.shift_36_count || 0);
+  return (
+    (r.shift_18_count || 0) + (r.shift_24_count || 0) + (r.shift_36_count || 0)
+  );
 }
 
 function getUniform(r: CaseRow): number {
-  return (r.wear_hat_count || 0) + (r.wear_shirt_count || 0) + (r.wear_pant_count || 0) + (r.wear_shoe_count || 0);
+  return (
+    (r.wear_hat_count || 0) +
+    (r.wear_shirt_count || 0) +
+    (r.wear_pant_count || 0) +
+    (r.wear_shoe_count || 0)
+  );
 }
 
 function getRules(r: CaseRow): number {
-  return (r.rule_sleep_count || 0) + (r.rule_use_phone_count || 0) + (r.rule_no_card_count || 0);
+  return (
+    (r.rule_sleep_count || 0) +
+    (r.rule_use_phone_count || 0) +
+    (r.rule_no_card_count || 0)
+  );
 }
 
 function statusLabel(s: string): string {
-  if (s === "approved") return "อนุมัติ";
-  if (s === "rejected") return "ไม่อนุมัติ";
+  if (s === "APPROVED") return "อนุมัติ";
+  if (s === "REJECTED") return "ไม่อนุมัติ";
   return "รออนุมัติ";
 }
 
 function statusClass(s: string): string {
-  if (s === "approved") return "ts-status--approved";
-  if (s === "rejected") return "ts-status--rejected";
+  if (s === "APPROVED") return "ts-status--approved";
+  if (s === "REJECTED") return "ts-status--rejected";
   return "ts-status--pending";
 }
 
 function statusIcon(s: string): string {
-  if (s === "approved") return "✓";
-  if (s === "rejected") return "✕";
+  if (s === "APPROVED") return "✓";
+  if (s === "REJECTED") return "✕";
   return "◷";
 }
 
@@ -112,7 +128,11 @@ function formatDate(dateStr: string): string {
   if (!dateStr) return "-";
   try {
     const d = new Date(dateStr.replace(" ", "T"));
-    return d.toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString("th-TH", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   } catch {
     return dateStr;
   }
@@ -122,7 +142,10 @@ function formatTime(dateStr: string): string {
   if (!dateStr) return "";
   try {
     const d = new Date(dateStr.replace(" ", "T"));
-    return d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } catch {
     return "";
   }
@@ -130,7 +153,17 @@ function formatTime(dateStr: string): string {
 
 /* ── SVGs for bulk actions matching OrdersTable.jsx exactly ── */
 const IconBulkSelectOff = () => (
-  <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="18px" width="18px" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2.5"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height="18px"
+    width="18px"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
     <path d="M4 16v2a2 2 0 0 0 2 2h2" />
     <path d="M16 4h2a2 2 0 0 1 2 2v2" />
@@ -140,13 +173,37 @@ const IconBulkSelectOff = () => (
 );
 
 const IconBulkSelectOn = () => (
-  <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" height="18px" width="18px" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2.5"
+    viewBox="0 0 24 24"
+    height="18px"
+    width="18px"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
   </svg>
 );
 
 const IconBulkDelete = ({ disabled }: { disabled: boolean }) => (
-  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 24 24" height="22px" width="22px" xmlns="http://www.w3.org/2000/svg" style={{ color: disabled ? "#cbd5e1" : "#dc2626", transition: "color 0.15s ease" }}>
+  <svg
+    stroke="currentColor"
+    fill="currentColor"
+    strokeWidth="0"
+    viewBox="0 0 24 24"
+    height="22px"
+    width="22px"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{
+      color: disabled ? "#cbd5e1" : "#dc2626",
+      transition: "color 0.15s ease",
+    }}
+  >
     <path d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z" />
   </svg>
 );
@@ -156,7 +213,9 @@ const IconBulkDelete = ({ disabled }: { disabled: boolean }) => (
    ══════════════════════════════════════════════ */
 export default function TableSearch() {
   // ── Local records state for CRUD ──
-  const [records, setRecords] = useState<CaseRow[]>(() => caseData as CaseRow[]);
+  const [records, setRecords] = useState<CaseRow[]>(
+    () => caseData as CaseRow[],
+  );
 
   // ── Bulk selection state ──
   const [showBulkSelect, setShowBulkSelect] = useState<boolean>(false);
@@ -185,13 +244,15 @@ export default function TableSearch() {
   const [editingRecord, setEditingRecord] = useState<CaseRow | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingRecord, setViewingRecord] = useState<CaseRow | null>(null);
-  
+
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<CaseRow | null>(null);
 
   // ── Unique values from records state ──
   const uniqueDepts = useMemo(() => {
-    return Array.from(new Set(records.map((r) => r.department_id))).sort((a, b) => a - b);
+    return Array.from(new Set(records.map((r) => r.department_id))).sort(
+      (a, b) => a - b,
+    );
   }, [records]);
 
   const uniqueStatuses = useMemo(() => {
@@ -228,12 +289,19 @@ export default function TableSearch() {
           getDeptName(r.department_id).toLowerCase().includes(q) ||
           (r.created_by || "").toLowerCase().includes(q) ||
           (r.warning || "").toLowerCase().includes(q) ||
-          (r.other_job || "").toLowerCase().includes(q)
+          (r.other_job || "").toLowerCase().includes(q),
       );
     }
 
     return data;
-  }, [records, filterDept, filterStatus, filterDateFrom, filterDateTo, searchText]);
+  }, [
+    records,
+    filterDept,
+    filterStatus,
+    filterDateFrom,
+    filterDateTo,
+    searchText,
+  ]);
 
   // ── Computed: sorted data ──
   const sortedData = useMemo(() => {
@@ -280,7 +348,9 @@ export default function TableSearch() {
       if (typeof va === "string" && typeof vb === "string") {
         return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
       }
-      return sortDir === "asc" ? (va as number) - (vb as number) : (vb as number) - (va as number);
+      return sortDir === "asc"
+        ? (va as number) - (vb as number)
+        : (vb as number) - (va as number);
     });
     return data;
   }, [filteredData, sortKey, sortDir]);
@@ -321,7 +391,7 @@ export default function TableSearch() {
       }
       setCurrentPage(1);
     },
-    [sortKey]
+    [sortKey],
   );
 
   const clearFilters = useCallback(() => {
@@ -337,7 +407,7 @@ export default function TableSearch() {
     (p: number) => {
       setCurrentPage(Math.max(1, Math.min(p, totalPages)));
     },
-    [totalPages]
+    [totalPages],
   );
 
   const handlePerPage = useCallback((val: number) => {
@@ -346,28 +416,34 @@ export default function TableSearch() {
   }, []);
 
   // ── Row Actions ──
-  const handleToggleApprove = useCallback((id: number, currentStatus: string) => {
-    let nextStatus = "approved";
-    if (currentStatus === "approved") {
-      nextStatus = "rejected";
-    } else if (currentStatus === "rejected") {
-      nextStatus = "approved";
-    } else {
-      nextStatus = "approved";
-    }
+  const handleToggleApprove = useCallback(
+    (id: number, currentStatus: string) => {
+      let nextStatus = "APPROVED";
+      if (currentStatus === "APPROVED") {
+        nextStatus = "REJECTED";
+      } else if (currentStatus === "REJECTED") {
+        nextStatus = "APPROVED";
+      } else {
+        nextStatus = "APPROVED";
+      }
 
-    setRecords((prev) =>
-      prev.map((r) =>
-        r.mo_daily_transaction_id === id
-          ? {
-              ...r,
-              approved_status: nextStatus,
-              approved_at: new Date().toISOString().replace("T", " ").substring(0, 19),
-            }
-          : r
-      )
-    );
-  }, []);
+      setRecords((prev) =>
+        prev.map((r) =>
+          r.mo_daily_transaction_id === id
+            ? {
+                ...r,
+                approved_status: nextStatus,
+                approved_at: new Date()
+                  .toISOString()
+                  .replace("T", " ")
+                  .substring(0, 19),
+              }
+            : r,
+        ),
+      );
+    },
+    [],
+  );
 
   const handleEditClick = useCallback((record: CaseRow) => {
     setEditingRecord({ ...record });
@@ -379,18 +455,23 @@ export default function TableSearch() {
     setIsViewModalOpen(true);
   }, []);
 
-  const handleSaveEdit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingRecord) return;
+  const handleSaveEdit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!editingRecord) return;
 
-    setRecords((prev) =>
-      prev.map((r) =>
-        r.mo_daily_transaction_id === editingRecord.mo_daily_transaction_id ? editingRecord : r
-      )
-    );
-    setIsEditModalOpen(false);
-    setEditingRecord(null);
-  }, [editingRecord]);
+      setRecords((prev) =>
+        prev.map((r) =>
+          r.mo_daily_transaction_id === editingRecord.mo_daily_transaction_id
+            ? editingRecord
+            : r,
+        ),
+      );
+      setIsEditModalOpen(false);
+      setEditingRecord(null);
+    },
+    [editingRecord],
+  );
 
   const handleDeleteClick = useCallback((record: CaseRow) => {
     setRecordToDelete(record);
@@ -400,11 +481,19 @@ export default function TableSearch() {
   const handleConfirmDelete = useCallback(() => {
     if (recordToDelete) {
       // Single delete
-      setRecords((prev) => prev.filter((r) => r.mo_daily_transaction_id !== recordToDelete.mo_daily_transaction_id));
+      setRecords((prev) =>
+        prev.filter(
+          (r) =>
+            r.mo_daily_transaction_id !==
+            recordToDelete.mo_daily_transaction_id,
+        ),
+      );
       setRecordToDelete(null);
     } else if (selectedIds.length > 0) {
       // Bulk delete
-      setRecords((prev) => prev.filter((r) => !selectedIds.includes(r.mo_daily_transaction_id)));
+      setRecords((prev) =>
+        prev.filter((r) => !selectedIds.includes(r.mo_daily_transaction_id)),
+      );
       setSelectedIds([]);
       setShowBulkSelect(false);
     }
@@ -422,7 +511,12 @@ export default function TableSearch() {
     return sortDir === "asc" ? "ascending" : "descending";
   };
 
-  const hasFilters = filterDept || filterStatus || filterDateFrom || filterDateTo || searchText.trim();
+  const hasFilters =
+    filterDept ||
+    filterStatus ||
+    filterDateFrom ||
+    filterDateTo ||
+    searchText.trim();
 
   return (
     <div className="mo-tablesearch">
@@ -430,7 +524,13 @@ export default function TableSearch() {
       <div className="ts-filter-bar">
         <div className="ts-filter-group">
           <label htmlFor="ts-search">ค้นหา:</label>
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+          <div
+            style={{
+              position: "relative",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
             <input
               id="ts-search"
               type="text"
@@ -443,7 +543,14 @@ export default function TableSearch() {
               }}
               style={{ minWidth: "160px", paddingLeft: "30px" }}
             />
-            <Search size={14} style={{ position: "absolute", left: "10px", color: "rgba(27,43,74,0.4)" }} />
+            <Search
+              size={14}
+              style={{
+                position: "absolute",
+                left: "10px",
+                color: "rgba(27,43,74,0.4)",
+              }}
+            />
           </div>
         </div>
 
@@ -516,7 +623,11 @@ export default function TableSearch() {
         </div>
 
         {hasFilters && (
-          <button type="button" className="ts-filter-btn ts-clear-btn" onClick={clearFilters}>
+          <button
+            type="button"
+            className="ts-filter-btn ts-clear-btn"
+            onClick={clearFilters}
+          >
             <RotateCcw size={13} />
             ล้างตัวกรอง
           </button>
@@ -535,14 +646,26 @@ export default function TableSearch() {
             <div className="ts-empty">
               <div className="ts-empty-icon">📋</div>
               <div className="ts-empty-text">ไม่พบข้อมูลรายงาน MO</div>
-              <div className="ts-empty-sub">ลองปรับเปลี่ยนตัวกรองค้นหาอีกครั้ง</div>
+              <div className="ts-empty-sub">
+                ลองปรับเปลี่ยนตัวกรองค้นหาอีกครั้ง
+              </div>
             </div>
           ) : (
             <table className="ts-table">
               <thead>
                 <tr>
-                  <th className="sticky-left text-center" style={{ minWidth: "60px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                  <th
+                    className="sticky-left text-center"
+                    style={{ minWidth: "60px" }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
                       <button
                         type="button"
                         className="ts-bulk-toggle-btn"
@@ -550,22 +673,43 @@ export default function TableSearch() {
                           setShowBulkSelect((prev) => !prev);
                           setSelectedIds([]);
                         }}
-                        title={showBulkSelect ? "ปิดการเลือกทีละหลายรายการ" : "เปิดการเลือกทีละหลายรายการ"}
+                        title={
+                          showBulkSelect
+                            ? "ปิดการเลือกทีละหลายรายการ"
+                            : "เปิดการเลือกทีละหลายรายการ"
+                        }
                       >
-                        {showBulkSelect ? <IconBulkSelectOn /> : <IconBulkSelectOff />}
+                        {showBulkSelect ? (
+                          <IconBulkSelectOn />
+                        ) : (
+                          <IconBulkSelectOff />
+                        )}
                       </button>
                       {showBulkSelect && (
                         <input
                           type="checkbox"
                           className="ts-bulk-checkbox"
-                          checked={pageData.length > 0 && pageData.every((r) => selectedIds.includes(r.mo_daily_transaction_id))}
+                          checked={
+                            pageData.length > 0 &&
+                            pageData.every((r) =>
+                              selectedIds.includes(r.mo_daily_transaction_id),
+                            )
+                          }
                           onChange={(e) => {
                             if (e.target.checked) {
-                              const pageIds = pageData.map((r) => r.mo_daily_transaction_id);
-                              setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+                              const pageIds = pageData.map(
+                                (r) => r.mo_daily_transaction_id,
+                              );
+                              setSelectedIds((prev) =>
+                                Array.from(new Set([...prev, ...pageIds])),
+                              );
                             } else {
-                              const pageIds = pageData.map((r) => r.mo_daily_transaction_id);
-                              setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+                              const pageIds = pageData.map(
+                                (r) => r.mo_daily_transaction_id,
+                              );
+                              setSelectedIds((prev) =>
+                                prev.filter((id) => !pageIds.includes(id)),
+                              );
                             }
                           }}
                           aria-label="เลือกทั้งหมดในหน้านี้"
@@ -573,7 +717,7 @@ export default function TableSearch() {
                       )}
                     </div>
                   </th>
-                  
+
                   <th
                     className={`ts-sortable ${hoveredColIndex === 1 ? "ts-col-hovered" : ""}`}
                     aria-sort={sortAria("department_id")}
@@ -581,9 +725,12 @@ export default function TableSearch() {
                     onMouseEnter={() => setHoveredColIndex(1)}
                     onMouseLeave={() => setHoveredColIndex(null)}
                   >
-                    ภาค <span className="ts-sort-icon">{sortArrow("department_id")}</span>
+                    ภาค{" "}
+                    <span className="ts-sort-icon">
+                      {sortArrow("department_id")}
+                    </span>
                   </th>
-                  
+
                   <th
                     className={`ts-sortable ${hoveredColIndex === 2 ? "ts-col-hovered" : ""}`}
                     aria-sort={sortAria("manpower")}
@@ -591,9 +738,12 @@ export default function TableSearch() {
                     onMouseEnter={() => setHoveredColIndex(2)}
                     onMouseLeave={() => setHoveredColIndex(null)}
                   >
-                    กำลังพล <span className="ts-sort-icon">{sortArrow("manpower")}</span>
+                    กำลังพล{" "}
+                    <span className="ts-sort-icon">
+                      {sortArrow("manpower")}
+                    </span>
                   </th>
-                  
+
                   <th
                     className={`ts-sortable ${hoveredColIndex === 3 ? "ts-col-hovered" : ""}`}
                     aria-sort={sortAria("leave")}
@@ -601,9 +751,10 @@ export default function TableSearch() {
                     onMouseEnter={() => setHoveredColIndex(3)}
                     onMouseLeave={() => setHoveredColIndex(null)}
                   >
-                    การลา <span className="ts-sort-icon">{sortArrow("leave")}</span>
+                    การลา{" "}
+                    <span className="ts-sort-icon">{sortArrow("leave")}</span>
                   </th>
-                  
+
                   <th
                     className={`ts-sortable ${hoveredColIndex === 4 ? "ts-col-hovered" : ""}`}
                     aria-sort={sortAria("uniform")}
@@ -611,9 +762,10 @@ export default function TableSearch() {
                     onMouseEnter={() => setHoveredColIndex(4)}
                     onMouseLeave={() => setHoveredColIndex(null)}
                   >
-                    แต่งกายผิดระเบียบ <span className="ts-sort-icon">{sortArrow("uniform")}</span>
+                    แต่งกายผิดระเบียบ{" "}
+                    <span className="ts-sort-icon">{sortArrow("uniform")}</span>
                   </th>
-                  
+
                   <th
                     className={`ts-sortable ${hoveredColIndex === 5 ? "ts-col-hovered" : ""}`}
                     aria-sort={sortAria("rules")}
@@ -621,9 +773,10 @@ export default function TableSearch() {
                     onMouseEnter={() => setHoveredColIndex(5)}
                     onMouseLeave={() => setHoveredColIndex(null)}
                   >
-                    ผิดข้อปฏิบัติ <span className="ts-sort-icon">{sortArrow("rules")}</span>
+                    ผิดข้อปฏิบัติ{" "}
+                    <span className="ts-sort-icon">{sortArrow("rules")}</span>
                   </th>
-                  
+
                   <th
                     className={hoveredColIndex === 6 ? "ts-col-hovered" : ""}
                     onMouseEnter={() => setHoveredColIndex(6)}
@@ -631,7 +784,7 @@ export default function TableSearch() {
                   >
                     หมายเหตุ/ข้อร้องเรียน
                   </th>
-                  
+
                   <th
                     className={`ts-sortable ${hoveredColIndex === 7 ? "ts-col-hovered" : ""}`}
                     aria-sort={sortAria("approved_status")}
@@ -639,9 +792,12 @@ export default function TableSearch() {
                     onMouseEnter={() => setHoveredColIndex(7)}
                     onMouseLeave={() => setHoveredColIndex(null)}
                   >
-                    สถานะ <span className="ts-sort-icon">{sortArrow("approved_status")}</span>
+                    สถานะ{" "}
+                    <span className="ts-sort-icon">
+                      {sortArrow("approved_status")}
+                    </span>
                   </th>
-                  
+
                   <th
                     className={`ts-sortable ${hoveredColIndex === 8 ? "ts-col-hovered" : ""}`}
                     aria-sort={sortAria("created_at")}
@@ -649,9 +805,12 @@ export default function TableSearch() {
                     onMouseEnter={() => setHoveredColIndex(8)}
                     onMouseLeave={() => setHoveredColIndex(null)}
                   >
-                    วันที่สร้าง <span className="ts-sort-icon">{sortArrow("created_at")}</span>
+                    วันที่สร้าง{" "}
+                    <span className="ts-sort-icon">
+                      {sortArrow("created_at")}
+                    </span>
                   </th>
-                  
+
                   <th
                     className={hoveredColIndex === 9 ? "ts-col-hovered" : ""}
                     onMouseEnter={() => setHoveredColIndex(9)}
@@ -660,7 +819,10 @@ export default function TableSearch() {
                     ผู้สร้างรายงาน
                   </th>
 
-                  <th className="text-center ts-actions-header" style={{ minWidth: "120px" }}>
+                  <th
+                    className="text-center ts-actions-header"
+                    style={{ minWidth: "120px" }}
+                  >
                     {showBulkSelect ? (
                       <button
                         type="button"
@@ -691,12 +853,21 @@ export default function TableSearch() {
                           <input
                             type="checkbox"
                             className="ts-bulk-checkbox"
-                            checked={selectedIds.includes(row.mo_daily_transaction_id)}
+                            checked={selectedIds.includes(
+                              row.mo_daily_transaction_id,
+                            )}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedIds((prev) => [...prev, row.mo_daily_transaction_id]);
+                                setSelectedIds((prev) => [
+                                  ...prev,
+                                  row.mo_daily_transaction_id,
+                                ]);
                               } else {
-                                setSelectedIds((prev) => prev.filter((id) => id !== row.mo_daily_transaction_id));
+                                setSelectedIds((prev) =>
+                                  prev.filter(
+                                    (id) => id !== row.mo_daily_transaction_id,
+                                  ),
+                                );
                               }
                             }}
                           />
@@ -704,82 +875,103 @@ export default function TableSearch() {
                           row.mo_daily_transaction_id
                         )}
                       </td>
-                      
-                      <td 
-                        className={hoveredColIndex === 1 ? "ts-col-hovered" : ""}
+
+                      <td
+                        className={
+                          hoveredColIndex === 1 ? "ts-col-hovered" : ""
+                        }
                         onMouseEnter={() => setHoveredColIndex(1)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
                         {getDeptName(row.department_id)}
                       </td>
-                      
-                      <td 
+
+                      <td
                         className={`ts-num ${hoveredColIndex === 2 ? "ts-col-hovered" : ""}`}
                         onMouseEnter={() => setHoveredColIndex(2)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
                         {manpower}
                       </td>
-                      
-                      <td 
+
+                      <td
                         className={`ts-num ${hoveredColIndex === 3 ? "ts-col-hovered" : ""}`}
                         onMouseEnter={() => setHoveredColIndex(3)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
                         {leave}
                       </td>
-                      
-                      <td 
+
+                      <td
                         className={`ts-num ${hoveredColIndex === 4 ? "ts-col-hovered" : ""}`}
                         onMouseEnter={() => setHoveredColIndex(4)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
                         {uniform}
                       </td>
-                      
-                      <td 
+
+                      <td
                         className={`ts-num ${hoveredColIndex === 5 ? "ts-col-hovered" : ""}`}
                         onMouseEnter={() => setHoveredColIndex(5)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
                         {rules}
                       </td>
-                      
-                      <td 
+
+                      <td
                         title={row.warning || row.other_job || "-"}
-                        className={hoveredColIndex === 6 ? "ts-col-hovered" : ""}
+                        className={
+                          hoveredColIndex === 6 ? "ts-col-hovered" : ""
+                        }
                         onMouseEnter={() => setHoveredColIndex(6)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
                         {(() => {
                           const note = row.warning || row.other_job || "-";
-                          return note.length > 20 ? note.slice(0, 20) + "…" : note;
+                          return note.length > 20
+                            ? note.slice(0, 20) + "…"
+                            : note;
                         })()}
                       </td>
-                      
-                      <td 
-                        className={hoveredColIndex === 7 ? "ts-col-hovered" : ""}
+
+                      <td
+                        className={
+                          hoveredColIndex === 7 ? "ts-col-hovered" : ""
+                        }
                         onMouseEnter={() => setHoveredColIndex(7)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
-                        <span className={`ts-status ${statusClass(row.approved_status)}`}>
-                          {statusIcon(row.approved_status)} {statusLabel(row.approved_status)}
+                        <span
+                          className={`ts-status ${statusClass(row.approved_status)}`}
+                        >
+                          {statusIcon(row.approved_status)}{" "}
+                          {statusLabel(row.approved_status)}
                         </span>
                       </td>
-                      
-                      <td 
-                        className={hoveredColIndex === 8 ? "ts-col-hovered" : ""}
+
+                      <td
+                        className={
+                          hoveredColIndex === 8 ? "ts-col-hovered" : ""
+                        }
                         onMouseEnter={() => setHoveredColIndex(8)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
                         <div>{formatDate(row.created_at)}</div>
-                        <div style={{ fontSize: "10.5px", opacity: 0.6, fontWeight: 700 }}>
+                        <div
+                          style={{
+                            fontSize: "10.5px",
+                            opacity: 0.6,
+                            fontWeight: 700,
+                          }}
+                        >
                           {formatTime(row.created_at)}
                         </div>
                       </td>
-                      
-                      <td 
-                        className={hoveredColIndex === 9 ? "ts-col-hovered" : ""}
+
+                      <td
+                        className={
+                          hoveredColIndex === 9 ? "ts-col-hovered" : ""
+                        }
                         onMouseEnter={() => setHoveredColIndex(9)}
                         onMouseLeave={() => setHoveredColIndex(null)}
                       >
@@ -865,7 +1057,7 @@ export default function TableSearch() {
                     >
                       {p}
                     </button>
-                  )
+                  ),
                 )}
 
                 {safePage < totalPages && (
@@ -885,13 +1077,23 @@ export default function TableSearch() {
 
       {/* ── Edit Modal ── */}
       {isEditModalOpen && editingRecord && (
-        <div className="ts-modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+        <div
+          className="ts-modal-overlay"
+          onClick={() => setIsEditModalOpen(false)}
+        >
           <div className="ts-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="ts-modal-header">
-              <h3 className="ts-modal-title">📝 แก้ไขรายงาน MO #{editingRecord.mo_daily_transaction_id}</h3>
-              <button className="ts-modal-close" onClick={() => setIsEditModalOpen(false)}>✕</button>
+              <h3 className="ts-modal-title">
+                📝 แก้ไขรายงาน MO #{editingRecord.mo_daily_transaction_id}
+              </h3>
+              <button
+                className="ts-modal-close"
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                ✕
+              </button>
             </div>
-            
+
             <form onSubmit={handleSaveEdit} className="ts-modal-body">
               {/* Section 1: Manpower and Leave */}
               <div className="ts-form-section">
@@ -903,7 +1105,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.shift_18_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, shift_18_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          shift_18_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -913,7 +1120,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.shift_24_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, shift_24_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          shift_24_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -923,7 +1135,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.shift_36_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, shift_36_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          shift_36_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -933,7 +1150,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.leave_sick_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, leave_sick_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          leave_sick_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -943,7 +1165,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.leave_business_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, leave_business_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          leave_business_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -953,7 +1180,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.leave_other_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, leave_other_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          leave_other_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -963,7 +1195,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.absent_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, absent_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          absent_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -972,7 +1209,9 @@ export default function TableSearch() {
 
               {/* Section 2: Rule violations and Clothing */}
               <div className="ts-form-section">
-                <div className="ts-form-section-title">👔 ระเบียบและการแต่งกาย</div>
+                <div className="ts-form-section-title">
+                  👔 ระเบียบและการแต่งกาย
+                </div>
                 <div className="ts-grid-3">
                   <div className="ts-form-group">
                     <label>ไม่สวมหมวก (นาย)</label>
@@ -980,7 +1219,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.wear_hat_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, wear_hat_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          wear_hat_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -990,7 +1234,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.wear_shirt_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, wear_shirt_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          wear_shirt_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -1000,7 +1249,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.wear_pant_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, wear_pant_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          wear_pant_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -1010,7 +1264,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.wear_shoe_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, wear_shoe_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          wear_shoe_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -1020,7 +1279,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.rule_sleep_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, rule_sleep_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          rule_sleep_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -1030,7 +1294,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.rule_use_phone_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, rule_use_phone_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          rule_use_phone_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -1040,7 +1309,12 @@ export default function TableSearch() {
                       type="number"
                       className="ts-form-input"
                       value={editingRecord.rule_no_card_count}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, rule_no_card_count: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          rule_no_card_count: Number(e.target.value),
+                        })
+                      }
                       min={0}
                     />
                   </div>
@@ -1049,17 +1323,33 @@ export default function TableSearch() {
 
               {/* Section 3: Text Notes and Status */}
               <div className="ts-form-section">
-                <div className="ts-form-section-title">📂 รายละเอียดเพิ่มเติมและสถานะ</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div className="ts-form-section-title">
+                  📂 รายละเอียดเพิ่มเติมและสถานะ
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                    marginBottom: "12px",
+                  }}
+                >
                   <div className="ts-form-group">
                     <label>ภาคสังกัด</label>
                     <select
                       className="ts-form-select"
                       value={editingRecord.department_id}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, department_id: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          department_id: Number(e.target.value),
+                        })
+                      }
                     >
                       {Object.entries(departmentMap).map(([id, name]) => (
-                        <option key={id} value={id}>{name}</option>
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -1068,11 +1358,16 @@ export default function TableSearch() {
                     <select
                       className="ts-form-select"
                       value={editingRecord.approved_status}
-                      onChange={(e) => setEditingRecord({ ...editingRecord, approved_status: e.target.value })}
+                      onChange={(e) =>
+                        setEditingRecord({
+                          ...editingRecord,
+                          approved_status: e.target.value,
+                        })
+                      }
                     >
-                      <option value="pending">รออนุมัติ</option>
-                      <option value="approved">อนุมัติ</option>
-                      <option value="rejected">ไม่อนุมัติ</option>
+                      <option value="PENDING">รออนุมัติ</option>
+                      <option value="APPROVED">อนุมัติ</option>
+                      <option value="REJECTED">ไม่อนุมัติ</option>
                     </select>
                   </div>
                 </div>
@@ -1082,7 +1377,12 @@ export default function TableSearch() {
                     type="text"
                     className="ts-form-input"
                     value={editingRecord.warning || ""}
-                    onChange={(e) => setEditingRecord({ ...editingRecord, warning: e.target.value })}
+                    onChange={(e) =>
+                      setEditingRecord({
+                        ...editingRecord,
+                        warning: e.target.value,
+                      })
+                    }
                     placeholder="รายละเอียดข้อความตักเตือน..."
                   />
                 </div>
@@ -1092,62 +1392,126 @@ export default function TableSearch() {
                     type="text"
                     className="ts-form-input"
                     value={editingRecord.other_job || ""}
-                    onChange={(e) => setEditingRecord({ ...editingRecord, other_job: e.target.value })}
+                    onChange={(e) =>
+                      setEditingRecord({
+                        ...editingRecord,
+                        other_job: e.target.value,
+                      })
+                    }
                     placeholder="รายละเอียดงานอื่นๆ..."
                   />
                 </div>
               </div>
-              
+
               <div className="ts-modal-footer">
-                <button type="button" className="ts-btn ts-btn-secondary" onClick={() => setIsEditModalOpen(false)}>ยกเลิก</button>
-                <button type="submit" className="ts-btn ts-btn-primary">บันทึกการแก้ไข</button>
+                <button
+                  type="button"
+                  className="ts-btn ts-btn-secondary"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  ยกเลิก
+                </button>
+                <button type="submit" className="ts-btn ts-btn-primary">
+                  บันทึกการแก้ไข
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-        {/* ── View Modal (read-only) ── */}
-        {isViewModalOpen && viewingRecord && (
-          <div className="ts-modal-overlay" onClick={() => setIsViewModalOpen(false)}>
-            <div className="ts-modal-card" onClick={(e) => e.stopPropagation()}>
-              <div className="ts-modal-header">
-                <h3 className="ts-modal-title">🔍 ดูรายงาน MO #{viewingRecord.mo_daily_transaction_id}</h3>
-                <button className="ts-modal-close" onClick={() => setIsViewModalOpen(false)}>✕</button>
-              </div>
+      {/* ── View Modal (read-only) ── */}
+      {isViewModalOpen && viewingRecord && (
+        <div
+          className="ts-modal-overlay"
+          onClick={() => setIsViewModalOpen(false)}
+        >
+          <div className="ts-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="ts-modal-header">
+              <h3 className="ts-modal-title">
+                🔍 ดูรายงาน MO #{viewingRecord.mo_daily_transaction_id}
+              </h3>
+              <button
+                className="ts-modal-close"
+                onClick={() => setIsViewModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
 
-              <div className="ts-modal-body">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div><strong>ภาค:</strong> {getDeptName(viewingRecord.department_id)}</div>
-                  <div><strong>วันที่สร้าง:</strong> {formatDate(viewingRecord.created_at)} {formatTime(viewingRecord.created_at)}</div>
-                  <div><strong>สถานะ:</strong> <span className={`ts-status ${statusClass(viewingRecord.approved_status)}`}>{statusIcon(viewingRecord.approved_status)} {statusLabel(viewingRecord.approved_status)}</span></div>
-                  <div><strong>ผู้สร้าง:</strong> {viewingRecord.created_by || "-"}</div>
+            <div className="ts-modal-body">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <strong>ภาค:</strong>{" "}
+                  {getDeptName(viewingRecord.department_id)}
                 </div>
-                <div style={{ marginTop: 12 }}>
-                  <strong>หมายเหตุ:</strong>
-                  <div style={{ marginTop: 6 }}>{viewingRecord.warning || viewingRecord.other_job || "-"}</div>
+                <div>
+                  <strong>วันที่สร้าง:</strong>{" "}
+                  {formatDate(viewingRecord.created_at)}{" "}
+                  {formatTime(viewingRecord.created_at)}
+                </div>
+                <div>
+                  <strong>สถานะ:</strong>{" "}
+                  <span
+                    className={`ts-status ${statusClass(viewingRecord.approved_status)}`}
+                  >
+                    {statusIcon(viewingRecord.approved_status)}{" "}
+                    {statusLabel(viewingRecord.approved_status)}
+                  </span>
+                </div>
+                <div>
+                  <strong>ผู้สร้าง:</strong> {viewingRecord.created_by || "-"}
                 </div>
               </div>
-
-              <div className="ts-modal-footer">
-                <button className="ts-btn ts-btn-secondary" onClick={() => setIsViewModalOpen(false)}>ปิด</button>
+              <div style={{ marginTop: 12 }}>
+                <strong>หมายเหตุ:</strong>
+                <div style={{ marginTop: 6 }}>
+                  {viewingRecord.warning || viewingRecord.other_job || "-"}
+                </div>
               </div>
             </div>
+
+            <div className="ts-modal-footer">
+              <button
+                className="ts-btn ts-btn-secondary"
+                onClick={() => setIsViewModalOpen(false)}
+              >
+                ปิด
+              </button>
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* ── Confirm Delete Dialog ── */}
       <ConfirmDeleteDialog
         open={isDeleteOpen}
-        title={recordToDelete ? "🗑 ยืนยันลบรายงาน MO" : "🗑 ยืนยันลบรายงาน MO แบบกลุ่ม"}
+        title={
+          recordToDelete
+            ? "🗑 ยืนยันลบรายงาน MO"
+            : "🗑 ยืนยันลบรายงาน MO แบบกลุ่ม"
+        }
         description={
           recordToDelete ? (
             <span>
               คุณแน่ใจหรือไม่ว่าต้องการลบรายงาน MO รหัส{" "}
               <strong>#{recordToDelete.mo_daily_transaction_id}</strong> ของ{" "}
-              <strong>{getDeptName(recordToDelete.department_id)}</strong> ใช่หรือไม่?
+              <strong>{getDeptName(recordToDelete.department_id)}</strong>{" "}
+              ใช่หรือไม่?
               <br />
-              <span style={{ color: "var(--red, #c00000)", fontSize: "12px", fontWeight: "bold" }}>
+              <span
+                style={{
+                  color: "var(--red, #c00000)",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                }}
+              >
                 * การกระทำนี้ไม่สามารถย้อนกลับได้
               </span>
             </span>
@@ -1156,7 +1520,13 @@ export default function TableSearch() {
               คุณแน่ใจหรือไม่ว่าต้องการลบรายงาน MO ที่เลือกทั้งหมดจำนวน{" "}
               <strong>{selectedIds.length}</strong> รายการใช่หรือไม่?
               <br />
-              <span style={{ color: "var(--red, #c00000)", fontSize: "12px", fontWeight: "bold" }}>
+              <span
+                style={{
+                  color: "var(--red, #c00000)",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                }}
+              >
                 * การกระทำนี้ไม่สามารถย้อนกลับได้ และจะลบข้อมูลที่เลือกออกถาวร
               </span>
             </span>

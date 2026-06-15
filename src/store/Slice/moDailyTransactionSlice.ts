@@ -4,17 +4,15 @@ import {
   type SectorReport,
   type EmployeeTodayReport,
   type DistinctDiscipline,
-} from "../../services.dev/moDailyTransaction.Service";
-// import {
-//   sectorReportService,
-//   type SectorReport,
-// } from "../../services/moReporTransaction.Service";
+} from "../../services/moReporTransaction.Service";
 
 export interface SectorReportFilters {
   department_id?: number;
+  division_id?: number;
+  created_by?: string;
   start_date?: string;
   end_date?: string;
-  status?: string;
+  approved_status?: string;
 }
 
 export interface SectorReportSlice {
@@ -22,6 +20,7 @@ export interface SectorReportSlice {
   currentReport: SectorReport | null;
   isLoading: boolean;
   error: string | null;
+  reportCache: Record<string, SectorReport[]>; // Add reportCache to the interface
 
   fetchReports: (filters?: SectorReportFilters) => Promise<SectorReport[]>;
   fetchReportById: (id: number) => Promise<void>;
@@ -47,29 +46,37 @@ export interface SectorReportSlice {
   fetchDistinctDisciplineTypes: () => Promise<DistinctDiscipline[]>;
 
   /**
-   * Fetch today's unique sub_location values for a department + employee.
-   * Returns sorted array of sub_location strings from today's reports.
+   * Fetch today's reports for a department.
+   * Returns division id + name for each report submitted today in this department.
    */
-  fetchEmployeeTodayReportSubLocations: (
+  fetchTodayDepartmentReportDivisions: (
     departmentId: number,
-    empCode: string,
-  ) => Promise<string[]>;
+  ) => Promise<{ division_id: number; division_name: string }[]>;
 }
 
 export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   set,
+  get,
 ) => ({
   reports: [],
   currentReport: null,
   isLoading: false,
   error: null,
+  reportCache: {},
 
   fetchReports: async (filters?: SectorReportFilters) => {
+    const cacheKey = JSON.stringify(filters || {});
+    // Bypass cache — always fetch fresh data
     set({ isLoading: true, error: null });
     console.log("SectorReportSlice: Fetching with filters:", filters);
     try {
       const reports = await sectorReportService.getAll(filters);
-      set({ reports, isLoading: false });
+      // Update cache and state
+      set((state) => ({
+        reports,
+        isLoading: false,
+        reportCache: { ...state.reportCache, [cacheKey]: reports },
+      }));
       return reports;
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
@@ -149,13 +156,12 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
     }
   },
 
-  fetchEmployeeTodayReportSubLocations: async (departmentId, empCode) => {
+  fetchTodayDepartmentReportDivisions: async (departmentId) => {
     set({ isLoading: true, error: null });
     try {
       const result =
-        await sectorReportService.getEmployeeTodayReportSubLocations(
+        await sectorReportService.getTodayDepartmentReportDivisions(
           departmentId,
-          empCode,
         );
       set({ isLoading: false });
       return result;

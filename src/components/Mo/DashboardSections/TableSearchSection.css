@@ -1,4 +1,4 @@
- u/* ===== TableSearch Section ===== */
+/* ===== TableSearch Section ===== */
 
 .mo-tablesearch {
   width: 100%;
@@ -230,25 +230,6 @@
 
 .ts-table tbody tr:nth-child(even) {
   background: rgba(245,249,255,0.55);
-}
-
-/* Make sure status classes override the even row background */
-.ts-table tbody tr:nth-child(even) td.ts-status--approved {
-  background: rgba(16,185,80,0.12) !important;
-  color: #0d8a3c !important;
-  border: 1px solid rgba(16,185,80,0.22) !important;
-}
-
-.ts-table tbody tr:nth-child(even) td.ts-status--pending {
-  background: rgba(245,166,35,0.12) !important;
-  color: #b87a00 !important;
-  border: 1px solid rgba(245,166,35,0.22) !important;
-}
-
-.ts-table tbody tr:nth-child(even) td.ts-status--rejected {
-  background: rgba(220,38,38,0.10) !important;
-  color: #b91c1c !important;
-  border: 1px solid rgba(220,38,38,0.18) !important;
 }
 
 .ts-table tbody tr:hover {

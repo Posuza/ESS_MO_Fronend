@@ -38,7 +38,6 @@ export default function Header({
         <span className={styles.firstLetter}>S</span>ervice
       </div>
       <div className={styles.subTh}>ระบบบริการตนเอง</div>
-      <div className={styles.subSmall}>สำหรับพนักงานสำนักงานและสายตรวจ</div>
 
       {showUserCard && (
         <div className={styles.usercard} role="status" aria-label="ผู้ใช้งาน">

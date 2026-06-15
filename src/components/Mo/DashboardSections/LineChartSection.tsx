@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import "./LineChartSection.css";
-import LineChart from "../charts/LineChart";
+import LineChart from "./charts/LineChart";
 import caseData from "@/temp_data/case.json";
 
 export default function LineChartSection() {
@@ -151,7 +151,8 @@ export default function LineChartSection() {
       grouped.issues = (grouped.rule || 0) + (grouped.warning || 0);
       // track unique locations per group using a Set on the running totals
       if (!prev._locationsSet) prev._locationsSet = new Set();
-      if (entry.department_id) prev._locationsSet.add(String(entry.department_id));
+      if (entry.department_id)
+        prev._locationsSet.add(String(entry.department_id));
 
       // ensure prev has numeric keys and add grouped values into totals (skip 'locations' placeholder)
       Object.keys(grouped).forEach((gk) => {
@@ -350,7 +351,9 @@ export default function LineChartSection() {
         : timeRange === "this_year"
           ? "month"
           : groupBy;
-  const isDayView = (effectiveGroupBy === "day" && timeRange !== "this_week") || effectiveGroupBy === "hour";
+  const isDayView =
+    (effectiveGroupBy === "day" && timeRange !== "this_week") ||
+    effectiveGroupBy === "hour";
   const yearSelectValue =
     timeRange !== "all" ? timeRange : (selectedYear ?? "all");
 

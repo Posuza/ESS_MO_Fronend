@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
-import { authService } from "@/services.dev/auth.Service";
-// import { authService } from "@/services/auth.Service";
+// import { authService } from "@/services.dev/auth.Service";
+import { authService } from "@/services/auth.Service";
 
 export interface AuthEmployee {
   employee_code: string;
@@ -25,7 +25,7 @@ export interface AuthSlice {
 
   // Actions
   login: (employee_code: string, password: string) => Promise<boolean>;
-  logout: (employee_code: string) => Promise<void>;
+  logout: (employee_code: string) => Promise<boolean>;
   clearAuthError: () => void;
   changePassword: (
     employee_code: string,
@@ -88,10 +88,13 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   },
 
   logout: async (employee_code) => {
-    await authService.logout(employee_code);
-    localStorage.removeItem("emp_code");
-    localStorage.removeItem("display_name");
-    set({ authEmployee: null, authError: null });
+    const result = await authService.logout(employee_code);
+    if (result.success) {
+      localStorage.removeItem("emp_code");
+      localStorage.removeItem("display_name");
+      set({ authEmployee: null, authError: null });
+    }
+    return result.success;
   },
 
   clearAuthError: () =>
