@@ -21,17 +21,19 @@ type Props = {
   selectedLocation?: string;
   locations?: EmployeeLocation[];
   reportData?: Record<string, unknown>;
-  // submitRef signature extended to accept an optional opts object (approve flag)
+  // submitRef signature extended to accept opts (approve / sendBack flags)
   submitRef?: React.MutableRefObject<
-    ((opts?: { approve?: boolean }) => Promise<void>) | null
+    ((opts?: { approve?: boolean; sendBack?: boolean }) => Promise<void>) | null
   >;
   isEditing?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
   isDirty?: boolean;
   onRequestSave?: () => void;
   // ── Approval state owned by parent (MoDetailPage) ──
-  externalApprovalStatus?: "PENDING" | "APPROVED" | "REJECT";
-  onApprovalStatusChange?: (status: "PENDING" | "APPROVED" | "REJECT") => void;
+  externalApprovalStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  onApprovalStatusChange?: (
+    status: "PENDING" | "APPROVED" | "REJECTED",
+  ) => void;
 };
 
 export default function MoUpdateForm(props: Props) {
@@ -117,7 +119,7 @@ export default function MoUpdateForm(props: Props) {
     },
     {
       keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
-      label: "ถูกปฏิเสธ",
+      label: "รอการดำเนินการแก้ไข",
       cssClass: styles["status-rejected"],
     },
   ];
@@ -167,14 +169,16 @@ export default function MoUpdateForm(props: Props) {
   // This allows MoDetailPage to own approval for its approve/send-back buttons,
   // while standalone uses of MoUpdateForm still work without a parent.
   const [localApprovalStatus, setLocalApprovalStatus] = useState<
-    "PENDING" | "APPROVED" | "REJECT"
+    "PENDING" | "APPROVED" | "REJECTED"
   >(
-    (props.reportData?.approved_status as "PENDING" | "APPROVED" | "REJECT") ||
-      "PENDING",
+    (props.reportData?.approved_status as
+      | "PENDING"
+      | "APPROVED"
+      | "REJECTED") || "PENDING",
   );
 
   const approvalStatus = props.externalApprovalStatus ?? localApprovalStatus;
-  const setApprovalStatus = (s: "PENDING" | "APPROVED" | "REJECT") => {
+  const setApprovalStatus = (s: "PENDING" | "APPROVED" | "REJECTED") => {
     setLocalApprovalStatus(s);
     props.onApprovalStatusChange?.(s);
   };
@@ -189,7 +193,7 @@ export default function MoUpdateForm(props: Props) {
       (props.reportData?.approved_status as
         | "PENDING"
         | "APPROVED"
-        | "REJECT") || "PENDING";
+        | "REJECTED") || "PENDING";
     setLocalApprovalStatus(incoming);
     // only notify parent if it hasn't already driven this value
     if (!props.externalApprovalStatus) {
@@ -348,28 +352,28 @@ export default function MoUpdateForm(props: Props) {
       items: [
         {
           key: "discipline_phone_count",
-          label: "เล่นโทรศัพท์มือถือ :",
+          label: "เล่นโทรศัพท์มือถือ",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
           key: "discipline_belt_count",
-          label: "ไม่มีเข็มขัด :",
+          label: "ไม่มีเข็มขัด",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
           key: "discipline_badge_count",
-          label: "ไม่แขวนบัตร :",
+          label: "ไม่แขวนบัตร",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
           key: "discipline_uniform_count",
-          label: "ชุดชำรุดเก่า :",
+          label: "ชุดชำรุดเก่า",
           unit: "คน",
           value: "0",
           isActive: false,
@@ -1079,10 +1083,13 @@ export default function MoUpdateForm(props: Props) {
   }, [counts, dynamicGroup2, dynamicGroup3]);
 
   // ── Expose save to parent via ref ──
-  // The signature now accepts opts so MoDetailPage can call submitRef.current({ approve: true })
+  // The signature now accepts opts so MoDetailPage can call submitRef.current({ approve: true }) or ({ sendBack: true })
   useEffect(() => {
     if (!props.submitRef) return;
-    props.submitRef.current = async (opts?: { approve?: boolean }) => {
+    props.submitRef.current = async (opts?: {
+      approve?: boolean;
+      sendBack?: boolean;
+    }) => {
       await doSave(opts);
     };
     return () => {
@@ -1104,7 +1111,7 @@ export default function MoUpdateForm(props: Props) {
     return hasCounts || hasGroup3Items;
   };
 
-  const doSave = async (opts?: { approve?: boolean }) => {
+  const doSave = async (opts?: { approve?: boolean; sendBack?: boolean }) => {
     const payload: Record<string, any> = {
       department_id: Number(selectedSector),
       division_name: selectedSubLocation,
@@ -1164,6 +1171,10 @@ export default function MoUpdateForm(props: Props) {
       if (approvalStatus === "APPROVED") {
         payload.approved_by = authEmployee?.employee_code || "ADMIN";
         payload.approved_at = new Date().toISOString();
+      } else {
+        // When reverting to PENDING, clear approval fields so the report is editable/deletable
+        payload.approved_by = null;
+        payload.approved_at = null;
       }
     }
 
@@ -1188,7 +1199,9 @@ export default function MoUpdateForm(props: Props) {
       }
 
       setIsUpdating(false);
-      setShowSuccess(true);
+      if (!opts?.sendBack) {
+        setShowSuccess(true);
+      }
     } catch (err: unknown) {
       setIsUpdating(false);
       const msg = err instanceof Error ? err.message : String(err);
@@ -1198,7 +1211,7 @@ export default function MoUpdateForm(props: Props) {
 
   const onSubmit = async (
     e?: React.FormEvent,
-    opts?: { approve?: boolean },
+    opts?: { approve?: boolean; sendBack?: boolean },
   ) => {
     e?.preventDefault();
     if (!hasAnyData() && !opts?.approve) return;
@@ -1216,7 +1229,7 @@ export default function MoUpdateForm(props: Props) {
       (props.reportData?.approved_status as
         | "PENDING"
         | "APPROVED"
-        | "REJECT") || "PENDING";
+        | "REJECTED") || "PENDING";
     const originalApprovalRemark =
       (props.reportData?.approved_remark as string) || "";
     const hasApprovalChanges =
@@ -1695,8 +1708,8 @@ export default function MoUpdateForm(props: Props) {
                         <td className={styles["first-column-cell"]}>
                           5.{itemIdx + 1}
                         </td>
-                        <td className={styles["second-column-cell"]}>
-                          <div>{r.label}</div>
+                        <td className={styles["group3-second-column-cell"]}>
+                          {r.label}:
                         </td>
                         <td
                           className={`${styles["third-column-cell"]} ${counts[r.key]?.toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
@@ -1721,6 +1734,7 @@ export default function MoUpdateForm(props: Props) {
                   {props.isEditing && (
                     <tr style={{ cursor: "pointer" }} onClick={openAddGroup2}>
                       <td className={styles["first-column-cell"]}>
+                        5.
                         {g.items.filter((r: any) => r.isActive === true)
                           .length + 1}
                       </td>
@@ -2079,7 +2093,7 @@ export default function MoUpdateForm(props: Props) {
         ))}
       </form>
 
-      {/* Signature section */}
+      {/* Signature section commented out
       <div className={styles["signature-section"]}>
         <div className={styles["signature-slot-left"]}>
           <div className={styles["signature-title"]}>ผู้ บันทึก:</div>
@@ -2094,6 +2108,7 @@ export default function MoUpdateForm(props: Props) {
           </div>
         </div>
       </div>
+      */}
 
       {/* Save / cancel buttons — only when editing */}
       <div className={`${styles["guts-Mo-actions"]} `}>

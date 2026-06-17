@@ -352,14 +352,14 @@ export default function MoReportPage({
 
   // ── Permission logic (same as MoDetailPage) ──
   const itemCreatedBy = (currentReport as any)?.created_by;
-  const isManager = currentEmployee
+  const isDirector = currentEmployee
     ? (currentEmployee as any).position_name?.includes("หัวหน้า") ||
       (currentEmployee as any).position_name?.includes("manager") ||
       (currentEmployee as any).role_name === "admin"
     : false;
   const canEditData =
     !!currentEmployee &&
-    (isManager ||
+    (isDirector ||
       (itemCreatedBy &&
         itemCreatedBy !== "" &&
         currentEmployee.employee_code &&

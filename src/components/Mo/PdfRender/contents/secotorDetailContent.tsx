@@ -17,6 +17,7 @@ const cellStyle: React.CSSProperties = {
   padding: "4px 6px",
   textAlign: "center",
   fontSize: 12,
+  background: "transparent",
   borderRight: "1px solid #e5e7eb",
 };
 
@@ -46,8 +47,8 @@ export default function SecotorDetialContent({ item }: Props) {
                 backgroundColor: "#003366",
                 color: "#fff",
                 fontWeight: 800,
-                padding: "2px 3px",
-                textAlign: "left",
+                textAlign: "center",
+                padding: "4px 6px",
               }}
             >
               6
@@ -58,7 +59,7 @@ export default function SecotorDetialContent({ item }: Props) {
                 backgroundColor: "#003366",
                 color: "#fff",
                 fontWeight: 800,
-                padding: "2px 3px",
+                padding: "4px 6px",
                 textAlign: "left",
               }}
             >
@@ -89,7 +90,9 @@ export default function SecotorDetialContent({ item }: Props) {
                   <tr style={rowStyle}>
                     <td
                       style={{
-                        fontWeight: 700,
+                        fontWeight: 600,
+                        textAlign: "center",
+                        fontSize: 14,
                         padding: "4px 3px",
                         borderLeft: "1px solid #e5e7eb",
                         borderRight: "1px solid #e5e7eb",
@@ -111,18 +114,21 @@ export default function SecotorDetialContent({ item }: Props) {
                   </tr>
                   <tr style={rowStyle}>
                     <td style={cellStyle}>รายละเอียด</td>
-                    <td colSpan={5} style={{ padding: "4px 6px" }}>
+                    <td
+                      colSpan={5}
+                      style={{ padding: "4px 6px", fontSize: 13 }}
+                    >
                       {it.detail || "-"}
                     </td>
                   </tr>
-                  <tr>
+                  <tr style={rowStyle}>
                     <td style={cellStyle}>สถานะ</td>
                     <td
                       colSpan={5}
                       style={{
                         color: "#fff",
                         fontWeight: 700,
-                        textAlign: "center",
+                        textAlign: "left",
                         padding: "4px 6px",
                         fontSize: 13,
                         background: statusBg(it.status),
@@ -133,7 +139,10 @@ export default function SecotorDetialContent({ item }: Props) {
                   </tr>
                   <tr style={rowStyle}>
                     <td style={cellStyle}>หมายเหตุ</td>
-                    <td colSpan={5} style={{ padding: "4px 6px" }}>
+                    <td
+                      colSpan={5}
+                      style={{ padding: "4px 6px", fontSize: 13 }}
+                    >
                       {it.note || "-"}
                     </td>
                   </tr>

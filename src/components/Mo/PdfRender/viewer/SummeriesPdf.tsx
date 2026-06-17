@@ -302,19 +302,6 @@ export default function SummeriesPdf({
               data={data}
               subLocation={col.sub_location}
             />
-            <div
-              style={{
-                background: "#4376c7",
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: 14,
-                padding: "4px 12px",
-                borderRadius: 3,
-                marginBottom: 12,
-              }}
-            >
-              {col.sub_location}
-            </div>
             <SecotorDetialContent item={{ ...col.report, projects: [] }} />
           </div>,
         );

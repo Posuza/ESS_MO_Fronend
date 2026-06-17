@@ -36,6 +36,25 @@ export function canApprove(positionId?: number | null): boolean {
 }
 
 /**
+ * Get division scoping filter based on employee role.
+ * Director (position 1 or 5) sees all divisions — returns empty filter.
+ * Everyone else sees only their own division.
+ * If the employee has no division_id, returns -1 to ensure no results.
+ */
+export function getDivisionScope(employee: AuthEmployee | null): {
+  division_id?: number;
+} {
+  if (!employee) return {};
+  const level = getAccessLevel(employee.position_id);
+  if (level === AccessLevel.ALL_DEPT) return {};
+  if (employee.division_id != null) {
+    return { division_id: employee.division_id };
+  }
+  // No division assigned — return invalid ID so API returns nothing
+  return { division_id: -1 };
+}
+
+/**
  * Build fetch filters based on employee's position and data.
  *
  * @param employee - The authenticated employee object
@@ -70,8 +89,11 @@ export function buildReportFilters(
       return base;
 
     case AccessLevel.OWN_ONLY:
-      // See only their own submitted reports
-      return { ...base, created_by: employee.employee_code };
+      // See their division's reports
+      if (employee.division_id != null) {
+        return { ...base, division_id: employee.division_id };
+      }
+      return base;
 
     default:
       return base;

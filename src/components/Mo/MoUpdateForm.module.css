@@ -476,8 +476,8 @@
     box-sizing: border-box;
     padding: 6px 3px !important;
     margin: 0 !important;
-    font-weight: 400;
-    font-size: 13px;
+    font-weight: 800;
+    font-size: 11px;
     color: #333;
     background: transparent;
     border: none !important;
@@ -485,6 +485,19 @@
     resize: none;
     line-height: 1.2;
     text-align: center;
+}
+
+/* View mode (disabled): bold, no underline */
+.third-column-textarea:disabled {
+    font-weight: bold !important;
+    text-decoration: none !important;
+    cursor: default;
+}
+
+/* Edit mode (enabled): normal weight, italic, underlined */
+.third-column-textarea:not(:disabled) {
+    font-weight: 400 !important;
+    font-style: italic;
     text-decoration: underline;
     text-underline-offset: 3px;
     text-decoration-color: #8cb4d4;
@@ -499,7 +512,7 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 400;
-    font-size: 13px;
+    font-size: 11px;
     color: #333;
     background: transparent;
     border: none !important;
@@ -511,6 +524,9 @@
     text-underline-offset: 3px;
     text-decoration-color: #8cb4d4;
 }
+.group3-popup-third-column-textarea1:not(:disabled) {
+    font-style: italic;
+}
 .group3-popup-third-column-textarea2 {
     display: block;
     width: 100%;
@@ -521,7 +537,7 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 400;
-    font-size: 13px;
+    font-size: 11px;
     color: #333;
     background: transparent;
     border: none !important;
@@ -532,6 +548,9 @@
     text-decoration: underline;
     text-underline-offset: 3px;
     text-decoration-color: #8cb4d4;
+}
+.group3-popup-third-column-textarea2:not(:disabled) {
+    font-style: italic;
 }
 
 /* make a specific cell variant that removes the cell padding so a child textarea can fill it */
@@ -664,8 +683,8 @@
     color: white;
 }
 .status-rejected {
-    background: #b71c1c;
-    color: white;
+    background: #cb6027 !important;
+    color: #ffffff !important;
 }
 
 /* Approval Section - matching MoDetailPage style */
@@ -1035,7 +1054,7 @@ textarea.approval-textarea:focus,
 }
 
 /* helper: variant of second column cell with left-aligned content (used for labels like 'Project XXXXX') */
-.second-column-cell-left {
+.mo-table td.second-column-cell-left {
     text-align: left !important;
     padding-left: 3px !important;
     box-sizing: border-box;

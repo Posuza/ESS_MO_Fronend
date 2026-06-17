@@ -11,8 +11,10 @@ export interface AuthEmployee {
   name_prefix: string;
   position_name: string;
   department_id?: number | null;
-  position_id?: number | null;
   department_name?: string | null;
+  division_id?: number | null;
+  division_name?: string | null;
+  position_id?: number | null;
 }
 
 export interface AuthSlice {

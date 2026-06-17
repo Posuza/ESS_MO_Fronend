@@ -3,14 +3,18 @@ import { useState, useEffect, useMemo, useRef } from "react";
 
 import { useStore } from "../../store/store";
 import { type SectorReport } from "../../services/moReporTransaction.Service";
-import { getAccessLevel, AccessLevel } from "../../utils/positionAccess";
+import {
+  getAccessLevel,
+  AccessLevel,
+  canApprove,
+} from "../../utils/positionAccess";
 import MoReportPage from "./MoReportPage";
 import MoListPage from "./MoListPage";
 import MoAddNewPage from "./MoAddNewPage";
 import MoConfigPage from "./MoConfigPage";
 import MoDetailPage from "./MoDetailPage";
 import { MoLoadingPopup } from "../../components/mo/popup";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, RefreshCw } from "lucide-react";
 import { FaHouse } from "react-icons/fa6";
 import { LuLandmark } from "react-icons/lu";
 import { usePositionReports } from "../../hooks/usePositionReports";
@@ -123,7 +127,7 @@ export default function MoHome(props: Props) {
     if (empDivId != null) {
       return divs.filter((d) => d.division_id === empDivId);
     }
-    return divs;
+    return [];
   };
 
   // Fetch division counts (with position filtering)
@@ -189,7 +193,7 @@ export default function MoHome(props: Props) {
     },
     {
       keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
-      label: "ถูกปฏิเสธ",
+      label: "รอการดำเนินการแก้ไข",
       cssClass: styles["status-rejected"],
     },
   ];
@@ -331,7 +335,17 @@ export default function MoHome(props: Props) {
             <tr>
               <th className={styles["mo-table-header-cell"]} colSpan={2}>
                 <div className={styles["mo-table-header"]}>
-                  <LuLandmark size="1.5em" /> {deptName || "Loading..."}
+                  <span className={styles["mo-table-header-left"]}>
+                    <LuLandmark size="1.5em" /> {deptName || "Loading..."}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles["mo-reload-btn"]}
+                    onClick={() => refreshMainView()}
+                    title="รีเฟรชข้อมูล"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
                 </div>
               </th>
             </tr>

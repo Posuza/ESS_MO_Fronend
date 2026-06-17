@@ -7,10 +7,8 @@ import {
   MapPin,
   Landmark,
   Check,
-  CheckCircle,
   Clock3,
   X,
-  XCircle,
   Users,
   CalendarDays,
 } from "lucide-react";
@@ -398,26 +396,37 @@ export default function MoListPage({
 
       {/* Search bar — always visible */}
       <div className={styles["mo-search"]}>
-        <select
-          value={selectedLocation}
-          onChange={(e) => setSelectedLocation(e.target.value)}
-          className={styles["guts-mo-search-input"]}
-        >
-          {(empCode ? employeeLocations : locationOptions).map(
-            (location: string) => (
-              <option key={location} value={location}>
-                {location}
-              </option>
-            ),
-          )}
-        </select>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className={styles["guts-mo-search-input"]}
-          max={new Date().toISOString().split("T")[0]}
-        />
+        <div className={styles["search-field-group"]}>
+          <label className={styles["search-label"]}>ภาค</label>
+          <select
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            className={styles["guts-mo-search-input"]}
+          >
+            {(empCode ? employeeLocations : locationOptions).map(
+              (location: string) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ),
+            )}
+          </select>
+        </div>
+
+        <div className={styles["search-field-group"]}>
+          <label className={styles["search-label"]}>จากวันที่</label>
+          <div className={styles["date-input-wrapper"]}>
+            <CalendarDays size={18} className={styles["date-icon"]} />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className={styles["guts-mo-search-input"]}
+              max={new Date().toISOString().split("T")[0]}
+            />
+          </div>
+        </div>
+
         <button
           className={styles["mo-search-clear"]}
           aria-label="Search"
@@ -505,21 +514,30 @@ export default function MoListPage({
 
                           {!expandedItems.has("dept-" + deptName) && (
                             <div className={styles["dept-card-chips"]}>
-                              <span
-                                className={`${styles["header-chip"]} ${styles["chip-approved"]}`}
-                              >
-                                <CheckCircle size={14} /> {approvedCnt}
+                              <span className={styles["header-chip"]}>
+                                <span
+                                  className={`${styles["chip-dot"]} ${styles["chip-dot-approved"]}`}
+                                >
+                                  <Check size={12} />
+                                </span>
+                                {approvedCnt}
                               </span>
-                              <span
-                                className={`${styles["header-chip"]} ${styles["chip-pending"]}`}
-                              >
-                                <FaHourglassHalf size={12} /> {pendingCnt}
+                              <span className={styles["header-chip"]}>
+                                <span
+                                  className={`${styles["chip-dot"]} ${styles["chip-dot-pending"]}`}
+                                >
+                                  <FaHourglassHalf size={12} />
+                                </span>
+                                {pendingCnt}
                               </span>
-                              <span
-                                className={`${styles["header-chip"]} ${styles["chip-rejected"]}`}
-                              >
-                                <XCircle size={14} /> {rejectedCnt}
-                              </span>
+                              {/*<span className={styles["header-chip"]}>
+                                <span
+                                  className={`${styles["chip-dot"]} ${styles["chip-dot-rejected"]}`}
+                                >
+                                  <X size={12} />
+                                </span>
+                                {rejectedCnt}
+                              </span>*/}
                             </div>
                           )}
                         </div>

@@ -799,7 +799,7 @@
 }
 
 /* helper: variant of second column cell with left-aligned content (used for labels like 'Project XXXXX') */
-.second-column-cell-left {
+.mo-table td.second-column-cell-left {
     text-align: left !important;
     padding-left: 3px !important;
     box-sizing: border-box;

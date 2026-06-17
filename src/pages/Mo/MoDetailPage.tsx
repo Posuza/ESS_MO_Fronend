@@ -31,7 +31,7 @@ const approvalStatusLabels = [
   },
   {
     keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
-    label: "ถูกปฏิเสธ",
+    label: "รอการดำเนินการแก้ไข",
     cssClass: "status-rejected",
   },
 ];
@@ -84,15 +84,15 @@ export default function MoDetailPage(props: Props) {
 
   // ── Approval state — lifted up from MoUpdateForm so this page can own the approve/send-back buttons ──
   const [approvalStatus, setApprovalStatus] = useState<
-    "PENDING" | "APPROVED" | "REJECT"
+    "PENDING" | "APPROVED" | "REJECTED"
   >(
-    (props.item?.approved_status as "PENDING" | "APPROVED" | "REJECT") ||
+    (props.item?.approved_status as "PENDING" | "APPROVED" | "REJECTED") ||
       "PENDING",
   );
 
   // ref that MoUpdateForm exposes so we can trigger a save (with optional approve flag) from here
   const submitRef = useRef<
-    ((opts?: { approve?: boolean }) => Promise<void>) | null
+    ((opts?: { approve?: boolean; sendBack?: boolean }) => Promise<void>) | null
   >(null);
 
   const currentEmployee = useStore((state) => state.authEmployee);
@@ -119,7 +119,7 @@ export default function MoDetailPage(props: Props) {
         ? (currentReport as any)?.approved_status
         : null) ?? props.item?.approved_status;
     if (freshStatus) {
-      setApprovalStatus(freshStatus as "PENDING" | "APPROVED" | "REJECT");
+      setApprovalStatus(freshStatus as "PENDING" | "APPROVED" | "REJECTED");
     }
   }, [currentReport, props.item]);
 
@@ -133,16 +133,22 @@ export default function MoDetailPage(props: Props) {
   // Check if current user has approval authority (Director / Deputy Director)
   const isApprover = canApprove(currentEmployee?.position_id);
 
-  // Managers can approve; derive from position_name as well for backwards compat
-  const isManager =
+  // Director-level users can approve
+  const isDirector =
     isApprover ||
     currentEmployee?.position_name?.includes("หัวหน้า") ||
     currentEmployee?.position_name?.includes("manager") ||
     (currentEmployee as any)?.role_name === "admin";
 
-  // User can edit/delete if they are an approver OR the creator of the report
+  // Only allow edit/delete if the report's date is today
+  const today = new Date().toISOString().split("T")[0];
+  const reportDate = props.item?.report_date ?? currentReport?.report_date;
+  const isReportDateToday = today === reportDate;
+
+  // User can edit/delete only on the report's date and if they are an approver OR the creator
   const canEditData =
     !!currentEmployee &&
+    isReportDateToday &&
     (isApprover ||
       (itemCreatedBy &&
         itemCreatedBy !== "" &&
@@ -194,9 +200,14 @@ export default function MoDetailPage(props: Props) {
     await submitRef.current?.({ approve: true });
   };
 
-  // ── Send back for revision: flip to editing mode ──
-  const handleSendBack = () => {
-    setIsEditing(true);
+  // ── Send back for revision: revert status to REJECTED, then save ──
+  const handleSendBack = async () => {
+    setApprovalStatus("REJECTED");
+    // give React one tick to flush the state into the submitRef closure
+    await new Promise((r) => requestAnimationFrame(r));
+    // save with the REJECTED status so the backend knows (no success popup)
+    await submitRef.current?.({ sendBack: true });
+    // stay in view mode — user can click the pencil to edit manually
   };
 
   return (
@@ -289,8 +300,8 @@ export default function MoDetailPage(props: Props) {
         />
       )}
 
-      {/* ── Manager-only approval buttons — only after initial loading ── */}
-      {isManager && !isEditing && !showPageLoading && (
+      {/* ── Director-only approval buttons — only after initial loading ── */}
+      {isDirector && !isEditing && !showPageLoading && (
         <div
           style={{
             display: "flex",
