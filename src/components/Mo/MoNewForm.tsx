@@ -77,6 +77,8 @@ export default function MoNewForm(props: Props) {
   // confirmation dialog state
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showFail, setShowFail] = useState(false);
+  const [failMessage, setFailMessage] = useState("");
 
   // Submission loading popup with minimum 2-second display time
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -912,7 +914,8 @@ export default function MoNewForm(props: Props) {
     } catch (err: unknown) {
       setIsSubmitting(false);
       const msg = err instanceof Error ? err.message : String(err);
-      alert(`เกิดข้อผิดพลาดในการบันทึก: ${msg}`);
+      setFailMessage(msg);
+      setShowFail(true);
     }
   };
 
@@ -1844,6 +1847,18 @@ export default function MoNewForm(props: Props) {
         variant="success"
         title="บันทึกรายงานสำเร็จ!"
         description="ระบบได้ทำการบันทึกข้อมูลของคุณเรียบร้อยแล้ว"
+      />
+
+      <InfoModel
+        open={showFail}
+        onClose={() => {
+          setShowFail(false);
+          if (props.onCancel) props.onCancel();
+          else window.history.back();
+        }}
+        variant="error"
+        title="บันทึกรายงานไม่สำเร็จ"
+        description={failMessage}
       />
     </>
   );

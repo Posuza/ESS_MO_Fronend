@@ -13,7 +13,7 @@ import MoListPage from "./MoListPage";
 import MoAddNewPage from "./MoAddNewPage";
 import MoConfigPage from "./MoConfigPage";
 import MoDetailPage from "./MoDetailPage";
-import { MoLoadingPopup } from "../../components/mo/popup";
+import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";
 import { ChevronRight, RefreshCw } from "lucide-react";
 import { FaHouse } from "react-icons/fa6";
 import { LuLandmark } from "react-icons/lu";
@@ -51,8 +51,12 @@ export default function MoHome(props: Props) {
     string | undefined
   >();
 
+  const [showNotFoundError, setShowNotFoundError] = useState(false);
+  const [notFoundErrorMessage, setNotFoundErrorMessage] = useState("");
+
   const currentEmployee = useStore((state) => state.authEmployee);
   const { reports, isLoading, fetchWithPosition } = usePositionReports();
+  const fetchReportById = useStore((s) => s.fetchReportById);
   const fetchDivisionsByDepartment = useStore(
     (s) => s.fetchDivisionsByDepartment,
   );
@@ -368,9 +372,19 @@ export default function MoHome(props: Props) {
                         Number(found.department_id) ===
                           Number(currentEmployee?.department_id)
                       ) {
-                        setSelectedItem(found);
-                        setDetailSource("main");
-                        setSubView("detail");
+                        // Verify report still exists before navigating
+                        fetchReportById(found.id)
+                          .then(() => {
+                            setSelectedItem(found);
+                            setDetailSource("main");
+                            setSubView("detail");
+                          })
+                          .catch((err: unknown) => {
+                            const msg =
+                              err instanceof Error ? err.message : String(err);
+                            setNotFoundErrorMessage(msg);
+                            setShowNotFoundError(true);
+                          });
                       }
                     }}
                     style={{ cursor: "pointer" }}
@@ -555,6 +569,17 @@ export default function MoHome(props: Props) {
       </div>
 
       <MoLoadingPopup open={showLoading} />
+
+      <InfoModel
+        open={showNotFoundError}
+        onClose={() => {
+          setShowNotFoundError(false);
+          refreshMainView();
+        }}
+        variant="error"
+        title="ไม่พบรายงาน"
+        description={notFoundErrorMessage}
+      />
 
       <div className={styles["mo-back-home-outer"]}>
         <button

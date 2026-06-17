@@ -61,6 +61,10 @@ export default function MoDetailPage(props: Props) {
     "ระบบได้ทำการอัปเดตข้อมูลของคุณเรียบร้อยแล้ว",
   );
 
+  // Fetch error state — report may have been deleted by someone else
+  const [showFetchError, setShowFetchError] = useState(false);
+  const [fetchErrorMessage, setFetchErrorMessage] = useState("");
+
   // Delete loading popup with minimum 2-second display time
   const [isDeleting, setIsDeleting] = useState(false);
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -98,10 +102,16 @@ export default function MoDetailPage(props: Props) {
   const currentEmployee = useStore((state) => state.authEmployee);
   const { deleteReport, fetchReportById, currentReport } = useStore();
 
-  // Fetch fresh data on mount
+  // Fetch fresh data on mount — if report was deleted, show error and go back
   useEffect(() => {
     if (props.item?.id) {
-      fetchReportById(props.item.id);
+      fetchReportById(props.item.id).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        setFetchErrorMessage(msg);
+        setShowFetchError(true);
+        setPageDataReady(true);
+        setPageMinTimePassed(true);
+      });
     }
   }, [props.item?.id, fetchReportById]);
 
@@ -279,6 +289,18 @@ export default function MoDetailPage(props: Props) {
         variant="success"
         title={successTitle}
         description={successDescription}
+      />
+
+      <InfoModel
+        open={showFetchError}
+        onClose={() => {
+          setShowFetchError(false);
+          if (props.onCancel) props.onCancel();
+          else window.history.back();
+        }}
+        variant="error"
+        title="ไม่พบรายงาน"
+        description={fetchErrorMessage}
       />
 
       {/* ── Form — only mount after initial loading is done ── */}

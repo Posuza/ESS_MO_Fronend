@@ -17,7 +17,7 @@ import { useStore } from "../../store/store";
 import type { SectorReport } from "../../store/store";
 import { buildReportFilters } from "../../utils/positionAccess";
 import { FaHourglassHalf } from "react-icons/fa";
-import { MoLoadingPopup } from "../../components/mo/popup";
+import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";
 
 const DEPARTMENT_NAMES: Record<number, string> = {
   4: "ฝ่ายปฎิบัติการภาค 1",
@@ -73,9 +73,13 @@ export default function MoListPage({
     currentDept?.name ?? "",
   );
 
+  const [showNotFoundError, setShowNotFoundError] = useState(false);
+  const [notFoundErrorMessage, setNotFoundErrorMessage] = useState("");
+
   const reports = useStore((state) => state.reports);
   const currentEmployee = useStore((state) => state.authEmployee);
   const fetchReports = useStore((state) => state.fetchReports);
+  const fetchReportById = useStore((state) => state.fetchReportById);
   const storeLoading = useStore((state) => state.isLoading);
 
   // Track last searched values — to highlight Search btn when values change
@@ -383,6 +387,20 @@ export default function MoListPage({
     <>
       <MoLoadingPopup open={showLoading} />
 
+      <InfoModel
+        open={showNotFoundError}
+        onClose={() => {
+          setShowNotFoundError(false);
+          // Re-fetch search results since the data is stale
+          if (lastSearchedLocation || lastSearchedDate) {
+            submitSearch();
+          }
+        }}
+        variant="error"
+        title="ไม่พบรายงาน"
+        description={notFoundErrorMessage}
+      />
+
       {/* Back button */}
       <div className={styles["mo-back-outer"]}>
         <button
@@ -664,7 +682,25 @@ export default function MoListPage({
                             className={styles["card-detail-btn"]}
                             onClick={(e) => {
                               e.stopPropagation();
-                              onOpenDetail(r);
+                              // Verify report still exists before navigating
+                              fetchReportById(r.id)
+                                .then(() => {
+                                  onOpenDetail(r);
+                                })
+                                .catch((err: unknown) => {
+                                  const msg =
+                                    err instanceof Error
+                                      ? err.message
+                                      : String(err);
+                                  setNotFoundErrorMessage(msg);
+                                  // Close loading popup first, then show error
+                                  if (pageLoadTimerRef.current)
+                                    clearTimeout(pageLoadTimerRef.current);
+                                  setShowLoading(false);
+                                  setTimeout(() => {
+                                    setShowNotFoundError(true);
+                                  }, 150);
+                                });
                             }}
                             aria-label="ดูรายละเอียด"
                             title="ดูรายละเอียด"
