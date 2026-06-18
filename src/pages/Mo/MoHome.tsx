@@ -278,11 +278,6 @@ export default function MoHome(props: Props) {
         onCancel={() => {
           setSubView("list");
         }}
-        onOpenDetail={(item) => {
-          setSelectedItem(item);
-          setDetailSource("report");
-          setSubView("detail");
-        }}
       />
     );
   }

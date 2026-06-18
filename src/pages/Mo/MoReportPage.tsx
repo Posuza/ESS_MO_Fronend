@@ -12,15 +12,15 @@ import {
 import { BsFillFileEarmarkPdfFill } from "react-icons/bs";
 import styles from "./MoReportPage.module.css";
 import { useStore } from "../../store/store";
-import type { SectorReport } from "../../store/store";
-import DetailViewer from "../../components/Mo/DetailViewer";
-import MoUpdateForm from "../../components/Mo/MoUpdateForm";
-import PdfViewer, { type PdfViewerHandle } from "../../components/Mo/PdfViewer";
+import type { SectorReport } from "../../services/moReporTransaction.Service";
+import DetailViewer from "../../components/mo/DetailViewer";
+import MoUpdateForm from "../../components/mo/MoUpdateForm";
+import PdfViewer, { type PdfViewerHandle } from "../../components/mo/PdfViewer";
 import {
   ConfirmDeleteDialog,
   InfoModel,
   MoLoadingPopup,
-} from "../../components/Mo/popup";
+} from "../../components/mo/popup";
 
 type ReportListItem = SectorReport & {
   location?: string;
@@ -341,7 +341,7 @@ export default function MoReportPage({
         department_id: selectedSectorId ?? 1,
         created_at: new Date().toISOString(),
         created_by: currentEmployee?.employee_code || "ADMIN",
-      } as SectorReport)
+      } as unknown as SectorReport)
     );
   }, [
     selectedTransactionId,
@@ -553,19 +553,25 @@ export default function MoReportPage({
           {viewMode === "table" ? (
             isEditing ? (
               <MoUpdateForm
-                reportData={currentReport}
+                reportData={currentReport as unknown as Record<string, unknown>}
                 onCancel={() => {
                   setIsEditing(false);
                   setIsDirty(false);
                 }}
                 isDirty={isDirty}
-                setIsDirty={setIsDirty}
+                onDirtyChange={setIsDirty}
                 submitRef={submitRef}
+              />
+            ) : selectedTransactionId ? (
+              <DetailViewer
+                view="sector"
+                selectedTransactionId={selectedTransactionId}
+                departmentId={selectedSectorId}
+                selectedDate={selectedDate}
               />
             ) : (
               <DetailViewer
-                view={selectedTransactionId ? "sector" : "summary"}
-                selectedTransactionId={selectedTransactionId as number}
+                view="summary"
                 departmentId={selectedSectorId}
                 selectedDate={selectedDate}
               />

@@ -852,6 +852,7 @@ export default function MoUpdateForm(props: Props) {
     try {
       const originalProjects = JSON.parse(snap.projectsJson) as Array<{
         name: string;
+        project_name?: string;
         detail: string;
         status: string;
         note: string;

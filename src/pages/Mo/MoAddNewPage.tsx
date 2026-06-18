@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
-import MoNewForm from "../../components/Mo/MoNewForm";
+import MoNewForm from "../../components/mo/MoNewForm";
 import { useStore } from "../../store/store";
 import { getAccessLevel, AccessLevel } from "../../utils/positionAccess";
 import { MoLoadingPopup } from "../../components/mo/popup";

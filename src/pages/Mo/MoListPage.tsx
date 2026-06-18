@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import styles from "./MoListPage.module.css";
 import { useStore } from "../../store/store";
-import type { SectorReport } from "../../store/store";
+import type { SectorReport } from "../../services/moReporTransaction.Service";
 import { buildReportFilters } from "../../utils/positionAccess";
 import { FaHourglassHalf } from "react-icons/fa";
 import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";

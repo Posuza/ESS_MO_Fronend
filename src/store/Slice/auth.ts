@@ -65,7 +65,8 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
       const result = await authService.login(employee_code, password);
 
       if (result.success && result.data) {
-        const emp: AuthEmployee = result.data.employee;
+        const emp: AuthEmployee = (result.data as { employee: AuthEmployee })
+          .employee;
         const displayName =
           `${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
 

@@ -12,6 +12,7 @@ export interface SectorReportDiscipline {
 export interface SectorReportProject {
   id: string;
   name: string;
+  project_name?: string;
   detail: string;
   status: string;
   note: string;

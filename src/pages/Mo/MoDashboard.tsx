@@ -1,12 +1,12 @@
 // src/pages/Home.tsx
 import "./MoDashborad.css";
 import { ArrowLeft } from "lucide-react";
-import TotalsGrid from "../../../components/Mo/DashboardSections/TotalsGridSection";
-import LineChart from "../../../components/Mo/DashboardSections/LineChartSection";
-import DualCharts from "../../../components/Mo/DashboardSections/DualChartsSection";
-import VerticalBar from "../../../components/Mo/DashboardSections/VerticalBarSection";
-import TableSearch from "../../../components/Mo/DashboardSections/TableSearchSection";
-import GeoChart from "../../../components/Mo/DashboardSections/GeoChartSection";
+import TotalsGrid from "../../components/mo/DashboardSections/TotalsGridSection";
+import LineChart from "../../components/mo/DashboardSections/LineChartSection";
+import DualCharts from "../../components/mo/DashboardSections/DualChartsSection";
+import VerticalBar from "../../components/mo/DashboardSections/VerticalBarSection";
+import TableSearch from "../../components/mo/DashboardSections/TableSearchSection";
+import GeoChart from "../../components/mo/DashboardSections/GeoChartSection";
 
 type Props = {
   empCode: string;
