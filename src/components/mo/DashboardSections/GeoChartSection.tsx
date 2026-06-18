@@ -23,11 +23,7 @@ import {
 import { divIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Feature } from "geojson";
-import {
-  geoData,
-  type GeoPoint,
-  type ZoomLevel,
-} from "../../../../../temp_data/geo_data";
+import { geoData, type GeoPoint, type ZoomLevel } from "@/data/geo_data";
 import styles from "./GeoChartSection.module.css";
 
 // ── Derive flat views from the combined geoData tree ──────────────────────────
