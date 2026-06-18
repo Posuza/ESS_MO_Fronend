@@ -14,9 +14,6 @@ import Header from "@/layout/Header";
 import styles from "./Home.module.css";
 
 type Props = {
-  empCode: string;
-  displayName?: string;
-
   onLogout: () => void;
   onGoCheckInOut: () => void;
   onGoLeaveOnline: () => void;
@@ -28,8 +25,6 @@ type Props = {
 };
 
 export default function Home({
-  empCode,
-  displayName,
   onLogout,
   onGoCheckInOut,
   onGoLeaveOnline,
@@ -42,12 +37,12 @@ export default function Home({
     <main className="guts-bg">
       <div className={styles.home}>
         <section className="guts-home-card" aria-label="Home">
-          <Header empCode={empCode} displayName={displayName} />
+          <Header />
 
           <h2 className={styles.title}>หน้าหลัก</h2>
 
           <div className={styles.menuStack}>
-            {/* 
+            {/*
             <button
               type="button"
               className={styles.menuBtn}
@@ -84,7 +79,7 @@ export default function Home({
               </div>
             </button>
 
-            {/* 
+            {/*
             <button
               type="button"
               className={styles.menuBtn}

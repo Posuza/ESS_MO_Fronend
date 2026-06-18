@@ -2,6 +2,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import styles from "./Header.module.css";
+import { useStore } from "@/store/store";
+import logoSrc from "@/assets/logo/logoguts.svg";
 
 type Props = {
   empCode?: string;
@@ -12,20 +14,30 @@ type Props = {
 };
 
 export default function Header({
-  empCode = "",
-  displayName,
+  empCode: _empCode,
+  displayName: _displayName,
   showUserCard = true,
 }: Props) {
+  const authEmployee = useStore((s) => s.authEmployee);
+  const empCode = _empCode ?? authEmployee?.employee_code ?? "";
+  const displayName =
+    _displayName ??
+    (authEmployee
+      ? `${authEmployee.first_name} ${authEmployee.last_name}`.trim() ||
+        authEmployee.employee_code
+      : undefined);
   return (
     <header className={styles.header}>
-      <h1 className={styles.logo}>
-        <span className={styles.logoGuts}>GUTS</span>{" "}
-        <span className={styles.logoEss}>ESS</span>
-      </h1>
+      <div className={styles.logoWrap}>
+        <img className={styles.logo} src={logoSrc} alt="GUTS ESS" />
+      </div>
 
-      <div className={styles.subEn}>Employee Self Service</div>
+      <div className={styles.subEn}>
+        <span className={styles.firstLetter}>E</span>mployee{" "}
+        <span className={styles.firstLetter}>S</span>elf{" "}
+        <span className={styles.firstLetter}>S</span>ervice
+      </div>
       <div className={styles.subTh}>ระบบบริการตนเอง</div>
-      <div className={styles.subSmall}>สำหรับพนักงานสำนักงานและสายตรวจ</div>
 
       {showUserCard && (
         <div className={styles.usercard} role="status" aria-label="ผู้ใช้งาน">

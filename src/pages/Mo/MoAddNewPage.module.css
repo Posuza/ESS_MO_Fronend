@@ -1,0 +1,25 @@
+.mo-back-outer {
+    display: flex;
+    padding-top: 6px;
+}
+
+.mo-back-btn {
+    height: 40px !important;
+    padding: 10px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--brandDark, rgba(2, 75, 118, 0.9)) !important;
+    border: 1px solid rgba(2, 75, 118, 0.06) !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1) !important;
+    width: auto !important;
+    box-sizing: border-box;
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        background 0.12s ease,
+        color 0.12s ease !important;
+}

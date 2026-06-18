@@ -15,7 +15,7 @@ import {
   type GeoPoint,
   type ZoomLevel,
 } from "@/temp_data/geo_data";
-import "./GeoChartSection.css";
+import styles from "./GeoChartSection.module.css";
 
 // ── Derive flat views from the combined geoData tree ──────────────────────────
 const _worldData: GeoPoint[] = geoData.map((c) => {
@@ -529,7 +529,7 @@ export default function GeoChart() {
   }, []);
 
   return (
-    <div className="gc-card">
+    <div className={styles.gcCard}>
       <div className="gc-header">
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {zoomLevel !== "world" && (
@@ -769,4 +769,3 @@ export default function GeoChart() {
     </div>
   );
 }
-

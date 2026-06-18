@@ -1,4 +1,5 @@
 import type { StateCreator } from "zustand";
+// import { authService } from "@/services.dev/auth.Service";
 import { authService } from "@/services/auth.Service";
 
 export interface AuthEmployee {
@@ -10,8 +11,10 @@ export interface AuthEmployee {
   name_prefix: string;
   position_name: string;
   department_id?: number | null;
-  position_id?: number | null;
   department_name?: string | null;
+  division_id?: number | null;
+  division_name?: string | null;
+  position_id?: number | null;
 }
 
 export interface AuthSlice {
@@ -19,26 +22,52 @@ export interface AuthSlice {
   authEmployee: AuthEmployee | null;
   authLoading: boolean;
   authError: string | null;
+  authErrorKey: string | null;
+  authContacts: Array<{ team?: string; email?: string }> | undefined;
 
   // Actions
   login: (employee_code: string, password: string) => Promise<boolean>;
-  logout: (employee_code: string) => Promise<void>;
+  logout: (employee_code: string) => Promise<boolean>;
   clearAuthError: () => void;
+  changePassword: (
+    employee_code: string,
+    oldPin: string,
+    newPin: string,
+  ) => Promise<{
+    success: boolean;
+    message: string;
+    error?: string;
+    contacts?: Array<{ team?: string; email?: string }>;
+  }>;
+  forgotPassword: (employee_code: string) => Promise<{
+    success: boolean;
+    message: string;
+    error?: string;
+    contacts?: Array<{ team?: string; email?: string }>;
+  }>;
 }
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   authEmployee: null,
   authLoading: false,
   authError: null,
+  authErrorKey: null,
+  authContacts: undefined,
 
   login: async (employee_code, password) => {
-    set({ authLoading: true, authError: null });
+    set({
+      authLoading: true,
+      authError: null,
+      authErrorKey: null,
+      authContacts: undefined,
+    });
     try {
       const result = await authService.login(employee_code, password);
 
       if (result.success && result.data) {
         const emp: AuthEmployee = result.data.employee;
-        const displayName = `${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
+        const displayName =
+          `${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
 
         localStorage.setItem("emp_code", emp.employee_code);
         localStorage.setItem("display_name", displayName);
@@ -47,7 +76,12 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
         return true;
       }
 
-      set({ authLoading: false, authError: result.message || "เข้าสู่ระบบไม่สำเร็จ" });
+      set({
+        authLoading: false,
+        authError: result.message || "เข้าสู่ระบบไม่สำเร็จ",
+        authErrorKey: result.error || null,
+        authContacts: result.contacts,
+      });
       return false;
     } catch {
       set({ authLoading: false, authError: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์" });
@@ -56,11 +90,67 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   },
 
   logout: async (employee_code) => {
-    await authService.logout(employee_code);
-    localStorage.removeItem("emp_code");
-    localStorage.removeItem("display_name");
-    set({ authEmployee: null, authError: null });
+    const result = await authService.logout(employee_code);
+    if (result.success) {
+      localStorage.removeItem("emp_code");
+      localStorage.removeItem("display_name");
+      set({ authEmployee: null, authError: null });
+    }
+    return result.success;
   },
 
-  clearAuthError: () => set({ authError: null }),
+  clearAuthError: () =>
+    set({ authError: null, authErrorKey: null, authContacts: undefined }),
+
+  changePassword: async (employee_code, oldPin, newPin) => {
+    set({
+      authLoading: true,
+      authError: null,
+      authErrorKey: null,
+      authContacts: undefined,
+    });
+    try {
+      const result = await authService.changePassword(
+        employee_code,
+        oldPin,
+        newPin,
+      );
+      set({ authLoading: false });
+      return result;
+    } catch {
+      const fallback = {
+        success: false,
+        message: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์",
+      };
+      set({
+        authLoading: false,
+        authError: fallback.message,
+      });
+      return fallback;
+    }
+  },
+
+  forgotPassword: async (employee_code) => {
+    set({
+      authLoading: true,
+      authError: null,
+      authErrorKey: null,
+      authContacts: undefined,
+    });
+    try {
+      const result = await authService.forgotPassword(employee_code);
+      set({ authLoading: false });
+      return result;
+    } catch {
+      const fallback = {
+        success: false,
+        message: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์",
+      };
+      set({
+        authLoading: false,
+        authError: fallback.message,
+      });
+      return fallback;
+    }
+  },
 });

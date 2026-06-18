@@ -9,22 +9,38 @@ const agg = caseData.reduce(
   (acc: any, row: any) => {
     acc.reports += 1;
     if (row.department_id) acc.sectors.add(row.department_id);
-    if (row.approved_status === "pending") acc.pending += 1;
-    if (row.approved_status === "approved") acc.approved += 1;
-    if (row.approved_status === "rejected") acc.rejected += 1;
+    if (row.approved_status === "PENDING") acc.pending += 1;
+    if (row.approved_status === "APPROVED") acc.approved += 1;
+    if (row.approved_status === "REJECTED") acc.rejected += 1;
 
-    const presentCount = (row.shift_18_count || 0) + (row.shift_24_count || 0) + (row.shift_36_count || 0);
-    const leaveCount = (row.leave_sick_count || 0) + (row.leave_business_count || 0) + (row.leave_other_count || 0);
-    const absentCount = (row.absent_count || 0);
+    const presentCount =
+      (row.shift_18_count || 0) +
+      (row.shift_24_count || 0) +
+      (row.shift_36_count || 0);
+    const leaveCount =
+      (row.leave_sick_count || 0) +
+      (row.leave_business_count || 0) +
+      (row.leave_other_count || 0);
+    const absentCount = row.absent_count || 0;
 
     acc.present += presentCount;
     acc.leave += leaveCount;
     // Total manpower is usually present + leave + absent
     acc.manpower += presentCount + leaveCount + absentCount;
 
-    acc.uniform += (row.wear_hat_count || 0) + (row.wear_shirt_count || 0) + (row.wear_pant_count || 0) + (row.wear_shoe_count || 0);
-    acc.rules += (row.rule_sleep_count || 0) + (row.rule_use_phone_count || 0) + (row.rule_no_card_count || 0);
-    acc.other += (row.other_job_count || 0) + (row.other_training_count || 0) + absentCount;
+    acc.uniform +=
+      (row.wear_hat_count || 0) +
+      (row.wear_shirt_count || 0) +
+      (row.wear_pant_count || 0) +
+      (row.wear_shoe_count || 0);
+    acc.rules +=
+      (row.rule_sleep_count || 0) +
+      (row.rule_use_phone_count || 0) +
+      (row.rule_no_card_count || 0);
+    acc.other +=
+      (row.other_job_count || 0) +
+      (row.other_training_count || 0) +
+      absentCount;
 
     return acc;
   },
@@ -40,12 +56,24 @@ const agg = caseData.reduce(
     uniform: 0,
     rules: 0,
     other: 0,
-  }
+  },
 );
 
 const cards1 = [
-  { id: 1, count: formatNum(agg.sectors.size), unit: "ภาค", label: "ภาค", cls: "card-blue" },
-  { id: 2, count: formatNum(agg.reports), unit: "รายงาน", label: "รายงานทั้งหมด", cls: "card-teal" },
+  {
+    id: 1,
+    count: formatNum(agg.sectors.size),
+    unit: "ภาค",
+    label: "ภาค",
+    cls: "card-blue",
+  },
+  {
+    id: 2,
+    count: formatNum(agg.reports),
+    unit: "รายงาน",
+    label: "รายงานทั้งหมด",
+    cls: "card-teal",
+  },
 ];
 
 const card1_feature = [
@@ -56,8 +84,20 @@ const card1_feature = [
     label: "รอดำเนินการ",
     cls: "card-green",
   },
-  { id: 2, count: formatNum(agg.approved), unit: "", label: "การอนุมัติ", cls: "card-blue" },
-  { id: 3, count: formatNum(agg.rejected), unit: "", label: "ปฏิเสธ", cls: "card-red" },
+  {
+    id: 2,
+    count: formatNum(agg.approved),
+    unit: "",
+    label: "การอนุมัติ",
+    cls: "card-blue",
+  },
+  {
+    id: 3,
+    count: formatNum(agg.rejected),
+    unit: "",
+    label: "ปฏิเสธ",
+    cls: "card-red",
+  },
 ];
 
 const cards2 = [
@@ -68,18 +108,18 @@ const cards2 = [
     label: "กำลังพล",
     cls: "card-green",
   },
-  { 
-    id: 2, 
-    count: formatNum(agg.present), 
-    unit: "คน", 
-    label: "มาปฏิบัติงาน", 
+  {
+    id: 2,
+    count: formatNum(agg.present),
+    unit: "คน",
+    label: "มาปฏิบัติงาน",
     cls: "card-blue",
   },
-  { 
-    id: 3, 
-    count: formatNum(agg.leave), 
-    unit: "คน", 
-    label: "ลา", 
+  {
+    id: 3,
+    count: formatNum(agg.leave),
+    unit: "คน",
+    label: "ลา",
     cls: "card-orange",
   },
 ];
