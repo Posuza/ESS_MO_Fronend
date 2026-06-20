@@ -43,19 +43,20 @@
 }
 
 .search-label {
+    font-family: "Prompt", sans-serif;
     font-size: 12px;
-    font-weight: 700;
-    color: #475569;
+    font-weight: 800;
+    color: var(--blueText);
     margin-left: 2px;
 }
 
 .guts-mo-search-input {
     height: 38px;
-    padding: 0 12px;
-    border-radius: 5px;
-    border: 1px solid #d1d5db;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid var(--blueText);
     font-weight: 500;
-    font-size: 13.5px;
+    font-size: 12px;
     width: 100%;
     box-sizing: border-box;
     color: #1f2937;
@@ -116,12 +117,12 @@ select.guts-mo-search-input {
     background: #014f86;
     color: #ffffff;
     border: none;
+    width: 38px;
     height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 0 20px;
+    padding: 0;
     border-radius: 5px;
     font-weight: 600;
     font-size: 13.5px;
@@ -158,21 +159,33 @@ select.guts-mo-search-input {
 }
 
 /* ─── Section header ──────────────────────────────────────── */
-.section-header {
+.department-section-header {
     display: flex;
     border-radius: 3px;
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    background: linear-gradient(90deg, var(--brandDark, #014f86), #0277bd);
+    background: #014f86;
     color: #fff;
     gap: 8px;
+    font-family: "Prompt", sans-serif;
+}
+.division-section-header {
+    display: flex;
+    border-radius: 3px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #0277bd;
+    color: #fff;
+    gap: 8px;
+    font-family: "Prompt", sans-serif;
 }
 
 .section-header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 6px;
     font-weight: 700;
     font-size: 14px;
     flex-shrink: 0;
@@ -233,7 +246,7 @@ select.guts-mo-search-input {
 }
 
 .chip-pending svg {
-    color: rgb(154, 82, 20);
+    color: orange;
 }
 
 .chip-rejected svg {
@@ -319,8 +332,9 @@ select.guts-mo-search-input {
 }
 
 .chip-dot-pending {
-    background: rgb(234, 88, 12);
-    color: #fff;
+    background: white;
+    color: orange;
+    border: 0.5px solid orange;
 }
 
 .chip-dot-rejected {
@@ -378,7 +392,7 @@ select.guts-mo-search-input {
 }
 
 .dept-item-name.chip-pending {
-    color: rgb(154, 82, 20);
+    color: orange;
 }
 
 .dept-item-name.chip-rejected {
@@ -405,7 +419,7 @@ select.guts-mo-search-input {
 }
 
 .value-pending {
-    color: #92400e !important;
+    color: orange !important;
 }
 
 .value-rejected {
@@ -452,7 +466,7 @@ select.guts-mo-search-input {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 5px;
+    padding: 4px 6px;
     cursor: pointer;
 }
 
@@ -462,8 +476,8 @@ select.guts-mo-search-input {
 }
 
 .status-dot {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 999px;
     border: none;
     display: flex;
@@ -482,8 +496,9 @@ select.guts-mo-search-input {
 }
 
 .dot-pending {
-    background: rgb(234, 88, 12);
-    color: #fff;
+    background: #fff;
+    color: orange;
+    border: 0.5px solid orange;
 }
 
 .dot-rejected {
@@ -497,6 +512,7 @@ select.guts-mo-search-input {
     display: flex;
     align-items: center;
     gap: 6px;
+    margin-left: 4px;
 }
 
 .card-key {
@@ -508,8 +524,8 @@ select.guts-mo-search-input {
 
 .card-title {
     font-weight: 700;
-    font-size: 14px;
-    color: var(--blueText, #1b2b4a);
+    font-size: 13px;
+    color: #6b7280;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -521,8 +537,8 @@ select.guts-mo-search-input {
     justify-content: center;
     gap: 4px;
     border-radius: 999px;
-    padding: 3px 10px;
-    font-size: 13px;
+    padding: 4px 10px;
+    font-size: 11px;
     font-weight: 900;
     border: 1px solid transparent;
     line-height: 1;
@@ -536,7 +552,7 @@ select.guts-mo-search-input {
         rgba(240, 253, 244, 0.96),
         rgba(220, 252, 231, 0.98)
     );
-    color: rgb(6, 95, 70);
+    color: #16a34a;
     border-color: rgba(52, 211, 153, 0.34);
 }
 
@@ -546,7 +562,7 @@ select.guts-mo-search-input {
         rgba(255, 247, 237, 0.96),
         rgba(255, 237, 213, 0.98)
     );
-    color: rgb(154, 82, 20);
+    color: ornage;
     border-color: rgba(245, 158, 11, 0.3);
 }
 
@@ -596,17 +612,18 @@ select.guts-mo-search-input {
     margin: 0 8px 10px 45px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     background: #f5f6f7;
     border-radius: 5px;
+    font-size: 12px;
 }
 
 .detail-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 13px;
-    padding: 6px 10px;
+    font-size: 12px;
+    padding: 4px 10px;
     border-bottom: 1px solid rgba(2, 75, 118, 0.08);
 }
 
@@ -624,8 +641,8 @@ select.guts-mo-search-input {
 
 .detail-value {
     color: #1b2b4a;
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 11px;
 }
 
 /* ─── Legacy classes kept for safety ─────────────────────── */

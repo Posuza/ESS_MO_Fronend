@@ -65,7 +65,7 @@ export default function MoHome(props: Props) {
   );
 
   // Local loading state with minimum 2-second display time
-  const [showLoading, setShowLoading] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
   const loadingStartRef = useRef(0);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const MIN_LOADING_MS = 2000;
@@ -335,7 +335,7 @@ export default function MoHome(props: Props) {
               <th className={styles["mo-table-header-cell"]} colSpan={2}>
                 <div className={styles["mo-table-header"]}>
                   <span className={styles["mo-table-header-left"]}>
-                    <LuLandmark size="1.5em" /> {deptName || "Loading..."}
+                    <LuLandmark size="1.5em" /> {deptName}
                   </span>
                   <button
                     type="button"

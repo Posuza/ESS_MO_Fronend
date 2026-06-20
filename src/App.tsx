@@ -6,7 +6,7 @@ import LogoutPopUp, {
 } from "./components/auth/popup/LogoutPopUp";
 const Login = lazy(() => import("./pages/Login"));
 const Home = lazy(() => import("./pages/Home"));
-const Mo = lazy(() => import("./pages/Mo/Mo"));
+import Mo from "./pages/Mo/Mo";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CheckInOut = lazy(() => import("./pages/Attendance/CheckInOut"));
 const FaceVerify = lazy(() => import("./pages/Attendance/FaceVerify"));

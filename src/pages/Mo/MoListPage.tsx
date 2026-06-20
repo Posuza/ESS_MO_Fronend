@@ -276,7 +276,7 @@ export default function MoListPage({
       };
     return {
       dotClass: styles["dot-pending"],
-      icon: <FaHourglassHalf size={15} />,
+      icon: <FaHourglassHalf size={12} />,
       label: "รอดำเนินการ",
       badgeClass: styles["badge-pending"],
     };
@@ -466,7 +466,7 @@ export default function MoListPage({
           {/* ========== DEPARTMENT GROUP — position 1 & 5 only ========== */}
           {canSeeDeptGroup && (
             <div className={styles["section-group"]}>
-              <div className={styles["section-header"]}>
+              <div className={styles["department-section-header"]}>
                 <div className={styles["section-header-left"]}>
                   <Landmark size={16} className={styles["section-icon"]} />
                   <span>ภาคบันทึก</span>
@@ -548,14 +548,14 @@ export default function MoListPage({
                                 </span>
                                 {pendingCnt}
                               </span>
-                              {/*<span className={styles["header-chip"]}>
+                              <span className={styles["header-chip"]}>
                                 <span
                                   className={`${styles["chip-dot"]} ${styles["chip-dot-rejected"]}`}
                                 >
                                   <X size={12} />
                                 </span>
                                 {rejectedCnt}
-                              </span>*/}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -617,7 +617,7 @@ export default function MoListPage({
 
           {/* ========== DIVISION GROUP ========== */}
           <div className={styles["section-group"]}>
-            <div className={styles["section-header"]}>
+            <div className={styles["division-section-header"]}>
               <div className={styles["section-header-left"]}>
                 <MapPin size={20} className={styles["section-icon"]} />
                 <span>เขตบันทึก</span>

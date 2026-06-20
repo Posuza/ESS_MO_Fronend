@@ -11,7 +11,7 @@
     backdrop-filter: blur(4px);
     display: grid;
     place-items: center;
-    animation: fadeIn 0.15s ease-out;
+    animation: fadeIn 0.25s ease-out;
 }
 
 @keyframes fadeIn {
@@ -38,13 +38,13 @@
 
 /* ── Modal card ── */
 .modal {
-    width: min(380px, 85vw);
+    width: min(440px, 90vw);
     background-color: #ebedf2;
     border-radius: 24px;
     box-shadow:
-        0 24px 48px rgba(0, 0, 0, 0.16),
-        0 2px 6px rgba(0, 0, 0, 0.06);
-    padding: 32px 32px 24px;
+        0 20px 40px rgba(0, 0, 0, 0.18),
+        0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 32px 32px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -55,7 +55,7 @@
         system-ui,
         -apple-system,
         sans-serif;
-    animation: scaleUp 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: scaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
     overflow: hidden;
 }
