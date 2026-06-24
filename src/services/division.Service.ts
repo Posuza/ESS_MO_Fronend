@@ -1,14 +1,17 @@
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── API client ─────────────────────────────────────────────────────────────
 
+import { API_URL, API_CONFIG } from "../config/api.config";
+
+
+
+// ── Types ──────────────────────────────────────────────────────────────────
 export interface Division {
   division_id: number;
   division_name: string;
   department_id: number;
 }
 
-// ── API client ─────────────────────────────────────────────────────────────
 
-import { API_URL, API_CONFIG } from "../config/api.config";
 
 async function request<T>(path: string): Promise<T> {
   const url = `${API_URL}/divisions${path}`;

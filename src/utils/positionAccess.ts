@@ -26,7 +26,7 @@ export function getAccessLevel(positionId?: number | null): AccessLevel {
     case 4:
       return AccessLevel.OWN_ONLY;
     default:
-      return AccessLevel.OWN_ONLY; // safest default: restrict to own reports
+      return AccessLevel.OWN_ONLY; 
   }
 }
 

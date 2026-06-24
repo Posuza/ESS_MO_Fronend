@@ -144,11 +144,7 @@ export default function MoDetailPage(props: Props) {
   const isApprover = canApprove(currentEmployee?.position_id);
 
   // Director-level users can approve
-  const isDirector =
-    isApprover ||
-    currentEmployee?.position_name?.includes("หัวหน้า") ||
-    currentEmployee?.position_name?.includes("manager") ||
-    (currentEmployee as any)?.role_name === "admin";
+  const isDirector = isApprover;
 
   // Only allow edit/delete if the report's date is today
   const today = new Date().toISOString().split("T")[0];
