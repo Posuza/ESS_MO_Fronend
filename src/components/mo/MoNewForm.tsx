@@ -933,19 +933,28 @@ export default function MoNewForm(props: Props) {
                     className={`${styles["location-table-header"]} ${styles["no-border"]}`}
                   >
                     <div className={styles["sector-header-fullwidth"]}>
-                      <select
-                        className={styles["sector-cell-select"]}
-                        value={selectedDepartment}
-                        onChange={(e) =>
-                          setSelectedDepartment(Number(e.target.value))
-                        }
-                      >
-                        {locations.map((loc) => (
-                          <option key={loc.id} value={loc.id}>
-                            {loc.location}
-                          </option>
-                        ))}
-                      </select>
+                      {locations.length > 1 ? (
+                        <select
+                          className={`${styles["sector-cell-select"]} ${styles["sector-cell-select-full"]}`}
+                          value={selectedDepartment}
+                          onChange={(e) =>
+                            setSelectedDepartment(Number(e.target.value))
+                          }
+                        >
+                          {locations.map((loc) => (
+                            <option key={loc.id} value={loc.id}>
+                              {loc.location}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          className={styles["sector-cell-single-value"]}
+                          style={{ color: "#fff" }}
+                        >
+                          {locations[0]?.location}
+                        </span>
+                      )}
                     </div>
                   </th>
                 </tr>
@@ -965,21 +974,27 @@ export default function MoNewForm(props: Props) {
                       gap: 8,
                     }}
                   >
-                    <select
-                      className={`${styles["sector-cell-select"]} ${styles["sector-cell-bodytext"]} ${styles["sector-cell-select-green"]}`}
-                      value={selectedSubLocation}
-                      onChange={(e) => setSelectedSubLocation(e.target.value)}
-                    >
-                      {availableSubSectorOptions.length > 0 ? (
-                        availableSubSectorOptions.map((opt) => (
+                    {availableSubSectorOptions.length > 1 ? (
+                      <select
+                        className={`${styles["sector-cell-select"]} ${styles["sector-cell-bodytext"]} ${styles["sector-cell-select-green"]} ${styles["sector-cell-select-full"]}`}
+                        value={selectedSubLocation}
+                        onChange={(e) => setSelectedSubLocation(e.target.value)}
+                      >
+                        {availableSubSectorOptions.map((opt) => (
                           <option key={opt.id} value={opt.shortName}>
                             {opt.shortName}
                           </option>
-                        ))
-                      ) : (
-                        <option value="">กำลังโหลด...</option>
-                      )}
-                    </select>
+                        ))}
+                      </select>
+                    ) : availableSubSectorOptions.length === 1 ? (
+                      <span className={styles["sector-cell-single-value"]}>
+                        {availableSubSectorOptions[0].shortName}
+                      </span>
+                    ) : (
+                      <span className={styles["sector-cell-single-value"]}>
+                        เขต ไม่พร้อมใช้งาน
+                      </span>
+                    )}
                   </td>
                 </tr>
               </tbody>
@@ -1374,7 +1389,7 @@ export default function MoNewForm(props: Props) {
                       colSpan={1}
                       className={`${styles["first-column-cell"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
                     >
-                      {idx + 1}.
+                      5.
                     </th>
                     <th
                       colSpan={4}
@@ -1415,7 +1430,7 @@ export default function MoNewForm(props: Props) {
                       .map((r, itemIdx) => (
                         <tr key={r.key}>
                           <td className={styles["first-column-cell"]}>
-                            {itemIdx + 1}
+                            5.{itemIdx + 1}
                           </td>
                           <td className={styles["group3-second-column-cell"]}>
                             {r.label}
@@ -1464,7 +1479,7 @@ export default function MoNewForm(props: Props) {
                             onClick={openAddGroup2}
                           >
                             <td className={styles["first-column-cell"]}>
-                              {nextNum}
+                              5.{nextNum}
                             </td>
                             <td
                               colSpan={4}
@@ -1705,7 +1720,7 @@ export default function MoNewForm(props: Props) {
                       colSpan={1}
                       className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
                     >
-                      {idx + 1}.
+                      6.
                     </th>
                     <th
                       colSpan={5}
@@ -1737,7 +1752,7 @@ export default function MoNewForm(props: Props) {
                     {g.items.map((r, itemIdx) => (
                       <tr key={itemIdx}>
                         <td className={styles["first-column-cell"]}>
-                          {idx + 1}.{itemIdx + 1}
+                          6.{itemIdx + 1}
                         </td>
                         <td className={styles["group3-second-column-cell"]}>
                           {r.label}
@@ -1797,7 +1812,7 @@ export default function MoNewForm(props: Props) {
                       }}
                     >
                       <td className={styles["first-column-cell"]}>
-                        {idx + 1}.{g.items.length + 1}
+                        6.{g.items.length + 1}
                       </td>
                       <td colSpan={4} className={styles["add-row-cell"]}>
                         <div className={styles["add-row-centered"]}>
