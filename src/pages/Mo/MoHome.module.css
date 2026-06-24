@@ -147,7 +147,7 @@
 
 .mo-reload-btn {
     background: none;
-    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    border: 0.5px solid rgba(255, 255, 255, 0.5);
     color: white;
     cursor: pointer;
     padding: 4px 6px;
@@ -190,7 +190,7 @@
 .status-rejected {
     background: #cb6027 !important;
     color: #ffffff !important;
-    border-color:  #cb6027 !important;
+    border-color: #cb6027 !important;
 }
 
 /* Buttons */

@@ -21,12 +21,12 @@ type Props = {
 const approvalStatusLabels = [
   {
     keys: ["approved", "ดำเนินการแล้ว"],
-    label: "ดำเนินการแล้ว",
+    label: "อนุมัติเรียบร้อยแล้ว",
     cssClass: "status-approved",
   },
   {
     keys: ["PENDING", "pending", "waited", "รอการดำเนินการ", "รอ"],
-    label: "รอการดำเนินการ",
+    label: "รอผู้อำนวยการอนุมัติ",
     cssClass: "status-pending",
   },
   {
@@ -354,7 +354,7 @@ export default function MoDetailPage(props: Props) {
             }
             onClick={handleSendBack}
           >
-            ส่งกลับแก้ไข หลังอนุมัติ
+            ผู้อำนวยการส่งกลับให้ผู้จัดการแก้ไข
           </button>
         </div>
       )}

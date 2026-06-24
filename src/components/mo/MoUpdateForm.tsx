@@ -109,12 +109,12 @@ export default function MoUpdateForm(props: Props) {
   const approvalStatusLabels = [
     {
       keys: ["approved", "ดำเนินการแล้ว"],
-      label: "ดำเนินการแล้ว",
+      label: "อนุมัติเรียบร้อยแล้ว",
       cssClass: styles["status-approved"],
     },
     {
       keys: ["PENDING", "pending", "waited", "รอการดำเนินการ", "รอ"],
-      label: "รอการดำเนินการ",
+      label: "รอผู้อำนวยการอนุมัติ",
       cssClass: styles["status-pending"],
     },
     {

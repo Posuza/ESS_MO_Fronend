@@ -266,7 +266,7 @@ export default function MoListPage({
       return {
         dotClass: styles["dot-approved"],
         icon: <Check size={15} />,
-        label: "ดำเนินการแล้ว",
+        label: "อนุมัติเรียบร้อยแล้ว",
         badgeClass: styles["badge-approved"],
       };
     if (s === "rejected" || s === "reject")
@@ -279,7 +279,7 @@ export default function MoListPage({
     return {
       dotClass: styles["dot-pending"],
       icon: <FaHourglassHalf size={12} />,
-      label: "รอดำเนินการ",
+      label: "รอผู้อำนวยการอนุมัติ",
       badgeClass: styles["badge-pending"],
     };
   }
@@ -582,13 +582,13 @@ export default function MoListPage({
                           {[
                             {
                               key: "approved",
-                              label: "ดำเนินการแล้ว",
+                              label: "อนุมัติเรียบร้อยแล้ว",
                               count: approvedCnt,
                               cls: styles["chip-approved"],
                             },
                             {
                               key: "pending",
-                              label: "รอดำเนินการ",
+                              label: "รอผู้อำนวยการอนุมัติ",
                               count: pendingCnt,
                               cls: styles["chip-pending"],
                             },

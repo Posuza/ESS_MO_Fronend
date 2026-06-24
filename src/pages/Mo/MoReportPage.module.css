@@ -234,18 +234,15 @@ select.guts-mo-search-input option {
     font-size: 14px;
     font-weight: 600;
     padding: 4px 8px;
-    border-radius: 0 !important;
+    border-radius: 5px;
     border: 1px solid #fff;
     background: transparent;
     color: #fff;
     cursor: pointer;
     outline: none;
     box-sizing: border-box;
-    min-width: 140px;
-    max-width: 60%;
-    width: auto;
-    flex: 0 0 auto;
-    align-self: stretch;
+    width: 100%;
+    flex: 1;
     height: 100%;
 }
 
@@ -352,16 +349,44 @@ select.guts-mo-search-input option {
     cursor: not-allowed;
 }
 
+.pdf-download-btn {
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: "Prompt", "Sarabun", sans-serif;
+    background: #dc2626;
+    border: none;
+    color: #fff;
+    border-radius: 6px;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.2);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.pdf-download-btn:hover:not(:disabled) {
+    background: #b91c1c;
+    box-shadow: 0 3px 8px rgba(220, 38, 38, 0.3);
+}
+
+.pdf-download-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
 .toggle-btn {
     cursor: pointer;
     transition: all 0.15s ease;
-    padding: 5px 6px;
+    padding: 5px 10px;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 5px;
     background: #ffffff;
     border: 1px solid #cbd5e1;
-    color: #64748b;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: "Prompt", "Sarabun", sans-serif;
+    white-space: nowrap;
 }
 
 /* First button in the group — rounded left */

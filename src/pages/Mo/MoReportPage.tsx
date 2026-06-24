@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import {
   ArrowLeft,
-  HomeIcon,
   FlagTriangleRightIcon,
   Table2Icon,
   FileDown,
@@ -10,6 +9,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { BsFillFileEarmarkPdfFill } from "react-icons/bs";
+import { LuLandmark } from "react-icons/lu";
 import styles from "./MoReportPage.module.css";
 import { useStore } from "../../store/store";
 import type { SectorReport } from "../../services/moReporTransaction.Service";
@@ -425,7 +425,7 @@ export default function MoReportPage({
                 className={`${styles["location-table-header"]} ${styles["no-border"]}`}
               >
                 <div className={styles["sector-header-fullwidth"]}>
-                  <HomeIcon />
+                  <LuLandmark size="1.5em" />
 
                   <select
                     className={styles["sector-cell-select"]}
@@ -485,14 +485,16 @@ export default function MoReportPage({
             onClick={() => setViewMode("table")}
             title="ดูตารางรายการ"
           >
-            <Table2Icon size={26} />
+            {/*<Table2Icon size={20} />*/}
+            <span>ตารางรายการ</span>
           </div>
           <div
             className={`${styles["pdf-icon-container"]} ${styles["toggle-btn"]} ${viewMode === "pdf" ? styles["active"] : ""}`}
             onClick={() => setViewMode("pdf")}
             title="ดูรายงาน PDF"
           >
-            <BsFillFileEarmarkPdfFill className={styles["pdf-icon"]} />
+            {/*<BsFillFileEarmarkPdfFill className={styles["pdf-icon"]} />*/}
+            <span>รายงาน PDF</span>
             {selectedTransactionId && (
               <FlagTriangleRightIcon className={styles["pin-icon-on-pdf"]} />
             )}
@@ -503,12 +505,13 @@ export default function MoReportPage({
           <div className={styles["toolbar-right"]}>
             <button
               type="button"
-              className={styles["toolbar-action-btn"]}
+              className={`${styles["toolbar-action-btn"]} ${styles["pdf-download-btn"]}`}
               onClick={handleDownload}
               disabled={pdfLoading}
               title="ดาวน์โหลด PDF"
             >
-              {pdfLoading ? "..." : <FileDown size={23} />}
+              <BsFillFileEarmarkPdfFill size={18} />
+              {pdfLoading ? "กำลังดาวน์โหลด..." : "ดาวน์โหลด PDF"}
             </button>
             {/* <button
               type="button"
