@@ -352,8 +352,8 @@ export default function MoSectorDetailForm(props: Props) {
   const statusTh: Record<string, string> = {
     approved: "ดำเนินการแล้ว",
     pending: "รอการดำเนินการ",
-    rejected: "ถูกปฏิเสธ",
-    reject: "ถูกปฏิเสธ",
+    rejected: "รอการดำเนินการแก้ไข",
+    reject: "รอการดำเนินการแก้ไข",
   };
   const statusKey = status.toLowerCase();
 

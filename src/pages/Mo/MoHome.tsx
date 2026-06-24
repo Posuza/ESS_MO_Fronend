@@ -582,7 +582,7 @@ export default function MoHome(props: Props) {
           className={styles["mo-back-home"]}
           onClick={goBack}
         >
-          <FaHouse className={styles.home} />
+           ย้อนกับ
         </button>
       </div>
     </div>

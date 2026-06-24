@@ -93,6 +93,8 @@ export default function MoListPage({
   // Position check: only position_id 1 or 5 can see the Department Group
   const canSeeDeptGroup = [1, 5].includes(Number(currentEmployee?.position_id));
 
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
   // Loading popup — shows on mount and during search (min 2s)
   const [showLoading, setShowLoading] = useState(true);
   const pageLoadStartRef = useRef(0);
@@ -271,7 +273,7 @@ export default function MoListPage({
       return {
         dotClass: styles["dot-rejected"],
         icon: <X size={15} />,
-        label: "ถูกปฏิเสธ",
+        label: "รอการดำเนินการแก้ไข",
         badgeClass: styles["badge-rejected"],
       };
     return {
@@ -434,8 +436,13 @@ export default function MoListPage({
         <div className={styles["search-field-group"]}>
           <label className={styles["search-label"]}>จากวันที่</label>
           <div className={styles["date-input-wrapper"]}>
-            <CalendarDays size={18} className={styles["date-icon"]} />
+            <CalendarDays
+              size={18}
+              className={styles["date-icon"]}
+              onClick={() => dateInputRef.current?.showPicker()}
+            />
             <input
+              ref={dateInputRef}
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
@@ -587,7 +594,7 @@ export default function MoListPage({
                             },
                             {
                               key: "rejected",
-                              label: "ถูกปฏิเสธ",
+                              label: "รอการดำเนินการแก้ไข",
                               count: rejectedCnt,
                               cls: styles["chip-rejected"],
                             },

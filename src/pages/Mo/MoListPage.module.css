@@ -80,9 +80,10 @@
 .date-icon {
     position: absolute;
     left: 10px;
-    color: #94a3b8;
-    pointer-events: none;
+    color: var(--blueText);
+    cursor: pointer;
     flex-shrink: 0;
+    z-index: 1;
 }
 
 .date-input-wrapper input[type="date"] {
