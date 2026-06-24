@@ -48,7 +48,7 @@ export interface AuthSlice {
 }
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
-  authEmployee: null,
+  authEmployee: JSON.parse(localStorage.getItem("auth_employee") || "null"),
   authLoading: false,
   authError: null,
   authErrorKey: null,
@@ -72,6 +72,8 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
 
         localStorage.setItem("emp_code", emp.employee_code);
         localStorage.setItem("display_name", displayName);
+        localStorage.setItem("auth_employee", JSON.stringify(emp));
+        localStorage.setItem("login_time", String(Date.now()));
 
         set({ authEmployee: emp, authLoading: false, authError: null });
         return true;
@@ -95,6 +97,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
     if (result.success) {
       localStorage.removeItem("emp_code");
       localStorage.removeItem("display_name");
+      localStorage.removeItem("auth_employee");
       set({ authEmployee: null, authError: null });
     }
     return result.success;

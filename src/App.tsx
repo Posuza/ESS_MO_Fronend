@@ -1,5 +1,12 @@
 // src/App.tsx
-import { Suspense, lazy, useCallback, useRef, useState } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useStore } from "./store/store";
 import LogoutPopUp, {
   type LogoutStatus,
@@ -21,8 +28,49 @@ type Route =
 type PunchType = "in" | "out";
 
 export default function App() {
-  const [stack, setStack] = useState<Route[]>(["login"]);
+  // Restore session on refresh — if emp_code exists in localStorage, skip login
+  const savedRoute = localStorage.getItem("app_route") as Route | null;
+  const isLoggedIn = !!localStorage.getItem("emp_code");
+  const initialRoute: Route = savedRoute && isLoggedIn ? savedRoute : "login";
+  const [stack, setStack] = useState<Route[]>([initialRoute]);
   const route = stack[stack.length - 1];
+
+  // Persist current route to localStorage so refresh keeps the same page
+  useEffect(() => {
+    if (route !== "login") {
+      localStorage.setItem("app_route", route);
+    }
+  }, [route]);
+
+  // ── Session timeout: 1 minute (for testing) ────────────────────────────
+  // const SESSION_TIMEOUT_MS = 1 * 60 * 1000; // 1 minute
+  const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+  const checkSession = useCallback(() => {
+    const loginTime = localStorage.getItem("login_time");
+    if (loginTime && Date.now() - Number(loginTime) > SESSION_TIMEOUT_MS) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  }, []);
+
+  // Check session on mount and on every route change
+  useEffect(() => {
+    checkSession();
+  }, [route, checkSession]);
+
+  // Also check on user interaction (click, keydown, scroll)
+  useEffect(() => {
+    const handleActivity = () => checkSession();
+    window.addEventListener("click", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("scroll", handleActivity);
+    return () => {
+      window.removeEventListener("click", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("scroll", handleActivity);
+    };
+  }, [checkSession]);
 
   const [lastInAt, setLastInAt] = useState<string | null>(null);
   const [lastOutAt, setLastOutAt] = useState<string | null>(null);
@@ -34,7 +82,10 @@ export default function App() {
   const logoutPromiseRef = useRef<Promise<boolean> | null>(null);
 
   // ===== Navigation helpers =====
-  const reset = (r: Route) => setStack([r]);
+  const reset = (r: Route) => {
+    setStack([r]);
+    if (r === "login") localStorage.removeItem("app_route");
+  };
 
   const push = (r: Route) =>
     setStack((s) => (s[s.length - 1] === r ? s : [...s, r]));
