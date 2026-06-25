@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800;900&display=swap");
 :root {
+    --bg: #f0f4f8;
     --cardTop: #f6f6f8;
     --cardBottom: #f3f4f7;
 
@@ -37,6 +38,11 @@ body {
         Arial,
         sans-serif;
     color: var(--textDark);
+    background-color: var(--bg);
+}
+
+#root {
+    min-height: 100vh;
 }
 
 /* ===== FirstLogin extras ===== */

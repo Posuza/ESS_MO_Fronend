@@ -125,12 +125,12 @@
 }
 
 .mo-table td {
-    font-size: 11px;
+    font-size: 12px;
     padding: 2px 3px;
 }
 
 .mo-table th {
-    font-size: 12px;
+    font-size: 13px;
 }
 
 /* Default header */
@@ -171,8 +171,9 @@
     width: 1%;
     white-space: nowrap;
     text-align: left !important;
-    font-weight: 800;
-    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
+    font-size: 12px;
     border-left: 1px solid #e5e7eb !important;
     border-right: 1px solid #e5e7eb !important;
     padding: 4px 3px;
@@ -192,8 +193,9 @@
     width: 99%;
     text-align: right !important;
     word-break: break-word;
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
+    font-size: 12px;
     padding: 4px 3px;
     background-color: transparent;
     vertical-align: middle;
@@ -245,6 +247,9 @@
     padding: 4px 2px;
     white-space: nowrap;
     text-align: center !important;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
 }
 
 /* Zebra stripe row class */
@@ -260,7 +265,9 @@
     white-space: nowrap;
     text-align: center !important;
     padding: 4px 3px;
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
     border-right: 1px solid #e5e7eb !important;
 }
 
@@ -289,9 +296,10 @@
     background-color: transparent;
     width: 45%;
     word-break: break-word;
-    font-weight: 600;
+    font-weight: 500;
+    color: #1b2b4a;
     vertical-align: middle;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 /* wrap cell for long numbers */
@@ -366,9 +374,9 @@
     box-sizing: border-box;
     padding: 2px 2px;
     margin: 0;
-    font-weight: 700;
-    font-size: 11px;
-    color: #1b2b4a;
+    font-weight: 600;
+    font-size: 12px;
+    color: #0f172a;
     line-height: 1.2;
     text-align: center;
     white-space: normal;

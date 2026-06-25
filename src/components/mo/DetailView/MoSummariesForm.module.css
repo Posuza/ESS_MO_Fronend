@@ -11,16 +11,15 @@
 .sector-cell-narrow {
     padding: 2px 2px !important;
     background-color: #f5f5f5 !important;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     width: 32px;
     min-width: 32px;
     max-width: 36px;
     font-size: 15px;
-    font-weight: bold;
+    font-weight: 500;
+    color: #475569;
     align-items: center;
     justify-content: center;
-    height: 36px;
-    min-height: 36px;
     height: 36px;
     min-height: 36px;
 }
@@ -39,10 +38,11 @@
     padding: 4px 8px !important;
     text-align: left !important;
     background-color: #f5f5f5 !important;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     vertical-align: middle;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 500;
+    color: #475569;
 }
 .sector-header-fullwidth {
     width: 100%;
@@ -69,7 +69,7 @@
     font-size: 15px;
     padding: 6px 10px; /* reduce vertical padding */
     background-color: #f5f5f5; /* slightly gray background */
-    border: 1px solid #7f0f0f;
+    border: 0.8px solid #7f0f0f;
     border-radius: 6px; /* slightly reduced radius */
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
     max-width: 100%;
@@ -146,14 +146,14 @@
     padding: 4px 8px !important;
     text-align: left !important;
     background-color: #f5f5f5 !important;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     vertical-align: middle;
 }
 
 .sector-cell-label {
     font-size: 14px;
-    font-weight: 700;
-    color: #333;
+    font-weight: 500;
+    color: #64748b;
     margin-right: 8px;
 }
 
@@ -213,8 +213,7 @@
 /* Table styles used by the form */
 .mo-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
     table-layout: auto;
 }
 
@@ -235,7 +234,7 @@
 
 .mo-table th,
 .mo-table td {
-    border: 1px solid #000; /* reset global cell padding so we can control per-cell */
+    border: 0.8px solid #000; /* reset global cell padding so we can control per-cell */
     text-align: center; /* keep horizontal centering by default */
     vertical-align: middle; /* center content vertically by default */
 }
@@ -271,7 +270,7 @@
 .mo-table th.mo-table-header-red {
     background-color: #9b111e; /* dark red */
     color: #ffffff;
-    border-color: #7f0f0f !important;
+    border-color: rgba(127, 15, 15, 0.6) !important;
 }
 .mo-table th.mo-table-header-white {
     background-color: transparent;
@@ -374,7 +373,7 @@
 /* five-column cell base + danger style (red + underline) */
 .five-column-cell {
     font-size: smaller;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     text-align: center;
     box-sizing: border-box;
     /* reduced width to keep the delete column compact */
@@ -397,8 +396,9 @@
 
 .mo-table td.first-column-cell {
     font-size: 13px;
-    border: 1px solid #ccc !important;
-    font-weight: 700;
+    border: 0.8px solid #ccc !important;
+    font-weight: 500;
+    color: #64748b;
     background-color: transparent;
     text-align: center !important;
     width: 35px;
@@ -408,8 +408,9 @@
     font-size: 13px;
     text-align: right !important;
     background-color: transparent;
-    border: 1px solid #ccc !important;
-    font-weight: 700;
+    border: 0.8px solid #ccc !important;
+    font-weight: 500;
+    color: #475569;
     min-width: 180px;
     padding: 6px 8px !important;
 }
@@ -418,23 +419,24 @@
     font-size: smaller;
     text-align: center !important;
     background-color: gainsboro;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     font-weight: bold;
     min-width: 180px;
 }
 
 .mo-table td.group3-second-column-cell {
-    font-size: smaller;
+    font-size: 13px;
     padding-right: 5px;
     text-align: right !important;
-    border: 1px solid #ccc !important;
-    font-weight: bold;
-    min-width: 180px; /* match other groups' second-column sizing */
-    max-width: 360px; /* prevent overly wide labels */
+    border: 0.8px solid #ccc !important;
+    font-weight: 500;
+    color: #475569;
+    min-width: 180px;
+    max-width: 360px;
     box-sizing: border-box;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap; /* keep label to one line like other groups */
+    white-space: nowrap;
 }
 
 .mo-table td.third-column-cell {
@@ -446,7 +448,7 @@
     min-width: 45px;
     width: 60px;
     min-height: 40px; /* reduced base height, allow expansion when wrapped */
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     background-color: transparent;
 }
 .mo-table td.third-column-header1-cell {
@@ -459,7 +461,7 @@
     width: 60px;
     background-color: gainsboro;
     min-height: 40px; /* reduced base height, allow expansion when wrapped */
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
 }
 .mo-table td.third-column-header2-cell {
     position: relative; /* ensure overlay positioned relative to the cell */
@@ -471,18 +473,19 @@
     width: 60px;
     background-color: lightskyblue;
     min-height: 40px; /* reduced base height, allow expansion when wrapped */
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
 }
 
 .mo-table td.group3-third-column-cell {
     position: relative;
     font-size: 13px;
     text-align: center !important;
-    font-weight: 700;
+    font-weight: 500;
+    color: #0f172a;
     padding: 6px 4px !important;
     min-width: 45px;
     width: 50px;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     display: table-cell;
     vertical-align: middle;
     box-sizing: border-box;
@@ -500,20 +503,19 @@
 .third-column-textarea {
     display: block;
     width: 100%;
-    height: auto; /* allow textarea to size to its content */
+    height: auto;
     min-height: 0;
     max-width: 100%;
     box-sizing: border-box;
-    /* give some comfortable inner padding so text doesn't touch edges */
     padding: 3px 3px !important;
     margin: 0 !important;
-    font-weight: 600;
-    font-size: 14px;
-    color: #333;
+    font-weight: 500;
+    font-size: 13px;
+    color: #0f172a;
     background: transparent;
     border: none !important;
     outline: none !important;
-    resize: none; /* let content expand the element */
+    resize: none;
     line-height: 1.2;
     text-align: center;
 }
@@ -521,21 +523,21 @@
 /* non-editable text replacement for textarea (same visual) */
 .third-column-text {
     display: flex;
-    align-items: center; /* vertical center */
-    justify-content: center; /* horizontal center */
+    align-items: center;
+    justify-content: center;
     width: 100%;
     box-sizing: border-box;
     padding: 3px 3px !important;
     margin: 0 !important;
-    font-weight: 600;
-    font-size: 14px;
-    color: #333;
+    font-weight: 500;
+    font-size: 13px;
+    color: #0f172a;
     background: transparent;
     border: none !important;
     outline: none !important;
     line-height: 1.2;
     text-align: center;
-    white-space: normal; /* allow wrapping */
+    white-space: normal;
     word-break: break-word;
 }
 
@@ -611,9 +613,10 @@
 .mo-table td.fourth-column-cell {
     font-size: 13px;
     background-color: transparent;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     text-align: center !important;
-    font-weight: 700;
+    font-weight: 500;
+    color: #475569;
     box-sizing: border-box;
     min-width: 70px;
     width: 90px;
@@ -623,7 +626,7 @@
 .mo-table td.fourth-column-header-cell {
     font-size: smaller;
     background-color: gainsboro;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     text-align: center !important;
     font-weight: bold;
     box-sizing: border-box;
@@ -635,9 +638,10 @@
 .mo-table td.group3-fourth-column-cell {
     font-size: 13px;
     background-color: transparent;
-    border: 1px solid #ccc !important;
+    border: 0.8px solid #ccc !important;
     text-align: center !important;
-    font-weight: 700;
+    font-weight: 500;
+    color: #475569;
     box-sizing: border-box;
     min-width: 40px;
     max-width: 45px;
@@ -652,6 +656,7 @@
     width: 48px !important;
     text-align: center !important;
     font-weight: 700;
+    border: 0.8px solid #ccc !important;
 }
 
 /* action button used for group3 rows */

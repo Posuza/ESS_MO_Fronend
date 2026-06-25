@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ArrowLeft } from "lucide-react";
 import MoNewForm from "../../components/mo/MoNewForm";
 import { useStore } from "../../store/store";
 import { getAccessLevel, AccessLevel } from "../../utils/positionAccess";
@@ -135,16 +134,6 @@ export default function MoAddNewPage({ onCancel }: Props) {
     <>
       <MoLoadingPopup open={showLoading} />
 
-      <div className={styles["mo-back-outer"]}>
-        <button
-          type="button"
-          className={styles["mo-back-btn"]}
-          onClick={onCancel}
-        >
-          <ArrowLeft size={18} />
-        </button>
-      </div>
-
       {!showLoading && (
         <MoNewForm
           selectedLocation={undefined}
@@ -153,6 +142,15 @@ export default function MoAddNewPage({ onCancel }: Props) {
           usedSubLocations={usedDivisionNames}
         />
       )}
+      <div className={styles["mo-back-outer"]}>
+        <button
+          type="button"
+          className={styles["mo-back-btn"]}
+          onClick={onCancel}
+        >
+          ย้อนกับ
+        </button>
+      </div>
     </>
   );
 }

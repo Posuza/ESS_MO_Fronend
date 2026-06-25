@@ -14,7 +14,9 @@ import MoAddNewPage from "./MoAddNewPage";
 import MoConfigPage from "./MoConfigPage";
 import MoDetailPage from "./MoDetailPage";
 import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";
-import { ChevronRight, RefreshCw } from "lucide-react";
+import { ChevronRight, RefreshCw, Check, X } from "lucide-react";
+import { FaHourglassHalf } from "react-icons/fa";
+import NoDataMessage from "../../components/NoDataMessage";
 import { FaHouse } from "react-icons/fa6";
 import { LuLandmark } from "react-icons/lu";
 import { usePositionReports } from "../../hooks/usePositionReports";
@@ -183,38 +185,28 @@ export default function MoHome(props: Props) {
     });
   }, [reports, currentEmployee?.department_id]);
 
-  // Robust mapping layout normalizes incoming backend text tags down to uniform Thai copy outputs
-  const statusLabels = [
-    {
-      keys: ["approved", "ดำเนินการแล้ว"],
-      label: "อนุมัติเรียบร้อยแล้ว",
-      cssClass: styles["status-approved"],
-    },
-    {
-      keys: ["PENDING", "pending", "waited", "รอการดำเนินการ", "รอ"],
+  const getStatusMeta = (statusRaw?: string) => {
+    const s = String(statusRaw ?? "").toLowerCase();
+    if (s === "approved" || s === "ดำเนินการแล้ว")
+      return {
+        dotClass: styles["dot-approved"],
+        icon: <Check size={16} strokeWidth={3} />,
+        label: "อนุมัติเรียบร้อยแล้ว",
+        badgeClass: styles["badge-approved"],
+      };
+    if (s === "rejected" || s === "reject" || s === "ถูกปฏิเสธ")
+      return {
+        dotClass: styles["dot-rejected"],
+        icon: <X size={16} strokeWidth={3} />,
+        label: "รอการดำเนินการแก้ไข",
+        badgeClass: styles["badge-rejected"],
+      };
+    return {
+      dotClass: styles["dot-pending"],
+      icon: <FaHourglassHalf size={14} />,
       label: "รอผู้อำนวยการอนุมัติ",
-      cssClass: styles["status-pending"],
-    },
-    {
-      keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
-      label: "รอการดำเนินการแก้ไข",
-      cssClass: styles["status-rejected"],
-    },
-  ];
-
-  // Helper matching lookups accurately regardless of white spacing or casing variations
-  const getStatusConfig = (status: string) => {
-    const cleaned = String(status ?? "")
-      .trim()
-      .toLowerCase();
-    return statusLabels.find((item) =>
-      item.keys.some((k) => k.toLowerCase() === cleaned),
-    );
-  };
-
-  const getStatusClass = (status: string) => {
-    const config = getStatusConfig(status);
-    return config ? config.cssClass : "";
+      badgeClass: styles["badge-pending"],
+    };
   };
 
   function openList() {
@@ -328,215 +320,88 @@ export default function MoHome(props: Props) {
 
   return (
     <div className={styles["mo-home-page"]}>
-      <div className={styles["mo-table-wrapper"]}>
-        <table className={styles["mo-table"]}>
-          <thead>
-            <tr>
-              <th className={styles["mo-table-header-cell"]} colSpan={2}>
-                <div className={styles["mo-table-header"]}>
-                  <span className={styles["mo-table-header-left"]}>
-                    <LuLandmark size="1.5em" /> {deptName}
-                  </span>
-                  <button
-                    type="button"
-                    className={styles["mo-reload-btn"]}
-                    onClick={() => refreshMainView()}
-                    title="รีเฟรชข้อมูล"
-                  >
-                    <RefreshCw size={18} />
-                  </button>
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {showLoading ? null : locationTable.length > 0 ? (
-              locationTable.map((r) => {
-                return (
-                  <tr
-                    key={`${r.id}-${r.division_name}`}
-                    onClick={() => {
-                      const found = reports.find(
-                        (rep) =>
-                          (rep.id || (rep as any).mo_daily_transaction_id) ===
-                          r.id,
-                      );
+      <div className={styles["mo-reload-box"]}>
+        <button
+          type="button"
+          className={styles["mo-reload-btn"]}
+          onClick={() => refreshMainView()}
+          title="รีเฟรชข้อมูล"
+        >
+          <RefreshCw size={15} className={styles["mo-reload-icon"]} />
+        </button>
+      </div>
+      <div className={styles["mo-card-wrapper"]}>
+        <div className={styles["mo-card-header"]}>
+          <LuLandmark size={16} />
+          <span>{deptName}</span>
+        </div>
 
-                      if (
-                        found &&
-                        Number(found.department_id) ===
-                          Number(currentEmployee?.department_id)
-                      ) {
-                        // Verify report still exists before navigating
-                        fetchReportById(found.id)
-                          .then(() => {
-                            setSelectedItem(found);
-                            setDetailSource("main");
-                            setSubView("detail");
-                          })
-                          .catch((err: unknown) => {
-                            const msg =
-                              err instanceof Error ? err.message : String(err);
-                            setNotFoundErrorMessage(msg);
-                            setShowNotFoundError(true);
-                          });
-                      }
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td className={styles["first-column-cell"]}>
-                      {(() => {
-                        const name = String(r.division_name ?? "");
-                        const m = name.match(/เขต\s+[\d.]+/);
-                        if (m) return m[0];
-                        const words = name.trim().split(/\s+/);
-                        return words.length >= 2
-                          ? words
-                              .slice(0, 2)
-                              .map((w) => w.charAt(0))
-                              .join("")
-                          : name;
-                      })()}
-                    </td>
-                    <td
-                      className={`${styles["second-column-cell"]} ${styles["status-pill"]} ${getStatusClass(r.approved_status)}`}
-                    >
-                      <div className={styles["second-column-inner"]}>
-                        {(() => {
-                          const config = getStatusConfig(r.approved_status);
-                          return config
-                            ? config.label
-                            : r.approved_status || "รอ";
-                        })()}
-                        <ChevronRight />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr className={styles["no-data-row"]}>
-                <td colSpan={2} className={styles["no-data-cell"]}>
-                  <div className={styles["no-data-message"]}>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        padding: "0.75rem 1rem",
-                      }}
-                    >
-                      <div style={{ width: 48, height: 48 }}>
-                        <svg
-                          width="48"
-                          height="48"
-                          viewBox="0 0 72 72"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <rect
-                            x="10"
-                            y="8"
-                            width="44"
-                            height="54"
-                            rx="7"
-                            fill="#9ca3af"
-                            stroke="#6b7280"
-                            strokeWidth="1.5"
-                          />
-                          <rect
-                            x="26"
-                            y="4"
-                            width="20"
-                            height="9"
-                            rx="4"
-                            fill="#9ca3af"
-                            stroke="#6b7280"
-                            strokeWidth="1.5"
-                          />
-                          <rect
-                            x="18"
-                            y="26"
-                            width="28"
-                            height="3"
-                            rx="1.5"
-                            fill="#6b7280"
-                          />
-                          <rect
-                            x="18"
-                            y="34"
-                            width="22"
-                            height="3"
-                            rx="1.5"
-                            fill="#6b7280"
-                          />
-                          <rect
-                            x="18"
-                            y="42"
-                            width="16"
-                            height="3"
-                            rx="1.5"
-                            fill="#6b7280"
-                          />
-                          <circle
-                            cx="56"
-                            cy="56"
-                            r="13"
-                            fill="#d1d5db"
-                            stroke="#9ca3af"
-                            strokeWidth="1"
-                          />
-                          <circle cx="56" cy="56" r="11" fill="#9ca3af" />
-                          <line
-                            x1="51"
-                            y1="51"
-                            x2="61"
-                            y2="61"
-                            stroke="#6b7280"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                          />
-                          <line
-                            x1="61"
-                            y1="51"
-                            x2="51"
-                            y2="61"
-                            stroke="#6b7280"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </div>
+        {showLoading ? null : locationTable.length > 0 ? (
+          <div className={styles["mo-card-list"]}>
+            {locationTable.map((r) => {
+              const { dotClass, icon, label, badgeClass } = getStatusMeta(
+                r.approved_status,
+              );
 
-                      <div style={{ textAlign: "center" }}>
-                        <p
-                          style={{
-                            margin: 0,
-                            fontWeight: 600,
-                            fontSize: 14,
-                            color: "#334155",
-                          }}
-                        >
-                          ไม่พบข้อมูลรายงาน
-                        </p>
-                        <p
-                          style={{
-                            margin: "2px 0 0",
-                            fontSize: 12,
-                            color: "#64748b",
-                          }}
-                        >
-                          ในแผนกของคุณในวันนี้
-                        </p>
-                      </div>
-                    </div>
+              return (
+                <div
+                  key={`${r.id}-${r.division_name}`}
+                  className={styles["mo-card-item"]}
+                  onClick={() => {
+                    const found = reports.find(
+                      (rep) =>
+                        (rep.id || (rep as any).mo_daily_transaction_id) ===
+                        r.id,
+                    );
+
+                    if (
+                      found &&
+                      Number(found.department_id) ===
+                        Number(currentEmployee?.department_id)
+                    ) {
+                      fetchReportById(found.id)
+                        .then(() => {
+                          setSelectedItem(found);
+                          setDetailSource("main");
+                          setSubView("detail");
+                        })
+                        .catch((err: unknown) => {
+                          const msg =
+                            err instanceof Error ? err.message : String(err);
+                          setNotFoundErrorMessage(msg);
+                          setShowNotFoundError(true);
+                        });
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className={`${styles["status-icon"]} ${dotClass}`}>
+                    {icon}
                   </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+
+                  <div className={styles["mo-card-body"]}>
+                    <span className={styles["mo-card-name"]}>
+                      {r.division_name || "-"}
+                    </span>
+                  </div>
+
+                  <span className={`${styles["status-badge"]} ${badgeClass}`}>
+                    {label}
+                  </span>
+
+                  <ChevronRight
+                    size={16}
+                    strokeWidth={2.8}
+                    className={styles["mo-card-chevron"]}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <NoDataMessage />
+        )}
       </div>
 
       <div className={styles["guts-mo-btn"]}>
@@ -576,13 +441,15 @@ export default function MoHome(props: Props) {
         description={notFoundErrorMessage}
       />
 
+      <hr className={styles["mo-divider"]} />
+
       <div className={styles["mo-back-home-outer"]}>
         <button
           type="button"
           className={styles["mo-back-home"]}
           onClick={goBack}
         >
-           ย้อนกับ
+          ย้อนกับ
         </button>
       </div>
     </div>

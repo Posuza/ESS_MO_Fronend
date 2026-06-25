@@ -33,9 +33,9 @@ export default function Header({
       </div>
 
       <div className={styles.subEn}>
-        <span className={styles.firstLetter}>E</span>mployee{" "}
-        <span className={styles.firstLetter}>S</span>elf{" "}
-        <span className={styles.firstLetter}>S</span>ervice
+        <span className={styles.redLetter}>E</span>mployee{" "}
+        <span className={styles.redLetter}>S</span>elf{" "}
+        <span className={styles.redLetter}>S</span>ervice
       </div>
       <div className={styles.subTh}>ระบบบริการตนเอง</div>
 

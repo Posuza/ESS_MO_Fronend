@@ -285,11 +285,13 @@ export default function MoSectorDetailForm(props: Props) {
               <tr>
                 <td
                   colSpan={4}
-                  className={styles["second-column-cell"]}
                   style={{
                     textAlign: "center",
+                    verticalAlign: "middle",
                     color: "#9ca3af",
                     fontStyle: "italic",
+                    padding: "10px",
+                    border: "0.8px solid #ccc",
                   }}
                 >
                   ไม่มีข้อมูลโครงการ

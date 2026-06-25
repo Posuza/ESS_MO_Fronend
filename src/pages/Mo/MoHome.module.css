@@ -6,194 +6,202 @@
 
 :root {
     --muted: #6b7280;
+    --mo-status-size: 11px;
 }
 
-/* Table styles used by the form */
-.mo-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: auto;
-    margin: 0;
+/* ─── Card wrapper (replaces table) ──────────────────────── */
+.mo-card-wrapper {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
 }
 
-.mo-table thead tr:first-child th:first-child {
-    border-radius: 8px 0 0 0;
-}
-
-.mo-table thead tr:first-child th:last-child {
-    border-radius: 0 8px 0 0;
-}
-
-/* Single th spanning both columns */
-.mo-table thead tr:first-child th:only-child {
-    border-radius: 8px 8px 0 0;
-}
-
-.mo-table tbody tr:last-child td:first-child {
-    border-radius: 0 0 0 8px;
-}
-
-.mo-table tbody tr:last-child td:last-child {
-    border-radius: 0 0 8px 0;
-}
-
-/* When a single td spans both columns (no-data state) */
-.mo-table tbody tr:last-child td:only-child {
-    border-radius: 0 0 8px 8px;
-}
-
-.mo-table-wrapper {
-    position: relative;
-    overflow: visible;
-}
-
-.no-data-message {
-    text-align: center;
-    padding: 1px;
-    color: var(--muted);
-    font-style: italic;
-}
-
-.no-data-row {
-    background: #f0f4f8;
-}
-
-.no-data-cell {
-    text-align: center;
-    padding: 1px;
-    color: var(--muted);
-    font-style: italic;
-}
-
-.mo-table th,
-.mo-table td {
-    font-family: "Prompt", sans-serif;
-    border: 1px solid #e2e8f0;
-    text-align: center;
-    vertical-align: top;
-}
-
-.mo-table th {
-    padding: 6px 8px;
-    background-color: #003366;
-    color: white;
-    font-weight: bold;
-}
-
-.mo-table td.first-column-cell {
-    padding: 2px 1px;
-    font-size: 13px;
-    text-align: center;
-    vertical-align: middle;
-    background-color: #f5f5f5;
-    border: 1px solid #ccc !important;
-    font-weight: bold;
-    min-width: 30px;
-    max-width: 35px;
-    white-space: nowrap;
-    box-sizing: border-box;
-}
-
-.mo-table td.second-column-cell {
-    padding: 4px 0 4px 6px;
-    font-weight: bold;
-    font-size: 13px;
-    border: 1px solid #ccc;
-    min-width: 100px;
-    box-sizing: border-box;
-    transition:
-        background-color 0.15s ease,
-        color 0.15s ease;
-}
-
-.second-column-inner {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    height: 100%;
-    gap: 0.5rem;
-}
-
-.mo-table-header-cell {
-    width: 100%;
-    padding: 11px 0px;
-    font-weight: 800;
-    background-color: #0b3b57;
-    color: white;
-    vertical-align: middle !important;
-    height: 40px;
-}
-
-.mo-table th.mo-table-header-cell {
-    text-align: left;
-    padding-left: 8px;
-}
-
-.mo-table-header {
+/* ─── Card header (department name) ──────────────────────── */
+.mo-card-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 6px;
+    padding: 10px 12px;
+    background: #014f86;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.mo-card-header svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ─── Card list container ─────────────────────────────────── */
+.mo-card-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ─── Card item (division row) ────────────────────────────── */
+.mo-card-item {
+    display: flex;
+    align-items: center;
     gap: 10px;
-}
-
-.mo-table-header-left {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.85rem;
-}
-
-.mo-reload-btn {
-    background: none;
-    border: 0.5px solid rgba(255, 255, 255, 0.5);
-    color: white;
+    padding: 10px 12px;
     cursor: pointer;
-    padding: 4px 6px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+    transition: background 0.12s ease;
+}
+
+.mo-card-item:last-child {
+    border-bottom: none;
+}
+
+.mo-card-item:hover {
+    background: #f8fbff;
+}
+
+.mo-card-item:focus-visible {
+    outline: 2px solid rgba(37, 99, 235, 0.5);
+    outline-offset: -2px;
+}
+
+/* ─── Status icon (colored circle like PatrolReport) ──────── */
+.status-icon {
+    width: 27px;
+    height: 27px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.status-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.dot-approved {
+    color: #ffffff;
+    background: #16a34a;
+    border: none;
+}
+
+.dot-pending {
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+}
+
+.dot-rejected {
+    color: #ffffff;
+    background: #dc2626;
+    border: none;
+}
+
+/* ─── Card body (division name) ──────────────────────────── */
+.mo-card-body {
+    flex: 1;
+    min-width: auto;
+}
+
+.mo-card-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1b2b4a;
+}
+
+/* ─── Status badge (pill like PatrolReport) ───────────────── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 22px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: var(--mo-status-size);
+    font-weight: 600;
+    line-height: 1.15;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.badge-approved {
+    color: #087a35;
+    background: #dff7e7;
+    border: 1px solid rgba(22, 163, 74, 0.18);
+}
+
+.badge-pending {
+    color: #d97706;
+    background: #fffbeb;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-rejected {
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid rgba(248, 113, 113, 0.32);
+}
+
+/* ─── Chevron (right arrow) ───────────────────────────────── */
+.mo-card-chevron {
+    flex-shrink: 0;
+    color: #94a3b8;
+    opacity: 0.7;
+}
+
+/* ─── Reload button ───────────────────────────────────────── */
+.mo-reload-box {
+    width: 72px;
+    height: 28px;
+    min-width: 72px;
+    margin-left: auto;
+    margin-bottom: 6px;
+    border: 1px solid #d8e3ee;
+    border-radius: 999px;
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
-    transition: background 0.15s ease;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
+.mo-reload-btn {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #4b5563;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
 .mo-reload-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #f1f5f9;
 }
 
 .mo-reload-btn:active {
-    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(1px);
 }
 
-.status-pill {
-    font-weight: 700;
+.mo-reload-icon {
+    width: 15px;
+    height: 15px;
+    display: block;
 }
 
-/* --- Fixed Status Overrides --- */
-
-/* Approved: White background, emerald green text, light border alignment */
-.status-approved {
-    background: #ffffff !important;
-    color: var(--brand, #0277bd) !important;
-    border: 1px solid #d1eae1 !important;
-}
-
-/* Pending: Full orange solid background with clean white text */
-.status-pending {
-    background: #ff9800 !important;
-    color: #ffffff !important;
-    border-color: #d2892f !important;
-}
-
-/* Rejected: Full crimson red background with clean white text */
-.status-rejected {
-    background: #cb6027 !important;
-    color: #ffffff !important;
-    border-color: #cb6027 !important;
-}
-
-/* Buttons */
+/* ─── Buttons ─────────────────────────────────────────────── */
 .guts-mo-btn {
     display: flex;
     justify-content: center;
@@ -203,10 +211,10 @@
 .guts-mo-btn button {
     width: 100%;
     height: 48px;
-    padding: 0 12px;
-    border-radius: 10px;
-    font-family: "Prompt", sans-serif;
-    font-weight: 600;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 14px;
+    font-weight: 700;
     font-size: 18px;
     letter-spacing: 0.2px;
     display: inline-flex;
@@ -219,23 +227,21 @@
         box-shadow 0.12s ease,
         background 0.12s ease;
     box-shadow: 0 8px 18px rgba(1, 58, 88, 0.1);
-    border: 0;
 }
 
 .mo-home-addnew {
-    background: #a81515;
-    color: #fff;
+    background: #dc2626;
+    color: #ffffff;
 }
 
-.mo-home-addnew:hover {
+.mo-home-addnew:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 14px 36px rgba(1, 58, 88, 0.18);
+    box-shadow: 0 14px 36px rgba(220, 38, 38, 0.25);
 }
 
 .mo-home-addnew:focus-visible {
-    outline: 3px solid rgba(2, 75, 118, 0.18);
+    outline: 3px solid rgba(220, 38, 38, 0.18);
     outline-offset: 4px;
-    border-radius: 14px;
 }
 
 .mo-home-addnew:disabled {
@@ -246,17 +252,19 @@
 }
 
 .mo-home-search {
-    background: linear-gradient(
-        90deg,
-        var(--brand, #0277bd),
-        var(--brandDark, #014f86)
-    );
-    color: #fff;
+    background: #1d4a82;
+    color: #ffffff;
+    box-shadow: 0 7px 16px rgba(20, 99, 243, 0.22);
 }
 
 .mo-home-search:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 36px rgba(1, 58, 88, 0.18);
+    box-shadow: 0 14px 36px rgba(20, 99, 243, 0.3);
+}
+
+.mo-home-search:focus-visible {
+    outline: 3px solid rgba(29, 74, 130, 0.18);
+    outline-offset: 4px;
 }
 
 .mo-back-home-outer {
@@ -268,6 +276,7 @@
     width: 100%;
     height: 50px;
     padding: 0;
+    border: 0;
     border-radius: 999px;
     display: flex;
     align-items: center;
@@ -275,11 +284,11 @@
     flex-direction: row;
     font-size: 18px;
     font-weight: 700;
-    background: black;
-    border: 0;
-    color: #fff;
+    background: #000000;
+    color: #ffffff;
     box-shadow: 0 10px 24px rgba(75, 85, 99, 0.35);
     gap: 8px;
+    cursor: pointer;
     transition:
         transform 0.12s ease,
         box-shadow 0.12s ease,
@@ -287,12 +296,8 @@
         color 0.12s ease;
 }
 
-.home {
-    font-size: 28px;
-}
-
-.mo-home-search:focus-visible {
-    outline: 3px solid rgba(2, 75, 118, 0.18);
-    outline-offset: 4px;
-    border-radius: 14px;
+.mo-divider {
+    border: none;
+    border-top: 1px solid rgba(226, 232, 240, 0.95);
+    margin: 16px 0;
 }

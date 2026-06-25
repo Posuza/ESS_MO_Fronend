@@ -921,7 +921,7 @@ export default function MoNewForm(props: Props) {
 
   return (
     <>
-      <form onSubmit={(e) => onSubmit(e)}>
+      <form className={styles["guts-mo-form"]} onSubmit={(e) => onSubmit(e)}>
         <div className={styles["guts-Mo-layout"]}>
           {/* หน่วยงาน / Sector row */}
           <div className={styles["sector-table-wrapper"]}>

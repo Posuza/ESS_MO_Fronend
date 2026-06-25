@@ -220,18 +220,6 @@ export default function MoDetailPage(props: Props) {
     <>
       {/* ── Top action bar: back + edit/delete ── */}
       <div className={styles["gut-detail-btns-box"]}>
-        <button
-          type="button"
-          className={styles["gut-back-icon"]}
-          onClick={() => {
-            if (props.onCancel) return props.onCancel();
-            return window.history.back();
-          }}
-          aria-label="Back"
-        >
-          <ArrowLeft size={18} />
-        </button>
-
         <div className={styles["guts-action-icons"]}>
           {canEditData && (
             <>
@@ -325,7 +313,7 @@ export default function MoDetailPage(props: Props) {
             display: "flex",
             flexDirection: "column",
             gap: "10px",
-            padding: "0 16px 16px",
+            padding: 0,
           }}
         >
           {/* อนุมัติรายงาน — hidden once already approved */}
@@ -358,6 +346,19 @@ export default function MoDetailPage(props: Props) {
           </button>
         </div>
       )}
+
+      <div className={styles["mo-back-outer"]}>
+        <button
+          type="button"
+          className={styles["mo-back-btn"]}
+          onClick={() => {
+            if (props.onCancel) return props.onCancel();
+            return window.history.back();
+          }}
+        >
+          ย้อนกับ
+        </button>
+      </div>
     </>
   );
 }

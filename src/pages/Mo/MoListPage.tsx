@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Search,
   ChevronRight,
-  ArrowLeft,
   Home,
   MapPin,
   Landmark,
@@ -18,6 +17,7 @@ import type { SectorReport } from "../../services/moReporTransaction.Service";
 import { buildReportFilters } from "../../utils/positionAccess";
 import { FaHourglassHalf } from "react-icons/fa";
 import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";
+import NoDataMessage from "../../components/NoDataMessage";
 
 const DEPARTMENT_NAMES: Record<number, string> = {
   4: "ฝ่ายปฎิบัติการภาค 1",
@@ -58,15 +58,10 @@ export default function MoListPage({
     return null;
   }, [authEmployee]);
 
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   const toggleExpand = useCallback((key: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    setExpandedKey((prev) => (prev === key ? null : key));
   }, []);
 
   const [selectedLocation, setSelectedLocation] = useState<string>(
@@ -265,122 +260,35 @@ export default function MoListPage({
     if (s === "approved")
       return {
         dotClass: styles["dot-approved"],
-        icon: <Check size={15} />,
+        icon: <Check size={16} strokeWidth={3} />,
         label: "อนุมัติเรียบร้อยแล้ว",
         badgeClass: styles["badge-approved"],
       };
     if (s === "rejected" || s === "reject")
       return {
         dotClass: styles["dot-rejected"],
-        icon: <X size={15} />,
+        icon: <X size={16} strokeWidth={3} />,
         label: "รอการดำเนินการแก้ไข",
         badgeClass: styles["badge-rejected"],
       };
     return {
       dotClass: styles["dot-pending"],
-      icon: <FaHourglassHalf size={12} />,
+      icon: <FaHourglassHalf size={14} />,
       label: "รอผู้อำนวยการอนุมัติ",
       badgeClass: styles["badge-pending"],
     };
   }
 
-  function renderNoData(message: string, subMessage: string) {
+  function renderNoData() {
     return (
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "0.5rem",
-          padding: "1.5rem 1rem",
-          background: "#e2e8f0",
+          background: "white",
           borderRadius: "4px 4px 8px 8px",
           boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
         }}
       >
-        <div style={{ width: 48, height: 48 }}>
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 72 72"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect
-              x="10"
-              y="8"
-              width="44"
-              height="54"
-              rx="7"
-              fill="#9ca3af"
-              stroke="#6b7280"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="26"
-              y="4"
-              width="20"
-              height="9"
-              rx="4"
-              fill="#9ca3af"
-              stroke="#6b7280"
-              strokeWidth="1.5"
-            />
-            <rect x="18" y="26" width="28" height="3" rx="1.5" fill="#6b7280" />
-            <rect x="18" y="34" width="22" height="3" rx="1.5" fill="#6b7280" />
-            <rect x="18" y="42" width="16" height="3" rx="1.5" fill="#6b7280" />
-            <circle
-              cx="56"
-              cy="56"
-              r="13"
-              fill="#d1d5db"
-              stroke="#9ca3af"
-              strokeWidth="1"
-            />
-            <circle cx="56" cy="56" r="11" fill="#9ca3af" />
-            <line
-              x1="51"
-              y1="51"
-              x2="61"
-              y2="61"
-              stroke="#6b7280"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            />
-            <line
-              x1="61"
-              y1="51"
-              x2="51"
-              y2="61"
-              stroke="#6b7280"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <p
-            style={{
-              margin: 0,
-              fontWeight: 600,
-              fontSize: 14,
-              color: "#334155",
-              fontStyle: "italic",
-            }}
-          >
-            {message}
-          </p>
-          <p
-            style={{
-              margin: "2px 0 0",
-              fontSize: 12,
-              color: "#64748b",
-              fontStyle: "italic",
-            }}
-          >
-            {subMessage}
-          </p>
-        </div>
+        <NoDataMessage />
       </div>
     );
   }
@@ -403,21 +311,10 @@ export default function MoListPage({
         description={notFoundErrorMessage}
       />
 
-      {/* Back button */}
-      <div className={styles["mo-back-outer"]}>
-        <button
-          type="button"
-          className={styles["mo-back-btn"]}
-          onClick={goBack}
-        >
-          <ArrowLeft size={18} />
-        </button>
-      </div>
-
       {/* Search bar — always visible */}
       <div className={styles["mo-search"]}>
-        <div className={styles["search-field-group"]}>
-          <label className={styles["search-label"]}>ภาค</label>
+        <label className={styles["search-field-group"]}>
+          <span className={styles["search-label"]}>ภาค</span>
           <select
             value={selectedLocation}
             onChange={(e) => setSelectedLocation(e.target.value)}
@@ -431,16 +328,12 @@ export default function MoListPage({
               ),
             )}
           </select>
-        </div>
+        </label>
 
-        <div className={styles["search-field-group"]}>
-          <label className={styles["search-label"]}>จากวันที่</label>
+        <label className={styles["search-field-group"]}>
+          <span className={styles["search-label"]}>จากวันที่</span>
           <div className={styles["date-input-wrapper"]}>
-            <CalendarDays
-              size={18}
-              className={styles["date-icon"]}
-              onClick={() => dateInputRef.current?.showPicker()}
-            />
+            <CalendarDays size={14} className={styles["date-icon"]} />
             <input
               ref={dateInputRef}
               type="date"
@@ -448,23 +341,21 @@ export default function MoListPage({
               onChange={(e) => setSelectedDate(e.target.value)}
               className={styles["guts-mo-search-input"]}
               max={new Date().toISOString().split("T")[0]}
+              onClick={(e) => {
+                e.currentTarget.showPicker();
+              }}
             />
           </div>
-        </div>
+        </label>
 
         <button
-          className={styles["mo-search-clear"]}
-          aria-label="Search"
+          className={`${styles["mo-search-clear"]} ${hasSearchChanged && !storeLoading ? styles["mo-search-clear-highlighted"] : ""}`}
+          aria-label="ค้นหา"
           onClick={submitSearch}
           type="button"
           disabled={!selectedLocation && !selectedDate}
-          style={
-            hasSearchChanged && !storeLoading
-              ? { background: "#014f86", color: "#fff" }
-              : {}
-          }
         >
-          <Search />
+          <Search size={15} strokeWidth={2.6} />
         </button>
       </div>
 
@@ -499,10 +390,7 @@ export default function MoListPage({
 
                 const entries = Object.entries(groupMap);
                 if (entries.length === 0) {
-                  return renderNoData(
-                    "ไม่พบข้อมูลรายงาน",
-                    "ไม่มีรายงานในวันที่เลือก",
-                  );
+                  return renderNoData();
                 }
 
                 return entries.map(([deptName, items], deptIdx) => {
@@ -523,7 +411,7 @@ export default function MoListPage({
                   return (
                     <div key={deptName} className={styles["dept-group-card"]}>
                       <div
-                        className={`${styles["dept-card"]} ${expandedItems.has("dept-" + deptName) ? styles["dept-card-expanded"] : ""}`}
+                        className={`${styles["dept-card"]} ${expandedKey === "dept-" + deptName ? styles["dept-card-expanded"] : ""}`}
                         onClick={() => toggleExpand("dept-" + deptName)}
                         role="button"
                         tabIndex={0}
@@ -537,7 +425,7 @@ export default function MoListPage({
                             {deptIdx + 1}. {deptName}
                           </div>
 
-                          {!expandedItems.has("dept-" + deptName) && (
+                          {expandedKey !== "dept-" + deptName && (
                             <div className={styles["dept-card-chips"]}>
                               <span className={styles["header-chip"]}>
                                 <span
@@ -577,7 +465,7 @@ export default function MoListPage({
                           <ChevronRight size={20} />
                         </button>
                       </div>
-                      {expandedItems.has("dept-" + deptName) && (
+                      {expandedKey === "dept-" + deptName && (
                         <div className={styles["dept-card-body"]}>
                           {[
                             {
@@ -626,7 +514,7 @@ export default function MoListPage({
           <div className={styles["section-group"]}>
             <div className={styles["division-section-header"]}>
               <div className={styles["section-header-left"]}>
-                <MapPin size={20} className={styles["section-icon"]} />
+                <MapPin size={16} className={styles["section-icon"]} />
                 <span>เขตบันทึก</span>
                 <span className={styles["section-count"]}>
                   {Math.min(5, filteredData.length)} รายการ
@@ -642,12 +530,12 @@ export default function MoListPage({
             </div>
 
             {displayRecords.length === 0
-              ? renderNoData("ไม่พบข้อมูลรายงาน", "ไม่มีรายงานในวันที่เลือก")
+              ? renderNoData()
               : displayRecords.map((r: any, idx: number) => {
                   const key = r.id ?? r.user_id ?? idx;
                   const subZone = r.subLocationLabel ?? r.division_name ?? "";
                   const itemKey = String(key) + "-sub";
-                  const isExpanded = expandedItems.has(itemKey);
+                  const isExpanded = expandedKey === itemKey;
 
                   const sumByPrefix = (prefix: string) =>
                     Object.keys(r)
@@ -779,6 +667,17 @@ export default function MoListPage({
           </div>
         </>
       )}
+
+      {/* Back button */}
+      <div className={styles["mo-back-outer"]}>
+        <button
+          type="button"
+          className={styles["mo-back-btn"]}
+          onClick={goBack}
+        >
+          ย้อนกับ
+        </button>
+      </div>
     </>
   );
 }

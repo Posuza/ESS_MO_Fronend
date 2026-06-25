@@ -878,8 +878,8 @@
 .guts-Mo-actions {
     display: flex;
     justify-content: center;
-    margin-top: 24px;
-    margin-bottom: 24px;
+    margin-top: 10px;
+    margin-bottom: 5px;
 
     grid-column: 1 / -1;
     flex-direction: column;
@@ -888,10 +888,15 @@
     box-sizing: border-box;
 }
 
+.guts-mo-form {
+    margin: 0;
+    padding: 0;
+}
+
 .guts-Mo-actions .guts-submit-btn {
     min-width: 0;
     flex: 1;
-    padding: 14px 24px;
+    padding: 10px 24px;
     height: auto;
     border-radius: 999px;
     font-size: 18px;
@@ -924,7 +929,7 @@
 .guts-Mo-actions .guts-btn {
     min-width: 0;
     flex: 1;
-    padding: 14px 24px;
+    padding: 10px 24px;
     height: auto;
     border-radius: 999px;
     font-size: 18px;

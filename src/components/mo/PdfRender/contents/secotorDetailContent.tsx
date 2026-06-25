@@ -92,7 +92,7 @@ export default function SecotorDetialContent({ item }: Props) {
                       style={{
                         fontWeight: 600,
                         textAlign: "center",
-                        fontSize: 14,
+                        fontSize: 13,
                         padding: "4px 3px",
                         borderLeft: "1px solid #e5e7eb",
                         borderRight: "1px solid #e5e7eb",
@@ -104,7 +104,7 @@ export default function SecotorDetialContent({ item }: Props) {
                       colSpan={5}
                       style={{
                         fontWeight: 700,
-                        fontSize: 14,
+                        fontSize: 13,
                         padding: "4px 6px",
                         textAlign: "left",
                       }}
@@ -116,7 +116,11 @@ export default function SecotorDetialContent({ item }: Props) {
                     <td style={cellStyle}>รายละเอียด</td>
                     <td
                       colSpan={5}
-                      style={{ padding: "4px 6px", fontSize: 13 }}
+                      style={{
+                        padding: "4px 6px",
+                        fontSize: 14,
+                        color: "#1b2b4a",
+                      }}
                     >
                       {it.detail || "-"}
                     </td>
@@ -130,7 +134,7 @@ export default function SecotorDetialContent({ item }: Props) {
                         fontWeight: 700,
                         textAlign: "left",
                         padding: "4px 6px",
-                        fontSize: 13,
+                        fontSize: 14,
                         background: statusBg(it.status),
                       }}
                     >
@@ -141,7 +145,11 @@ export default function SecotorDetialContent({ item }: Props) {
                     <td style={cellStyle}>หมายเหตุ</td>
                     <td
                       colSpan={5}
-                      style={{ padding: "4px 6px", fontSize: 13 }}
+                      style={{
+                        padding: "4px 6px",
+                        fontSize: 14,
+                        color: "#1b2b4a",
+                      }}
                     >
                       {it.note || "-"}
                     </td>

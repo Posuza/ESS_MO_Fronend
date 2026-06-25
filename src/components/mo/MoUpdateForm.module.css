@@ -666,25 +666,32 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 12px;
+    min-height: 22px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
     font-weight: 600;
-    color: #fff;
-    line-height: 1.6;
+    line-height: 1.15;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
+
 .status-approved {
-    background: #1d4ed8;
-    color: white;
+    color: #087a35;
+    background: #dff7e7;
+    border: 1px solid rgba(22, 163, 74, 0.18);
 }
+
 .status-pending {
-    background: #ff9800;
-    color: white;
+    color: #d97706;
+    background: #fffbeb;
+    border: 1px solid rgba(245, 158, 11, 0.3);
 }
+
 .status-rejected {
-    background: #cb6027 !important;
-    color: #ffffff !important;
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid rgba(248, 113, 113, 0.32);
 }
 
 /* Approval Section - matching MoDetailPage style */

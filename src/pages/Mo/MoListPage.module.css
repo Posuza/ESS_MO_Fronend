@@ -1,27 +1,41 @@
+/* ─── CSS custom properties ────────────────────────────────── */
+:root {
+    --mo-status-size: 11px;
+    --mo-label-font-size: 11px;
+    --mo-filter-font-size: 12px;
+    --mo-icon-size: 16px;
+    --mo-card-title-size: 13px;
+}
+
 /* ─── Back button ─────────────────────────────────────────── */
 .mo-back-outer {
     display: flex;
-    padding-top: 6px;
-    margin-bottom: 20px;
+    margin-top: auto;
 }
 
 .mo-back-btn {
-    height: 40px !important;
-    padding: 10px !important;
-    border-radius: 999px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: var(--brandDark, rgba(2, 75, 118, 0.9)) !important;
-    border: 1px solid rgba(2, 75, 118, 0.06) !important;
-    color: #ffffff !important;
-    cursor: pointer !important;
-    box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1) !important;
-    width: auto !important;
-    box-sizing: border-box;
+    margin-top: 5px;
+    width: 100%;
+    height: 50px;
+    padding: 0;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    font-size: 18px;
+    font-weight: 700;
+    background: black;
+    border: 0;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(75, 85, 99, 0.35);
+    gap: 8px;
+    cursor: pointer;
     transition:
         transform 0.12s ease,
-        box-shadow 0.12s ease !important;
+        box-shadow 0.12s ease,
+        background 0.12s ease,
+        color 0.12s ease;
 }
 
 /* ─── Search bar ──────────────────────────────────────────── */
@@ -34,121 +48,157 @@
     width: 100%;
 }
 
-/* Added for the new label layout */
+/* Field group: label + control stacked */
 .search-field-group {
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 3px;
     flex: 1;
 }
 
 .search-label {
-    font-family: "Prompt", sans-serif;
-    font-size: 12px;
+    display: block;
+    margin: 0;
+    color: #475569;
+    font-size: var(--mo-label-font-size);
     font-weight: 800;
-    color: var(--blueText);
-    margin-left: 2px;
+    line-height: 1.15;
 }
 
 .guts-mo-search-input {
-    height: 38px;
-    padding: 0 8px;
-    border-radius: 6px;
-    border: 1px solid var(--blueText);
-    font-weight: 500;
-    font-size: 12px;
     width: 100%;
-    box-sizing: border-box;
-    color: #1f2937;
-    background: #fff;
-    box-shadow: none;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid rgba(148, 163, 184, 0.42);
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 500;
     outline: none;
-    transition: border-color 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-sizing: border-box;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .guts-mo-search-input:focus {
-    border-color: #014f86;
-    box-shadow: none;
+    border-color: rgba(37, 99, 235, 0.72);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
 }
 
+.guts-mo-search-input::placeholder {
+    color: #98a2b3;
+}
+
+.guts-mo-search-input:disabled {
+    background: #f2f4f7;
+    color: #667085;
+    cursor: not-allowed;
+}
+
+/* Select-specific styling */
+select.guts-mo-search-input {
+    padding: 0 28px 0 12px;
+    appearance: auto;
+    cursor: pointer;
+}
+
+/* Date input wrapper — like PatrolReport .dateControl */
 .date-input-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
+    width: 100%;
+    cursor: pointer;
 }
 
 .date-icon {
     position: absolute;
-    left: 10px;
-    color: var(--blueText);
-    cursor: pointer;
-    flex-shrink: 0;
-    z-index: 1;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 13px;
+    height: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    opacity: 0.72;
+    pointer-events: none;
 }
 
 .date-input-wrapper input[type="date"] {
-    padding-left: 34px;
+    padding: 0 12px 0 28px;
+    appearance: auto;
 }
 
 .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
-    display: none;
-    -webkit-appearance: none;
+    opacity: 0.6;
+    cursor: pointer;
 }
 
 .date-input-wrapper input[type="date"]::-moz-calendar-picker-indicator {
-    display: none;
+    cursor: pointer;
 }
 
 .date-input-wrapper input[type="date"]::-ms-clear {
     display: none;
 }
 
-select.guts-mo-search-input {
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23014f86' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 14px;
-    padding-right: 26px;
-    text-align: left;
-}
-
+/* Search button — like PatrolReport .searchButton */
 .mo-search-clear {
-    background: #014f86;
-    color: #ffffff;
-    border: none;
-    width: 38px;
-    height: 38px;
+    height: 34px;
+    min-width: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
-    border-radius: 5px;
-    font-weight: 600;
-    font-size: 13.5px;
+    gap: 6px;
+    background: #1d4a82;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.15s ease;
+    box-shadow: 0 7px 16px rgba(20, 99, 243, 0.22);
+    transition:
+        background 0.15s ease,
+        box-shadow 0.15s ease,
+        color 0.15s ease;
 }
 
 .mo-search-clear:hover:not(:disabled) {
-    background: #013a63;
-    border-color: none;
+    background: #2563eb;
 }
 
 .mo-search-clear:disabled {
-    opacity: 0.45;
+    background: #94a3b8;
+    color: #ffffff;
     cursor: not-allowed;
-    background: #a9c5da;
-    color: #e0e0e0;
+    box-shadow: none;
 }
 
 .mo-search-clear svg {
     width: 16px;
     height: 16px;
-    stroke: currentColor;
-    stroke-width: 2.5;
+    stroke: #ffffff;
+    stroke-width: 2.6;
+}
+
+/* Highlight state — shown inline when values have changed */
+.mo-search-clear-highlighted {
+    background: #1d4a82 !important;
+    color: #ffffff !important;
+    box-shadow: 0 7px 16px rgba(20, 99, 243, 0.22) !important;
+}
+
+.mo-search-clear-highlighted:hover:not(:disabled) {
+    background: #2563eb !important;
+    box-shadow: 0 7px 24px rgba(20, 99, 243, 0.45) !important;
 }
 
 /* ─── Section wrapper (shared by dept + division groups) ──── */
@@ -162,25 +212,25 @@ select.guts-mo-search-input {
 /* ─── Section header ──────────────────────────────────────── */
 .department-section-header {
     display: flex;
-    border-radius: 3px;
+    border-radius: 8px;
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
     background: #014f86;
     color: #fff;
     gap: 8px;
-    font-family: "Prompt", sans-serif;
+    box-shadow: 0 1px 3px rgba(1, 79, 134, 0.2);
 }
 .division-section-header {
     display: flex;
-    border-radius: 3px;
+    border-radius: 8px;
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
     background: #0277bd;
     color: #fff;
     gap: 8px;
-    font-family: "Prompt", sans-serif;
+    box-shadow: 0 1px 3px rgba(2, 119, 189, 0.2);
 }
 
 .section-header-left {
@@ -201,8 +251,19 @@ select.guts-mo-search-input {
 }
 
 .section-icon {
-    opacity: 0.9;
+    opacity: 0.95;
     flex-shrink: 0;
+    width: var(--mo-icon-size);
+    height: var(--mo-icon-size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
 }
 
 .section-count {
@@ -221,6 +282,9 @@ select.guts-mo-search-input {
     font-weight: 600;
     opacity: 0.9;
     white-space: nowrap;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 8px;
+    border-radius: 6px;
 }
 
 /* ─── Header status chips ──────────────────────────────── */
@@ -269,14 +333,14 @@ select.guts-mo-search-input {
 }
 
 .dept-card-expanded {
-    background: rgba(2, 75, 118, 0.05);
-    border-bottom: 1px solid rgba(2, 75, 118, 0.08);
+    background: rgba(2, 75, 118, 0.03);
+    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .dept-group-card {
-    background: linear-gradient(90deg, #dfeaf5, #e8f2fa);
-    border: 1px solid rgba(2, 75, 118, 0.1);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 6px;
@@ -317,49 +381,62 @@ select.guts-mo-search-input {
 }
 
 .chip-dot {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 999px;
     border: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    font-size: 12px;
+}
+
+.chip-dot svg {
+    width: 12px;
+    height: 12px;
+    display: block;
 }
 
 .chip-dot-approved {
-    background: rgb(22, 163, 74);
-    color: #fff;
+    background: #16a34a;
+    color: #ffffff;
+    border: none;
 }
 
 .chip-dot-pending {
-    background: white;
-    color: orange;
-    border: 0.5px solid orange;
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid rgba(148, 163, 184, 0.45);
 }
 
 .chip-dot-rejected {
-    background: rgb(220, 38, 38);
-    color: #fff;
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
 }
 
 .dept-card-body {
-    padding: 2px 2px;
-    margin: 0 8px 10px 45px;
+    margin: 0 8px 8px 45px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    background: #f5f6f7;
-    border-radius: 5px;
+    gap: 0;
+    overflow: hidden;
+    border-radius: 7px;
+    border: 1px solid rgba(203, 213, 225, 0.85);
+    background: #f7fbf8;
 }
 
 .dept-item-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
-    border-bottom: 1px solid rgba(2, 75, 118, 0.08);
+    padding: 5px 9px;
+    font-size: 11px;
+    min-height: 24px;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.75);
 }
 
 .dept-item-row:last-child {
@@ -377,27 +454,26 @@ select.guts-mo-search-input {
     flex-shrink: 0;
     font-size: 12px;
 }
-
 .dept-item-name {
     flex: 1;
     min-width: 0;
-    font-weight: 600;
-    color: #6b7280;
+    font-weight: 500;
+    color: #64748b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .dept-item-name.chip-approved {
-    color: rgb(6, 95, 70);
+    color: #087a35;
 }
 
 .dept-item-name.chip-pending {
-    color: orange;
+    color: #d97706;
 }
 
 .dept-item-name.chip-rejected {
-    color: rgb(153, 27, 27);
+    color: #dc2626;
 }
 
 .dept-card-title {
@@ -420,11 +496,11 @@ select.guts-mo-search-input {
 }
 
 .value-pending {
-    color: orange !important;
+    color: #d97706 !important;
 }
 
 .value-rejected {
-    color: rgb(153, 27, 27) !important;
+    color: #991b1b !important;
 }
 
 .dept-card-btn {
@@ -452,15 +528,16 @@ select.guts-mo-search-input {
 
 /* ─── Report card (division items) ───────────────────────── */
 .report-card {
-    background: linear-gradient(90deg, #dfeaf5, #e8f2fa);
-    border: 1px solid rgba(2, 75, 118, 0.1);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
     border-radius: 8px;
-    transition: background 0.1s ease;
+    overflow: hidden;
+    transition: box-shadow 0.15s ease;
 }
 
 .report-card:hover {
-    background: linear-gradient(90deg, #dce8f2, #d3e2ef);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .card-header {
@@ -472,39 +549,46 @@ select.guts-mo-search-input {
 }
 
 .card-header-expanded {
-    background: rgba(2, 75, 118, 0.05);
-    border-bottom: 1px solid rgba(2, 75, 118, 0.08);
+    background: rgba(34, 197, 94, 0.03);
+    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .status-dot {
-    width: 20px;
-    height: 20px;
+    width: 27px;
+    height: 27px;
     border-radius: 999px;
     border: none;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .status-dot svg {
-    stroke-width: 3.2;
+    width: 16px;
+    height: 16px;
+    display: block;
 }
 
 .dot-approved {
-    background: rgb(22, 163, 74);
-    color: #fff;
+    background: #16a34a;
+    color: #ffffff;
+    border: none;
 }
 
 .dot-pending {
-    background: #fff;
-    color: orange;
-    border: 0.5px solid orange;
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid rgba(148, 163, 184, 0.45);
 }
 
 .dot-rejected {
-    background: rgb(220, 38, 38);
-    color: #fff;
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
 }
 
 .card-body {
@@ -525,8 +609,8 @@ select.guts-mo-search-input {
 
 .card-title {
     font-weight: 700;
-    font-size: 13px;
-    color: #6b7280;
+    font-size: var(--mo-card-title-size);
+    color: #1b2b4a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -539,10 +623,10 @@ select.guts-mo-search-input {
     gap: 4px;
     border-radius: 999px;
     padding: 4px 10px;
-    font-size: 11px;
-    font-weight: 900;
+    font-size: var(--mo-status-size);
+    font-weight: 600;
     border: 1px solid transparent;
-    line-height: 1;
+    line-height: 1.15;
     white-space: nowrap;
     word-break: keep-all;
 }
@@ -553,7 +637,7 @@ select.guts-mo-search-input {
         rgba(240, 253, 244, 0.96),
         rgba(220, 252, 231, 0.98)
     );
-    color: #16a34a;
+    color: #087a35;
     border-color: rgba(52, 211, 153, 0.34);
 }
 
@@ -563,7 +647,7 @@ select.guts-mo-search-input {
         rgba(255, 247, 237, 0.96),
         rgba(255, 237, 213, 0.98)
     );
-    color: ornage;
+    color: #d97706;
     border-color: rgba(245, 158, 11, 0.3);
 }
 
@@ -571,9 +655,9 @@ select.guts-mo-search-input {
     background: linear-gradient(
         180deg,
         rgba(254, 242, 242, 0.96),
-        rgba(254, 226, 226, 0.98)
+        rgba(226, 226, 226, 0.98)
     );
-    color: rgb(153, 27, 27);
+    color: #dc2626;
     border-color: rgba(248, 113, 113, 0.32);
 }
 
@@ -607,25 +691,29 @@ select.guts-mo-search-input {
     transform: scale(1.05);
 }
 
-/* ─── Expanded detail rows ────────────────────────────────── */
 .card-details {
-    padding: 2px 2px;
-    margin: 0 8px 10px 45px;
+    margin: 0 8px 8px 45px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    background: #f5f6f7;
-    border-radius: 5px;
-    font-size: 12px;
+    gap: 0;
+    overflow: hidden;
+    border-radius: 7px;
+    border: 1px solid rgba(203, 213, 225, 0.85);
+    background: #f7fbf8;
+    font-size: 11px;
 }
 
 .detail-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 12px;
-    padding: 4px 10px;
-    border-bottom: 1px solid rgba(2, 75, 118, 0.08);
+    gap: 10px;
+    min-height: 24px;
+    padding: 5px 9px;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.75);
+    font-size: 11px;
+    line-height: 1.25;
 }
 
 .detail-row:last-child {
@@ -636,14 +724,19 @@ select.guts-mo-search-input {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    color: #6b7280;
-    font-weight: 600;
+    flex: 0 0 auto;
+    color: #64748b;
+    font-weight: 500;
+    font-size: 11px;
 }
 
 .detail-value {
-    color: #1b2b4a;
+    min-width: 0;
+    color: #0f172a;
     font-weight: 500;
     font-size: 11px;
+    text-align: right;
+    overflow-wrap: anywhere;
 }
 
 /* ─── Legacy classes kept for safety ─────────────────────── */

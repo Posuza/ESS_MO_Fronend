@@ -2,31 +2,24 @@
 
 /* top-right meta (date/time) */
 .guts-card-meta {
-    text-align: center;
-    margin-top: 8px;
-    line-height: 1.1;
-}
-.guts-meta-year {
-    font-family: "Prompt", sans-serif;
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--blueText);
+    text-align: left;
+    margin: 4px 0 8px;
+    line-height: 1.35;
 }
 .guts-meta-date {
-    margin-top: 4px;
-    font-family: "Prompt", sans-serif;
-    font-weight: 200;
-    font-size: 12px;
-    color: var(--blueText);
+    font-weight: 900;
+    font-size: 15px;
+    color: #0f172a;
 }
 
 /* page title */
 .guts-att-title {
-    font-family: "Prompt", sans-serif;
-    font-weight: 700;
-    color: var(--blueText);
-    font-size: 20px;
-    margin: 8px 0 4px;
+    margin: 14px 0 4px;
+    font-weight: 900;
+    color: rgba(27, 43, 74, 0.92);
+    font-size: 22px;
+    letter-spacing: 0.2px;
+    text-align: left;
 }
 
 .mo-bg {

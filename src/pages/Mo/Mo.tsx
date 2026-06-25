@@ -7,33 +7,46 @@ type Props = {
   onBackHome?: () => void;
 };
 
-export default function Mo({ onBackHome }: Props) {
-  const now = new Date();
-  const thaiDay = now.getDate();
-  const thaiMonth = new Intl.DateTimeFormat("th-TH", { month: "long" }).format(
-    now,
-  );
-  const thaiYear = new Intl.DateTimeFormat("th-TH", { year: "numeric" }).format(
-    now,
-  );
-  const longThaiDate = `วันที่ ${thaiDay} เดือน ${thaiMonth} ${thaiYear}`;
+const dayNames = [
+  "อาทิตย์",
+  "จันทร์",
+  "อังคาร",
+  "พุธ",
+  "พฤหัสบดี",
+  "ศุกร์",
+  "เสาร์",
+];
+const monthNames = [
+  "ม.ค.",
+  "ก.พ.",
+  "มี.ค.",
+  "เม.ย.",
+  "พ.ค.",
+  "มิ.ย.",
+  "ก.ค.",
+  "ส.ค.",
+  "ก.ย.",
+  "ต.ค.",
+  "พ.ย.",
+  "ธ.ค.",
+];
 
-  const [timeNow, setTimeNow] = useState(
-    now.toLocaleTimeString("th-TH", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  );
+function formatRoundDate(date: Date) {
+  const dayName = dayNames[date.getDay()];
+  const day = date.getDate();
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear() + 543;
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  return `รอบ วัน ${dayName} ที่ ${day} ${month} ${year} เวลาขณะนี้ ${hour}:${minute} น.`;
+}
+
+export default function Mo({ onBackHome }: Props) {
+  const [roundDate, setRoundDate] = useState(formatRoundDate(new Date()));
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const t = new Date();
-      setTimeNow(
-        t.toLocaleTimeString("th-TH", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
+      setRoundDate(formatRoundDate(new Date()));
     }, 30_000);
     return () => clearInterval(timer);
   }, []);
@@ -43,14 +56,14 @@ export default function Mo({ onBackHome }: Props) {
       <section className="guts-home-card" aria-label="Mo">
         <Header />
 
-        <div className={styles["guts-card-meta"]}>
-          <div className={styles["guts-meta-year"]}>{longThaiDate}</div>
-          <div className={styles["guts-meta-date"]}>เวลา {timeNow} น.</div>
-        </div>
-
         <h3 className={styles["guts-att-title"]}>
           รายงานประจำวันฝ่ายปฏิบัติการ
         </h3>
+
+        <div className={styles["guts-card-meta"]}>
+          <div className={styles["guts-meta-date"]}>{roundDate}</div>
+        </div>
+
         <MoHome onBackHome={onBackHome} />
       </section>
     </div>
