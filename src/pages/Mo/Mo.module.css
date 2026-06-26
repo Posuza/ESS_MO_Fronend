@@ -1,25 +1,39 @@
 /* Minimal MO styles — only selectors used by src/pages/Mo.tsx */
 
-/* top-right meta (date/time) */
+/* ── Info meta wrapper ── */
 .guts-card-meta {
     text-align: left;
-    margin: 4px 0 8px;
-    line-height: 1.35;
-}
-.guts-meta-date {
-    font-weight: 900;
-    font-size: 15px;
-    color: #0f172a;
+    margin: 2px 0;
+    line-height: 1.4;
 }
 
-/* page title */
+/* Station / division text */
+.guts-meta-station {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-weight: 400;
+    font-size: 14px;
+    color: #1e293b;
+    letter-spacing: 0.1px;
+}
+
+/* Date text */
+.guts-meta-date {
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 0.1px;
+}
+
+/* ── Page title ── */
 .guts-att-title {
-    margin: 14px 0 4px;
+    margin: 6px 0 4px;
     font-weight: 900;
-    color: rgba(27, 43, 74, 0.92);
-    font-size: 22px;
-    letter-spacing: 0.2px;
+    color: #1a3d6e;
+    font-size: 17px;
+    letter-spacing: 0.15px;
     text-align: left;
+    line-height: 1.3;
 }
 
 .mo-bg {
@@ -58,7 +72,8 @@
     height: 48px !important;
     padding: 0 !important;
     border: 0 !important;
-    border-radius: 999px !important; /* fully rounded pill */
+    border-radius: 999px !important;
+    /* fully rounded pill */
     overflow: hidden !important;
     background: #f2f4f6;
     color: var(--blueText);

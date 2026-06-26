@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Header from "../../layout/Header";
 import styles from "./Mo.module.css";
 import MoHome from "./MoHome";
+import { useStore } from "../../store/store";
 
 type Props = {
   onBackHome?: () => void;
@@ -42,6 +43,7 @@ function formatRoundDate(date: Date) {
 }
 
 export default function Mo({ onBackHome }: Props) {
+  const authEmployee = useStore((state) => state.authEmployee);
   const [roundDate, setRoundDate] = useState(formatRoundDate(new Date()));
 
   useEffect(() => {
@@ -56,10 +58,23 @@ export default function Mo({ onBackHome }: Props) {
       <section className="guts-home-card" aria-label="Mo">
         <Header />
 
+        {/* Title */}
         <h3 className={styles["guts-att-title"]}>
           รายงานประจำวันฝ่ายปฏิบัติการ
         </h3>
 
+        {/* Station + division on one line */}
+        <div className={styles["guts-card-meta"]}>
+          <div className={styles["guts-meta-station"]}>
+            <span>{authEmployee?.department_name ?? "-"}</span>
+            {authEmployee?.division_name && (
+              <span>{authEmployee.division_name}</span>
+            )}
+            {authEmployee?.route_name && <span>{authEmployee.route_name}</span>}
+          </div>
+        </div>
+
+        {/* Live round date */}
         <div className={styles["guts-card-meta"]}>
           <div className={styles["guts-meta-date"]}>{roundDate}</div>
         </div>

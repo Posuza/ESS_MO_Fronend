@@ -69,3 +69,5 @@ coverage-reports/
 # Qodo
 .qodo/
 excel-pq-symbols/
+.claude/
+.opencode/
