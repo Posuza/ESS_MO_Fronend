@@ -351,9 +351,8 @@ select.guts-mo-search-input option {
 
 .pdf-download-btn {
     padding: 5px 10px;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
-    font-family: "Prompt", "Sarabun", sans-serif;
     background: #dc2626;
     border: none;
     color: #fff;
@@ -383,9 +382,8 @@ select.guts-mo-search-input option {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     color: #475569;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
-    font-family: "Prompt", "Sarabun", sans-serif;
     white-space: nowrap;
 }
 

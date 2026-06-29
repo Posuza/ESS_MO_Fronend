@@ -675,7 +675,7 @@ export default function MoListPage({
           className={styles["mo-back-btn"]}
           onClick={goBack}
         >
-          ย้อนกับ
+          ย้อนกลับ
         </button>
       </div>
     </>

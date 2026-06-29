@@ -1,0 +1,12 @@
+/* Cell borders on all 4 sides — collapsed into clean grid lines */
+:global(.pdf-page) table thead th,
+:global(.pdf-page) table tbody td {
+    border-bottom: 0.005px solid #d0d0d0;
+    border-right: 0.005px solid #d0d0d0;
+    border-top: none;
+    border-left: none;
+}
+:global(.pdf-page) table thead th:first-child,
+:global(.pdf-page) table tbody td:first-child {
+    border-left: 0.005px solid #d0d0d0;
+}

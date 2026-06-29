@@ -307,7 +307,7 @@
 .mo-table th.first-column-cell {
     font-size: smaller;
     font-weight: bold;
-    text-align: left !important;
+    text-align: center;
     width: 5%;
 }
 .mo-table-header {
@@ -399,7 +399,7 @@
 .mo-table td.first-column-cell {
     font-weight: bold;
     background-color: transparent;
-    text-align: left !important;
+    text-align: center;
     width: 5%;
     border-right: 1px solid #e5e7eb !important;
 }

@@ -148,7 +148,7 @@ export default function MoAddNewPage({ onCancel }: Props) {
           className={styles["mo-back-btn"]}
           onClick={onCancel}
         >
-          ย้อนกับ
+          ย้อนกลับ
         </button>
       </div>
     </>

@@ -356,7 +356,7 @@ export default function MoDetailPage(props: Props) {
             return window.history.back();
           }}
         >
-          ย้อนกับ
+          ย้อนกลับ
         </button>
       </div>
     </>

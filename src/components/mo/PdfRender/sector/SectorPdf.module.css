@@ -1,0 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap");
+
+/* ═══════════════════════════════════════════════════════════
+   SectorPdf.module.css — page-level styles for SectorPdf viewer
+   ═══════════════════════════════════════════════════════════ */
+
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
+:global(.pdf-page),
+:global(.pdf-page) * {
+    font-family: "Sarabun", sans-serif !important;
+}
+
+:global(.pdf-page) {
+    margin: 0;
+    width: 596px;
+    min-height: 842px;
+    flex-shrink: 0;
+    background: white;
+    border: 1px solid #c2ccda;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    box-sizing: border-box;
+    color: #1b2b4a;
+    outline: 2px solid #1e3a8a;
+    outline-offset: -10px;
+    position: relative;
+}
+
+@media print {
+    :global(html),
+    :global(body) {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    :global(.pdf-viewer-wrapper) {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    :global(.pdf-container) {
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+
+    :global(.pdf-page) {
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        padding: 20mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    :global(.pdf-page:last-child) {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+    }
+}

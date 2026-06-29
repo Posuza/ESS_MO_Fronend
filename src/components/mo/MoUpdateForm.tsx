@@ -953,8 +953,10 @@ export default function MoUpdateForm(props: Props) {
   const toDigitString = (v: string) => {
     const digits = String(v || "").replace(/\D/g, "");
     if (digits === "") return "0";
-    const n = digits.replace(/^0+/, "");
-    return n === "" ? "0" : n;
+    const noLeadingZeros = digits.replace(/^0+/, "");
+    if (noLeadingZeros === "") return "0";
+    // Limit to 9 digits to prevent scientific notation and exceeding integer limits
+    return noLeadingZeros.slice(0, 9);
   };
 
   const handleTextareaChange = (
@@ -976,6 +978,7 @@ export default function MoUpdateForm(props: Props) {
     }
     const clean = toDigitString(sanitized);
     setEditingRaw(clean);
+    setCounts((s) => ({ ...s, [key]: clean }));
     adjustTextareaHeight(el);
   };
 
@@ -996,6 +999,7 @@ export default function MoUpdateForm(props: Props) {
     const el = e.target as HTMLTextAreaElement;
     el.value = normalized;
     setEditingRaw(normalized);
+    setCounts((s) => ({ ...s, [key]: normalized }));
     adjustTextareaHeight(el);
   };
 
@@ -1025,20 +1029,28 @@ export default function MoUpdateForm(props: Props) {
     if (e.key === "ArrowUp") {
       e.preventDefault();
       const valStr = editingRaw || "0";
+      let newVal: string;
       try {
-        setEditingRaw(String(BigInt(valStr) + 1n));
+        newVal = String(BigInt(valStr) + 1n);
       } catch {
-        setEditingRaw(String(Number(valStr) + 1));
+        newVal = String(Number(valStr) + 1);
       }
+      const clean = toDigitString(newVal);
+      setEditingRaw(clean);
+      setCounts((s) => ({ ...s, [key]: clean }));
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       const valStr = editingRaw || "0";
+      let newVal: string;
       try {
         const base = BigInt(valStr);
-        setEditingRaw(base > 0n ? String(base - 1n) : "0");
+        newVal = base > 0n ? String(base - 1n) : "0";
       } catch {
-        setEditingRaw(String(Math.max(0, Number(valStr) - 1)));
+        newVal = String(Math.max(0, Number(valStr) - 1));
       }
+      const clean = toDigitString(newVal);
+      setEditingRaw(clean);
+      setCounts((s) => ({ ...s, [key]: clean }));
     }
   };
 
@@ -1687,7 +1699,7 @@ export default function MoUpdateForm(props: Props) {
                             : ""
                         }
                       >
-                        5.{g.title}
+                        {g.title}
                       </p>
                       <div>
                         {openGroups[g.key] ? (
@@ -1715,7 +1727,22 @@ export default function MoUpdateForm(props: Props) {
                         <td
                           className={`${styles["third-column-cell"]} ${counts[r.key]?.toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
                         >
-                          <div>{getDisplayValue(r.key)}</div>
+                          <textarea
+                            ref={inputRef as any}
+                            className={`${styles["third-column-textarea"]} ${styles["third-column-textarea-danger"]}`}
+                            value={
+                              editingKey === r.key
+                                ? editingRaw
+                                : getDisplayValue(r.key)
+                            }
+                            rows={1}
+                            disabled={!props.isEditing}
+                            onChange={(e) => handleTextareaChange(r.key, e)}
+                            onPaste={(e) => handleTextareaPaste(r.key, e)}
+                            onFocus={(e) => handleTextareaFocus(r.key, e)}
+                            onKeyDown={(e) => handleTextareaKeyDown(r.key, e)}
+                            onBlur={() => handleTextareaBlur(r.key)}
+                          />
                         </td>
                         <td
                           className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-danger"]}`}

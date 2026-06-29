@@ -148,7 +148,7 @@
     justify-content: center;
     gap: 2px;
     color: white;
-    background: black;
+    background: rgb(222, 146, 4);
     border: 0;
     cursor: pointer;
 }

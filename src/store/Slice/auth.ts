@@ -15,8 +15,7 @@ export interface AuthEmployee {
   division_id?: number | null;
   division_name?: string | null;
   position_id?: number | null;
-  route_id?: number | null;
-  route_name?: string | null;
+  route?: string | null;
 }
 
 export interface AuthSlice {

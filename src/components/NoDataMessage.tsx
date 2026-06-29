@@ -139,10 +139,7 @@ export default function NoDataMessage() {
           fontWeight: 800,
           lineHeight: 1.35,
         }}
-      >
-        <Info size={24} strokeWidth={2.5} color="#4f84c4" aria-hidden="true" />
-        <span>ในแผนกของคุณในวันนี้</span>
-      </div>
+      ></div>
     </div>
   );
 }

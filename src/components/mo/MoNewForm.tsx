@@ -1440,7 +1440,6 @@ export default function MoNewForm(props: Props) {
                           >
                             <textarea
                               ref={inputRef as any}
-                              readOnly
                               className={`${styles["third-column-textarea"]} ${g.key === "discipline" ? styles["third-column-textarea-danger"] : ""}`}
                               value={
                                 editingKey === r.key
@@ -1448,6 +1447,11 @@ export default function MoNewForm(props: Props) {
                                   : getDisplayValue(r.key)
                               }
                               rows={1}
+                              onChange={(e) => handleTextareaChange(r.key, e)}
+                              onPaste={(e) => handleTextareaPaste(r.key, e)}
+                              onFocus={(e) => handleTextareaFocus(r.key, e)}
+                              onKeyDown={(e) => handleTextareaKeyDown(r.key, e)}
+                              onBlur={() => handleTextareaBlur(r.key)}
                             />
                           </td>
                           <td

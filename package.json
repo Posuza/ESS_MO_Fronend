@@ -25,6 +25,7 @@
     "d3-selection": "^3.0.0",
     "d3-zoom": "^3.0.0",
     "html2pdf.js": "^0.14.0",
+    "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",
     "prop-types": "^15.8.1",
