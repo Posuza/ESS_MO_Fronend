@@ -52,9 +52,10 @@
     gap: 12px;
     box-sizing: border-box;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 14px;
     /* ensure the header container fills the table cell height */
     height: 100%;
+    padding: 4px 7px;
 }
 .plus-header-fullwidth {
     width: auto;
@@ -305,10 +306,10 @@
     line-height: 1.1;
 }
 .mo-table th.first-column-cell {
-    font-size: smaller;
-    font-weight: bold;
+    font-size: 12px;
+    font-weight: normal;
     text-align: center;
-    width: 5%;
+    width: 4%;
 }
 .mo-table-header {
     /* let inner .mo-header control padding so inner content lines up with cells */
@@ -398,10 +399,11 @@
 }
 
 .mo-table td.first-column-cell {
-    font-weight: bold;
+    font-weight: normal;
     background-color: transparent;
     text-align: center;
-    width: 5%;
+    width: 4%;
+    padding: 6px 4px;
     border-right: 1px solid #e5e7eb !important;
 }
 
@@ -410,21 +412,20 @@
     background-color: transparent;
     width: 45%;
     word-break: break-word;
-    font-weight: 600;
     vertical-align: middle;
     font-size: 13px;
     overflow: visible;
+    padding: 6px 12px;
 }
 
 .mo-table td.group3-second-column-cell {
-    padding: 1px 2px;
     text-align: left !important;
     background-color: transparent;
     width: 35%;
     word-break: break-word;
-    font-weight: 600;
     vertical-align: middle;
     font-size: 13px;
+    padding: 6px 8px;
 }
 
 .mo-table td.third-column-cell {
@@ -588,6 +589,7 @@
     min-width: 40px;
     width: 18%;
     vertical-align: middle !important;
+    font-weight: normal;
 }
 .mo-table td.group3-fourth-column-cell {
     background-color: transparent;
@@ -632,8 +634,8 @@
     border: none;
     color: #0b4bd6;
     text-decoration: underline;
-    font-weight: 800;
-    font-size: 14px;
+    font-weight: 600;
+    font-size: 12px;
     text-underline-offset: 3px;
     text-decoration-thickness: 2px;
     display: inline-block;
