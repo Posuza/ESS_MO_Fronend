@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "d3-selection": "^3.0.0",
     "d3-zoom": "^3.0.0",
+    "html2pdf.js": "^0.14.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "leaflet": "^1.9.4",
