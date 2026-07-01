@@ -1,5 +1,5 @@
 @page {
-    size: A4 portrait;
+    size: A4 landscape;
     margin: 0;
 }
 
@@ -18,7 +18,8 @@
     background: #f0f4f8;
     width: 100%;
     flex: 1;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     padding: 0;

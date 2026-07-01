@@ -15,7 +15,7 @@
     width: 32px;
     min-width: 32px;
     max-width: 36px;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 500;
     color: #475569;
     align-items: center;
@@ -40,7 +40,7 @@
     background-color: #f5f5f5 !important;
     border: 0.8px solid #ccc !important;
     vertical-align: middle;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: #475569;
 }
@@ -53,7 +53,7 @@
     gap: 12px;
     box-sizing: border-box;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 14px;
     /* ensure the header container fills the table cell height */
     height: 100%;
 }
@@ -66,7 +66,7 @@
     gap: 4px; /* tighten spacing between icon and text */
     box-sizing: border-box;
     font-weight: bold;
-    font-size: 15px;
+    font-size: 13px;
     padding: 6px 10px; /* reduce vertical padding */
     background-color: #f5f5f5; /* slightly gray background */
     border: 0.8px solid #7f0f0f;
@@ -151,14 +151,14 @@
 }
 
 .sector-cell-label {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: #64748b;
     margin-right: 8px;
 }
 
 .sector-header-cell {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     padding: 3px 1px;
     text-align: left;
@@ -197,14 +197,14 @@
     color: var(--blueText);
     text-align: right;
     line-height: 1;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
 }
 
 .region-card-value {
     width: 100%;
     color: var(--blueText);
-    font-size: 19px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.1;
     padding-left: 8px;
@@ -261,7 +261,7 @@
 .mo-table td.fourth-column-cell,
 .mo-table td.fourth-column-header-cell,
 .mo-table td.five-column-cell {
-    padding: 5px 3px; /* reduced vertical/horizontal padding */
+    padding: 8px 3px;
     box-sizing: border-box;
 }
 
@@ -325,7 +325,7 @@
 .mo-header p {
     margin: 0;
     padding: 0; /* remove inner vertical padding to keep baseline */
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     flex: 1 1 auto; /* allow text to grow/shrink */
     text-align: left; /* align title to leftmost inside available space */
@@ -395,7 +395,7 @@
 }
 
 .mo-table td.first-column-cell {
-    font-size: 13px;
+    font-size: 11px;
     border: 0.8px solid #ccc !important;
     font-weight: 500;
     color: #64748b;
@@ -405,8 +405,8 @@
 }
 
 .mo-table td.second-column-cell {
-    font-size: 13px;
-    text-align: right !important;
+    font-size: 11px;
+    text-align: left !important;
     background-color: transparent;
     border: 0.8px solid #ccc !important;
     font-weight: 500;
@@ -416,18 +416,18 @@
 }
 
 .mo-table td.second-column-header-cell {
-    font-size: smaller;
+    font-size: 11px;
     text-align: center !important;
     background-color: gainsboro;
     border: 0.8px solid #ccc !important;
-    font-weight: bold;
+    font-weight: 600;
     min-width: 180px;
 }
 
 .mo-table td.group3-second-column-cell {
-    font-size: 13px;
+    font-size: 11px;
     padding-right: 5px;
-    text-align: right !important;
+    text-align: left !important;
     border: 0.8px solid #ccc !important;
     font-weight: 500;
     color: #475569;
@@ -441,21 +441,22 @@
 
 .mo-table td.third-column-cell {
     position: relative; /* ensure overlay positioned relative to the cell */
-    font-size: 13px;
+    font-size: 11px;
     text-align: center !important;
-    font-weight: 700;
+    font-weight: 600;
     padding: 6px 4px !important;
     min-width: 45px;
     width: 60px;
     min-height: 40px; /* reduced base height, allow expansion when wrapped */
     border: 0.8px solid #ccc !important;
     background-color: transparent;
+    color: #475569;
 }
 .mo-table td.third-column-header1-cell {
     position: relative; /* ensure overlay positioned relative to the cell */
-    font-size: smaller;
+    font-size: 11px;
     text-align: center !important;
-    font-weight: bold;
+    font-weight: 600;
     padding: 0 !important;
     min-width: 45px;
     width: 60px;
@@ -465,9 +466,9 @@
 }
 .mo-table td.third-column-header2-cell {
     position: relative; /* ensure overlay positioned relative to the cell */
-    font-size: smaller;
+    font-size: 11px;
     text-align: center !important;
-    font-weight: bold;
+    font-weight: 600;
     padding: 0 !important;
     min-width: 45px;
     width: 60px;
@@ -478,10 +479,10 @@
 
 .mo-table td.group3-third-column-cell {
     position: relative;
-    font-size: 13px;
+    font-size: 11px;
     text-align: center !important;
     font-weight: 500;
-    color: #0f172a;
+    color: #475569;
     padding: 6px 4px !important;
     min-width: 45px;
     width: 50px;
@@ -510,8 +511,8 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 500;
-    font-size: 13px;
-    color: #0f172a;
+    font-size: 11px;
+    color: #475569;
     background: transparent;
     border: none !important;
     outline: none !important;
@@ -530,8 +531,8 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 500;
-    font-size: 13px;
-    color: #0f172a;
+    font-size: 11px;
+    color: #475569;
     background: transparent;
     border: none !important;
     outline: none !important;
@@ -556,8 +557,8 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 600;
-    font-size: 14px;
-    color: #333;
+    font-size: 11px;
+    color: #475569;
     background: transparent;
     border: none !important;
     outline: none !important;
@@ -576,8 +577,8 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 600;
-    font-size: 14px;
-    color: #333;
+    font-size: 11px;
+    color: #475569;
     background: transparent;
     border: none !important;
     outline: none !important;
@@ -611,24 +612,24 @@
 }
 
 .mo-table td.fourth-column-cell {
-    font-size: 13px;
+    font-size: 11px;
     background-color: transparent;
     border: 0.8px solid #ccc !important;
     text-align: center !important;
-    font-weight: 500;
+    font-weight: 400;
     color: #475569;
     box-sizing: border-box;
-    min-width: 70px;
-    width: 90px;
+    min-width: 60px;
+    width: 75px;
     vertical-align: middle !important;
-    padding: 6px 4px;
+    padding: 6px 0px;
 }
 .mo-table td.fourth-column-header-cell {
-    font-size: smaller;
+    font-size: 11px;
     background-color: gainsboro;
     border: 0.8px solid #ccc !important;
     text-align: center !important;
-    font-weight: bold;
+    font-weight: 600;
     box-sizing: border-box;
     min-width: 45px; /* prevents it from collapsing too small */
     width: 73px; /* preferred width to make alignment consistent */
@@ -636,7 +637,7 @@
     padding-left: 8px; /* align text with other cell content */
 }
 .mo-table td.group3-fourth-column-cell {
-    font-size: 13px;
+    font-size: 11px;
     background-color: transparent;
     border: 0.8px solid #ccc !important;
     text-align: center !important;
@@ -655,7 +656,7 @@
     max-width: 64px !important;
     width: 48px !important;
     text-align: center !important;
-    font-weight: 700;
+    font-weight: 600;
     border: 0.8px solid #ccc !important;
 }
 
@@ -684,8 +685,8 @@
     border: none;
     color: #0b4bd6;
     text-decoration: underline;
-    font-weight: 800;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 12px;
     text-underline-offset: 3px;
     text-decoration-thickness: 2px;
     display: inline-block;
@@ -697,7 +698,7 @@
     background: transparent;
     border: none;
     color: #b71c1c;
-    font-weight: 700;
+    font-weight: 600;
     padding: 4px 8px;
     display: inline-block;
     cursor: pointer;
@@ -759,7 +760,7 @@
 
 .modal-header h3 {
     margin: 0;
-    font-size: 15px; /* smaller title */
+    font-size: 13px; /* smaller title */
     line-height: 1.1;
     padding: 4px 8px; /* restore a bit of left padding */
     color: var(--blueText, #0b4bd6);
@@ -775,7 +776,7 @@
 }
 
 .modal-label {
-    font-size: 13px;
+    font-size: 11px;
     color: #333;
     font-weight: 700;
     margin-top: 6px;
@@ -786,7 +787,7 @@
     border-radius: 6px;
     border: 1px solid rgba(0, 0, 0, 0.08);
     background: #fff;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .modal-footer {
@@ -863,6 +864,7 @@
     text-align: left !important;
     padding-left: 8px !important;
     box-sizing: border-box;
+    color: #475569;
 }
 
 /* radio group for select-like options (flex wrapping, each item grows) */

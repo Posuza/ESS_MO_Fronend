@@ -21,6 +21,11 @@ import {
   InfoModel,
   MoLoadingPopup,
 } from "../../components/mo/popup";
+import {
+  clearMoReportState,
+  persistMoReportState,
+  readSavedMoReportState,
+} from "./moPersistence";
 
 type ReportListItem = SectorReport & {
   location?: string;
@@ -43,10 +48,15 @@ export default function MoReportPage({
 }: Props) {
   const authEmployee = useStore((s) => s.authEmployee);
   const empCode = authEmployee?.employee_code;
-  const [selectedDate, setSelectedDate] = useState(initialDate ?? "");
+  const savedState = useMemo(() => readSavedMoReportState(), []);
+  const [selectedDate, setSelectedDate] = useState(
+    savedState?.selectedDate ?? initialDate ?? "",
+  );
 
   // viewMode and PDF controls — lifted up from DetailViewer so MoReportPage is the orchestrator
-  const [viewMode, setViewMode] = useState<"table" | "pdf">("table");
+  const [viewMode, setViewMode] = useState<"table" | "pdf">(
+    savedState?.viewMode ?? "table",
+  );
   const [pdfLoading, setPdfLoading] = useState(false);
   const pdfViewerRef = useRef<PdfViewerHandle>(null);
 
@@ -89,8 +99,8 @@ export default function MoReportPage({
 
   const handleDownload = async () => {
     setPdfLoading(true);
-    // Let React paint the loading overlay before starting the heavy PDF generation
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+    // Let React commit the loading state before starting heavy PDF work
+    await new Promise((resolve) => setTimeout(resolve, 50));
     try {
       await pdfViewerRef.current?.downloadPdf();
     } finally {
@@ -131,10 +141,11 @@ export default function MoReportPage({
   );
 
   useEffect(() => {
+    if (savedState?.selectedDate != null) return;
     if (initialDate !== undefined) {
       setSelectedDate(initialDate);
     }
-  }, [initialDate]);
+  }, [initialDate, savedState?.selectedDate]);
 
   // Sync department name from reports slice when data loads
   useEffect(() => {
@@ -281,12 +292,21 @@ export default function MoReportPage({
 
   const [selectedTransactionId, setSelectedTransactionId] = useState<
     number | null
-  >(null);
+  >(savedState?.selectedTransactionId ?? null);
 
   // Edit mode state — threaded through to MoUpdateForm in MoSectorDetailForm
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(savedState?.isEditing ?? false);
   const [isDirty, setIsDirty] = useState(false);
   const submitRef = useRef<(() => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    persistMoReportState({
+      selectedTransactionId,
+      isEditing,
+      viewMode,
+      selectedDate,
+    });
+  }, [selectedTransactionId, isEditing, viewMode, selectedDate]);
 
   // Delete / success dialog state
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -401,18 +421,8 @@ export default function MoReportPage({
   }, [selectedTransactionRow, selectedSectorName]);
 
   return (
-    <>
+    <div className={styles["reportPage"]}>
       <MoLoadingPopup open={showLoading} />
-
-      <div className={styles["mo-back-outer"]}>
-        <button
-          type="button"
-          className={styles["mo-back-btn"]}
-          onClick={onCancel}
-        >
-          <ArrowLeft size={18} />
-        </button>
-      </div>
 
       {/* หน่วยงาน / Sector row */}
 
@@ -489,9 +499,15 @@ export default function MoReportPage({
             <span>ตารางรายการ</span>
           </div>
           <div
-            className={`${styles["pdf-icon-container"]} ${styles["toggle-btn"]} ${viewMode === "pdf" ? styles["active"] : ""}`}
-            onClick={() => setViewMode("pdf")}
-            title="ดูรายงาน PDF"
+            className={`${styles["pdf-icon-container"]} ${styles["toggle-btn"]} ${viewMode === "pdf" ? styles["active"] : ""} ${transactionIds.length < 1 ? styles["disabled"] : ""}`}
+            onClick={() => {
+              if (transactionIds.length > 0) setViewMode("pdf");
+            }}
+            title={
+              transactionIds.length < 1
+                ? "ไม่มีรายงานให้ดู PDF"
+                : "ดูรายงาน PDF"
+            }
           >
             {/*<BsFillFileEarmarkPdfFill className={styles["pdf-icon"]} />*/}
             <span>รายงาน PDF</span>
@@ -511,7 +527,7 @@ export default function MoReportPage({
               title="ดาวน์โหลด PDF"
             >
               <BsFillFileEarmarkPdfFill size={18} />
-              {pdfLoading ? "กำลังดาวน์โหลด..." : "ดาวน์โหลด PDF"}
+              ดาวน์โหลด PDF
             </button>
             {/* <button
               type="button"
@@ -590,6 +606,16 @@ export default function MoReportPage({
           )}
         </>
       )}
-    </>
+
+      <div className={styles["mo-back-outer"]}>
+        <button
+          type="button"
+          className={styles["mo-back-btn"]}
+          onClick={onCancel}
+        >
+          ย้อนกลับ
+        </button>
+      </div>
+    </div>
   );
 }

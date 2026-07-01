@@ -19,10 +19,18 @@ import {
   type PdfGroup,
   type PdfGroupItem,
 } from "../shared/PaginationSystem";
-import { PdfPageHeader, PdfPageFooter, TotalPagesContext } from "../shared/PdfPageLayout";
+import {
+  PdfPageHeader,
+  PdfPageFooter,
+  TotalPagesContext,
+} from "../shared/PdfPageLayout";
 import SectorTableContent from "./SectorTableContent";
 import SectorDetailContent from "./SectorDetailContent";
-import { groupDefs, buildGroup2Disciplines, buildGroup3Projects } from "./sectorGroups";
+import {
+  groupDefs,
+  buildGroup2Disciplines,
+  buildGroup3Projects,
+} from "./sectorGroups";
 import "./SectorPdf.module.css";
 
 type Props = {
@@ -41,7 +49,7 @@ export default function SectorPdf({
 
   // ─── Build groups from data ──────────────────────────────
   const group2Disciplines = useMemo(() => buildGroup2Disciplines(data), [data]);
-  const group3Projects    = useMemo(() => buildGroup3Projects(data), [data]);
+  const group3Projects = useMemo(() => buildGroup3Projects(data), [data]);
 
   // ─── Page type 1: Table grids ───────────────────────────
   const renderPaginatedTables = (startPageNum: number) => {
@@ -87,7 +95,10 @@ export default function SectorPdf({
       const maxItemsInRow = Math.max(...gridRow.map((g) => g.items.length));
       const gridRowHeight = tableHeight(maxItemsInRow) + PDF.GAP;
 
-      if (usedHeight + gridRowHeight > DETAILED_AVAILABLE_H && pageGroups.length > 0) {
+      if (
+        usedHeight + gridRowHeight > DETAILED_AVAILABLE_H &&
+        pageGroups.length > 0
+      ) {
         flushPage();
       }
       for (const group of gridRow) pageGroups.push(group);
@@ -126,7 +137,11 @@ export default function SectorPdf({
         title: "เข้าพบผู้ว่าจ้าง",
         items: projects,
       };
-      const chunks = paginateWithGroupSplit([projectGroup], DETAILED_AVAILABLE_H, 10);
+      const chunks = paginateWithGroupSplit(
+        [projectGroup],
+        DETAILED_AVAILABLE_H,
+        10,
+      );
       chunks.forEach((chunk) => {
         const chunkItems = chunk.flatMap((g) => g.items);
         pages.push(
@@ -149,7 +164,8 @@ export default function SectorPdf({
   };
 
   // ─── Assemble all pages ──────────────────────────────────
-  const { pages: tablePages, nextPageNum } = renderPaginatedTables(pageNumStart);
+  const { pages: tablePages, nextPageNum } =
+    renderPaginatedTables(pageNumStart);
   const projectPages = renderPaginatedProjects(nextPageNum);
   const totalPages = tablePages.length + projectPages.length;
 

@@ -953,10 +953,9 @@ export default function MoUpdateForm(props: Props) {
   const toDigitString = (v: string) => {
     const digits = String(v || "").replace(/\D/g, "");
     if (digits === "") return "0";
-    const noLeadingZeros = digits.replace(/^0+/, "");
-    if (noLeadingZeros === "") return "0";
-    // Limit to 9 digits to prevent scientific notation and exceeding integer limits
-    return noLeadingZeros.slice(0, 9);
+    const n = digits.replace(/^0+/, "");
+    // Limit to 15 digits to stay within JavaScript safe integer range
+    return n === "" ? "0" : n.slice(0, 15);
   };
 
   const handleTextareaChange = (
@@ -978,7 +977,6 @@ export default function MoUpdateForm(props: Props) {
     }
     const clean = toDigitString(sanitized);
     setEditingRaw(clean);
-    setCounts((s) => ({ ...s, [key]: clean }));
     adjustTextareaHeight(el);
   };
 
@@ -999,7 +997,6 @@ export default function MoUpdateForm(props: Props) {
     const el = e.target as HTMLTextAreaElement;
     el.value = normalized;
     setEditingRaw(normalized);
-    setCounts((s) => ({ ...s, [key]: normalized }));
     adjustTextareaHeight(el);
   };
 
@@ -1037,7 +1034,6 @@ export default function MoUpdateForm(props: Props) {
       }
       const clean = toDigitString(newVal);
       setEditingRaw(clean);
-      setCounts((s) => ({ ...s, [key]: clean }));
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       const valStr = editingRaw || "0";
@@ -1050,7 +1046,6 @@ export default function MoUpdateForm(props: Props) {
       }
       const clean = toDigitString(newVal);
       setEditingRaw(clean);
-      setCounts((s) => ({ ...s, [key]: clean }));
     }
   };
 
@@ -1369,6 +1364,14 @@ export default function MoUpdateForm(props: Props) {
                           }
                           rows={1}
                           disabled={!props.isEditing}
+                          style={{
+                            fontStyle:
+                              (editingKey === r.key
+                                ? editingRaw
+                                : getDisplayValue(r.key)) === "0"
+                                ? "italic"
+                                : "normal",
+                          }}
                           onChange={(e) => handleTextareaChange(r.key, e)}
                           onPaste={(e) => handleTextareaPaste(r.key, e)}
                           onFocus={(e) => handleTextareaFocus(r.key, e)}
@@ -1682,7 +1685,7 @@ export default function MoUpdateForm(props: Props) {
                     5.
                   </th>
                   <th
-                    colSpan={4}
+                    colSpan={props.isEditing ? 4 : 3}
                     className={`${styles["mo-table-header"]} ${styles["mo-table-header-red"]} ${styles["no-border"]}`}
                   >
                     <div
@@ -1737,6 +1740,14 @@ export default function MoUpdateForm(props: Props) {
                             }
                             rows={1}
                             disabled={!props.isEditing}
+                            style={{
+                              fontStyle:
+                                (editingKey === r.key
+                                  ? editingRaw
+                                  : getDisplayValue(r.key)) === "0"
+                                  ? "italic"
+                                  : "normal",
+                            }}
                             onChange={(e) => handleTextareaChange(r.key, e)}
                             onPaste={(e) => handleTextareaPaste(r.key, e)}
                             onFocus={(e) => handleTextareaFocus(r.key, e)}

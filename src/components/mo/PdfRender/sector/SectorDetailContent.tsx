@@ -22,7 +22,7 @@ const cellStyle: React.CSSProperties = {
   fontWeight: 400,
   padding: "6px 6px",
   textAlign: "center",
-  fontSize: 8,
+  fontSize: 7,
   background: "transparent",
 };
 
@@ -56,7 +56,7 @@ export default function SectorDetailContent({ item }: Props) {
                 backgroundColor: "#d9d9d9",
                 color: "#000000",
                 fontWeight: 700,
-                fontSize: 8,
+                fontSize: 7,
                 textAlign: "center",
                 padding: "6px 4px",
               }}
@@ -69,7 +69,7 @@ export default function SectorDetailContent({ item }: Props) {
                 backgroundColor: "#d9d9d9",
                 color: "#000000",
                 fontWeight: 700,
-                fontSize: 8,
+                fontSize: 7,
                 padding: "6px 4px",
                 textAlign: "left",
               }}
@@ -89,7 +89,7 @@ export default function SectorDetailContent({ item }: Props) {
                   textAlign: "center",
                   padding: "16px",
                   color: "#000000",
-                  fontSize: 8,
+                  fontSize: 7,
                   fontWeight: 500,
                 }}
               >
@@ -104,7 +104,7 @@ export default function SectorDetailContent({ item }: Props) {
                     style={{
                       fontWeight: 400,
                       textAlign: "center",
-                      fontSize: 8,
+                      fontSize: 7,
                       padding: "6px 3px",
                     }}
                   >
@@ -114,7 +114,7 @@ export default function SectorDetailContent({ item }: Props) {
                     colSpan={5}
                     style={{
                       fontWeight: 400,
-                      fontSize: 8,
+                      fontSize: 7,
                       padding: "6px 6px",
                       textAlign: "left",
                     }}
@@ -128,7 +128,7 @@ export default function SectorDetailContent({ item }: Props) {
                     colSpan={5}
                     style={{
                       padding: "6px 6px",
-                      fontSize: 8,
+                      fontSize: 7,
                       color: "#000000",
                     }}
                   >
@@ -141,10 +141,9 @@ export default function SectorDetailContent({ item }: Props) {
                     colSpan={5}
                     style={{
                       color: statusBg(it.status),
-                      fontWeight: 700,
                       textAlign: "left",
                       padding: "6px 6px",
-                      fontSize: 8,
+                      fontSize: 7,
                     }}
                   >
                     {statusLabel(it.status)}
@@ -156,7 +155,7 @@ export default function SectorDetailContent({ item }: Props) {
                     colSpan={5}
                     style={{
                       padding: "6px 6px",
-                      fontSize: 8,
+                      fontSize: 7,
                       color: "#000000",
                     }}
                   >

@@ -173,6 +173,10 @@ select.guts-mo-search-input option {
     stroke: #999;
 }
 
+.reportPage {
+    padding-top: 16px;
+}
+
 /* Page layout for MoReport */
 .guts-Mo-layout {
     border-radius: 5px;
@@ -297,8 +301,8 @@ select.guts-mo-search-input option {
 }
 .mo-back-outer {
     display: flex;
-    padding-top: 6px;
-    margin-bottom: 20px;
+    padding-top: 4px;
+    margin-top: 12px;
 }
 
 .toolbar {
@@ -411,6 +415,12 @@ select.guts-mo-search-input option {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
+.toggle-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .toolbar-action-btn-delete:hover {
     background: rgba(185, 28, 28, 0.14);
     color: rgb(185, 28, 28);
@@ -451,22 +461,26 @@ select.guts-mo-search-input option {
 }
 
 .mo-back-btn {
-    height: 40px !important;
-    padding: 10px !important;
-    border-radius: 999px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: var(--brandDark, rgba(2, 75, 118, 0.9)) !important;
-    border: 1px solid rgba(2, 75, 118, 0.06) !important;
-    color: #ffffff !important;
-    cursor: pointer !important;
-    box-shadow: 0 10px 24px rgba(3, 30, 83, 0.1) !important;
-    width: auto !important;
-    box-sizing: border-box;
+    width: 100%;
+    height: 50px;
+    padding: 0;
+    margin-top: 3px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    font-size: 18px;
+    font-weight: 700;
+    background: black;
+    border: 0;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(75, 85, 99, 0.35);
+    gap: 8px;
+    cursor: pointer;
     transition:
         transform 0.12s ease,
         box-shadow 0.12s ease,
         background 0.12s ease,
-        color 0.12s ease !important;
+        color 0.12s ease;
 }

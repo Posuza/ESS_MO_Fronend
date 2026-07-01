@@ -1,12 +1,26 @@
+// ─────────────────────────────────────────────────────────────
+// PdfViewer.tsx
+//
+// HTML-to-PDF preview + jsPDF download.
+// - Preview shows the actual HTML table content (WYSIWYG)
+// - Download / Share / Print use jsPDF for the real PDF file
+// ─────────────────────────────────────────────────────────────
+
 import {
-  useEffect,
-  useRef,
-  useState,
   forwardRef,
   useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
 } from "react";
-import html2pdf from "html2pdf.js";
 import { useStore } from "../../store/store";
+import {
+  buildSectorPdf,
+  buildSummariesPdf,
+  exportSectorPdf,
+  exportSummariesPdf,
+} from "./PdfRender/shared/exportPdf";
 import SectorPdf from "./PdfRender/sector/SectorPdf";
 import SummeriesPdf from "./PdfRender/summaries/SummeriesPdf";
 import MoLoadingPopup from "./popup/MoLoadingPopup";
@@ -26,9 +40,6 @@ export type PdfViewerHandle = {
   printPdf: () => void;
 };
 
-const PDF_WIDTH = 596;
-const PDF_HEIGHT = 842;
-
 const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
   { item, sectorName, isSector, loading }: Props,
   ref,
@@ -36,19 +47,12 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
   const reports = useStore((state) => (state as any).reports);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+
+  // ─── Zoom / scale state ────────────────────────────────
   const [scale, setScale] = useState(1);
   const [minScale, setMinScale] = useState(0.3);
-  const [renderKey, setRenderKey] = useState(0);
 
-  // Force re-render after mount to ensure content is ready
-  useEffect(() => {
-    const timer = setTimeout(() => setRenderKey((k) => k + 1), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Fit to screen — responsive: fills container width
-  // Uses ResizeObserver (not window.resize) so scrollbar
-  // appearing/disappearing also triggers re-fit
+  // ─── Fit to screen — responsive ─────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -56,18 +60,18 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
       if (w > 0) {
-        const f = w / PDF_WIDTH;
-        setMinScale(Math.max(0.4, f - 0.3));
+        // A4 landscape at 72 DPI ≈ 842pt wide. Fit width with padding.
+        const pageW = Math.min(842, w - 40);
+        const f = pageW / 842;
+        // Auto-fit page width — also locks min zoom so page never smaller than container
         setScale(f);
+        setMinScale(f);
       }
     };
 
-    // Initial fit
     fit();
 
-    // Watch for any container size change (scrollbar, resize, etc.)
     const observer = new ResizeObserver(() => {
-      // Debounce: avoid rapid re-fits during scrollbar toggle
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(fit);
     });
@@ -79,7 +83,7 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
     };
   }, []);
 
-  // Wheel zoom
+  // ─── Wheel zoom ─────────────────────────────────────────
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -91,7 +95,7 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
     return () => el.removeEventListener("wheel", onWheel);
   }, [minScale]);
 
-  // Touch zoom
+  // ─── Touch pinch-to-zoom ────────────────────────────────
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -123,101 +127,87 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
     };
   }, [minScale]);
 
-  const generatePdfBlob = async () => {
-    const pdfElement = document.getElementById("guts-pdf-content");
-    if (!pdfElement) return null;
+  // ─── Download ────────────────────────────────────────────
+  const handleDownloadPdf = async () => {
+    // Build date string: ddmmyy from report_date or created_at
+    const rawDate = item?.report_date || item?.created_at || "";
+    let dateStr = "";
+    if (rawDate) {
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        dateStr = `${String(d.getDate()).padStart(2, "0")}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getFullYear()).slice(-2)}`;
+      }
+    }
 
-    await document.fonts.ready;
-    await new Promise((res) => setTimeout(res, 500));
-    try {
-      const opt = {
-        margin: 0,
-        image: { type: "png" as const },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: {
-          unit: "pt" as const,
-          format: "a4" as const,
-          orientation: "portrait" as const,
-        },
-      };
-      const worker = html2pdf().set(opt).from(pdfElement);
-      const pdfBlob = await worker.outputPdf("blob");
-      return pdfBlob;
-    } catch (error) {
-      console.error("PDF generation failed:", error);
-      return null;
+    if (isSector) {
+      const cleanedSectorName = sectorName.replace(/\s+/g, "_");
+      const fileName = `รายงานประจำวันฝ่ายปฏิบัติการ_${cleanedSectorName}_${dateStr}.pdf`;
+      await exportSectorPdf(item, sectorName, fileName);
+    } else {
+      const cleanedSectorName = sectorName.replace(/\s+/g, "_");
+      const fileName = `รายงานประจำวันฝ่ายปฏิบัติการ_${cleanedSectorName}_${dateStr}.pdf`;
+      await exportSummariesPdf(item, sectorName, reports, fileName);
     }
   };
 
-  const handleDownloadPdf = async () => {
-    // Wait for fonts to settle
-    await document.fonts.ready;
-    await new Promise((res) => setTimeout(res, 300));
-
-    // Use browser's native print-to-PDF engine
-    // This produces selectable text, vector borders, and smaller file size
-    // The @media print CSS hides all UI chrome and shows only the PDF content
-    // User selects "Save as PDF" from the print dialog
-    window.print();
-  };
-
+  // ─── Share (open in new tab) ────────────────────────────
   const handleSharePdf = async () => {
-    // Uses html2pdf (PNG-image based) for share/preview
-    // Fallback for when print dialog isn't suitable
-    const pdfBlob = await generatePdfBlob();
-    if (!pdfBlob) return;
-    const url = URL.createObjectURL(pdfBlob);
-    window.open(url, "_blank");
+    const doc = isSector
+      ? await buildSectorPdf(item, sectorName)
+      : await buildSummariesPdf(item, sectorName, reports);
+    const dataUri = doc.output("datauristring");
+    window.open(dataUri, "_blank");
   };
 
+  // ─── Print ──────────────────────────────────────────────
+  const handlePrintPdf = async () => {
+    const doc = isSector
+      ? await buildSectorPdf(item, sectorName)
+      : await buildSummariesPdf(item, sectorName, reports);
+    try {
+      (doc as any).autoPrint();
+    } catch {
+      // autoPrint plugin not available
+    }
+    const dataUri = doc.output("datauristring");
+    window.open(dataUri, "_blank");
+  };
+
+  // ─── Expose imperative handle ───────────────────────────
   useImperativeHandle(ref, () => ({
     downloadPdf: handleDownloadPdf,
     sharePdf: handleSharePdf,
-    printPdf: () => window.print(),
+    printPdf: handlePrintPdf,
   }));
 
-  const scaledWidth = PDF_WIDTH * scale;
-  const scaledHeight = PDF_HEIGHT * scale;
+  // ─── Determine which PDF page component to show ────────
+  const previewContent = useMemo(() => {
+    if (isSector) {
+      // Sector view: render PDF pages via SectorPdf
+      return <SectorPdf item={item} sectorName={sectorName} />;
+    }
+    // Summary view: render PDF pages via SummeriesPdf
+    return (
+      <SummeriesPdf item={item} sectorName={sectorName} reports={reports} />
+    );
+  }, [isSector, item, sectorName, reports]);
 
   return (
     <>
-      <MoLoadingPopup open={loading} message="กำลังสร้าง PDF..." />
+      <MoLoadingPopup open={!!loading} message="กำลังสร้าง PDF..." />
       <div className="pdf-viewer-wrapper">
         <div className="pdf-container" ref={containerRef}>
           <div
             style={{
-              width: scaledWidth,
-              height: scaledHeight,
-              minHeight: "100%",
-              position: "relative",
-              flexShrink: 0,
+              zoom: scale,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+              padding: "10px 0",
             }}
           >
-            <div
-              id="guts-pdf-content"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
-              }}
-            >
-              {isSector ? (
-                <SectorPdf
-                  key={`sector-${renderKey}`}
-                  item={item}
-                  sectorName={sectorName}
-                />
-              ) : (
-                <SummeriesPdf
-                  key={`summeries-${renderKey}`}
-                  item={item}
-                  sectorName={sectorName}
-                  reports={reports}
-                />
-              )}
-            </div>
+            {previewContent}
           </div>
         </div>
       </div>

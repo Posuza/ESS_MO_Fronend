@@ -373,6 +373,7 @@
 .third-column-textarea-danger {
     color: #b71c1c; /* red */
     font-weight: 500;
+    overflow: hidden;
 }
 
 /* five-column cell base + danger style (red + underline) */
@@ -483,6 +484,7 @@
     border: none !important;
     outline: none !important;
     resize: none;
+    overflow: hidden;
     line-height: 1.2;
     text-align: center;
 }
@@ -518,6 +520,7 @@
     border: none !important;
     outline: none !important;
     resize: none;
+    overflow: hidden;
     line-height: 1.2;
     text-align: center;
     text-decoration: underline;
@@ -543,6 +546,7 @@
     border: none !important;
     outline: none !important;
     resize: none;
+    overflow: hidden;
     line-height: 1.2;
     text-align: center;
     text-decoration: underline;
@@ -598,7 +602,6 @@
 /* reduced width variant for discipline/group-5 fourth column */
 .fourth-column-cell-danger {
     min-width: 40px !important;
-    width: 10% !important;
     text-align: center !important;
     font-weight: 700;
     border-right: 1px solid #e5e7eb !important;

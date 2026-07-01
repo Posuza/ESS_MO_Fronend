@@ -5,7 +5,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 @page {
-    size: A4 portrait;
+    size: A4 landscape;
     margin: 0;
 }
 
@@ -16,8 +16,8 @@
 
 :global(.pdf-page) {
     margin: 0;
-    width: 596px;
-    min-height: 842px;
+    width: 842px;
+    min-height: 596px;
     flex-shrink: 0;
     background: white;
     border: 1px solid #c2ccda;
@@ -28,6 +28,8 @@
     outline: 2px solid #1e3a8a;
     outline-offset: -10px;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 @media print {
@@ -62,8 +64,9 @@
         padding: 20mm !important;
         page-break-after: always !important;
         break-after: page !important;
-        min-height: 0 !important;
-        height: auto !important;
+        height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     :global(.pdf-page:last-child) {

@@ -282,7 +282,6 @@ select.guts-mo-search-input {
     font-weight: 600;
     opacity: 0.9;
     white-space: nowrap;
-    background: rgba(255, 255, 255, 0.15);
     padding: 2px 8px;
     border-radius: 6px;
 }
@@ -333,7 +332,6 @@ select.guts-mo-search-input {
 }
 
 .dept-card-expanded {
-    background: rgba(2, 75, 118, 0.03);
     border-bottom: 1px solid rgba(34, 197, 94, 0.2);
 }
 
@@ -418,7 +416,7 @@ select.guts-mo-search-input {
 
 .dept-card-body {
     margin: 0 8px 8px 45px;
-    padding: 0;
+    padding: 8px 12px;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -426,6 +424,7 @@ select.guts-mo-search-input {
     border-radius: 7px;
     border: 1px solid rgba(203, 213, 225, 0.85);
     background: #f7fbf8;
+    font-size: 11px;
 }
 
 .dept-item-row {
@@ -477,8 +476,8 @@ select.guts-mo-search-input {
 }
 
 .dept-card-title {
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: 500;
+    font-size: 13px;
     color: var(--blueText, #1b2b4a);
     white-space: nowrap;
     overflow: hidden;
@@ -549,7 +548,6 @@ select.guts-mo-search-input {
 }
 
 .card-header-expanded {
-    background: rgba(34, 197, 94, 0.03);
     border-bottom: 1px solid rgba(34, 197, 94, 0.2);
 }
 
@@ -601,15 +599,15 @@ select.guts-mo-search-input {
 }
 
 .card-key {
-    font-weight: 700;
+    font-weight: 300;
     font-size: 13px;
     color: #6b7280;
     flex-shrink: 0;
 }
 
 .card-title {
-    font-weight: 700;
-    font-size: var(--mo-card-title-size);
+    font-weight: 500;
+    font-size: calc(var(--mo-card-title-size) - 1px);
     color: #1b2b4a;
     white-space: nowrap;
     overflow: hidden;

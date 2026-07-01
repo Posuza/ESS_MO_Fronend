@@ -70,7 +70,7 @@ export default function Mo({ onBackHome }: Props) {
             {authEmployee?.division_name && (
               <span>{authEmployee.division_name}</span>
             )}
-            {authEmployee?.route_name && <span>{authEmployee.route_name}</span>}
+            {authEmployee?.route && <span>{authEmployee.route}</span>}
           </div>
         </div>
 

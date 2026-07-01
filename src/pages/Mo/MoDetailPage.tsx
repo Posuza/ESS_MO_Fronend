@@ -11,6 +11,11 @@ import MoUpdateForm from "../../components/mo/MoUpdateForm";
 import { useStore } from "../../store/store";
 import type { SectorReport } from "../../services/moReporTransaction.Service";
 import { canApprove } from "../../utils/positionAccess";
+import {
+  clearMoDetailEditState,
+  persistMoDetailEditState,
+  readSavedMoDetailEditState,
+} from "./moPersistence";
 
 type Props = {
   onCancel?: () => void;
@@ -52,7 +57,12 @@ const getApprovalStatusClass = (
 };
 
 export default function MoDetailPage(props: Props) {
-  const [isEditing, setIsEditing] = useState(false);
+  const savedEditState = readSavedMoDetailEditState();
+  const [isEditing, setIsEditing] = useState(
+    savedEditState?.itemId === props.item?.id
+      ? savedEditState.isEditing
+      : false,
+  );
   const [isDirty, setIsDirty] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -132,6 +142,18 @@ export default function MoDetailPage(props: Props) {
       setApprovalStatus(freshStatus as "PENDING" | "APPROVED" | "REJECTED");
     }
   }, [currentReport, props.item]);
+
+  useEffect(() => {
+    if (!props.item?.id) return;
+
+    const saved = readSavedMoDetailEditState();
+    setIsEditing(saved?.itemId === props.item.id ? saved.isEditing : false);
+  }, [props.item?.id]);
+
+  useEffect(() => {
+    if (!props.item?.id) return;
+    persistMoDetailEditState(props.item.id, isEditing);
+  }, [props.item?.id, isEditing]);
 
   const reportData =
     (currentReport?.id === props.item?.id
@@ -267,6 +289,7 @@ export default function MoDetailPage(props: Props) {
         open={showSuccess}
         onClose={() => {
           setShowSuccess(false);
+          clearMoDetailEditState();
           if (props.onCancel) props.onCancel();
           else window.history.back();
         }}
@@ -279,6 +302,7 @@ export default function MoDetailPage(props: Props) {
         open={showFetchError}
         onClose={() => {
           setShowFetchError(false);
+          clearMoDetailEditState();
           if (props.onCancel) props.onCancel();
           else window.history.back();
         }}
@@ -307,7 +331,7 @@ export default function MoDetailPage(props: Props) {
       )}
 
       {/* ── Director-only approval buttons — only after initial loading ── */}
-      {isDirector && !isEditing && !showPageLoading && (
+      {isDirector && !isEditing && !showPageLoading && isReportDateToday && (
         <div
           style={{
             display: "flex",
@@ -352,6 +376,7 @@ export default function MoDetailPage(props: Props) {
           type="button"
           className={styles["mo-back-btn"]}
           onClick={() => {
+            clearMoDetailEditState();
             if (props.onCancel) return props.onCancel();
             return window.history.back();
           }}

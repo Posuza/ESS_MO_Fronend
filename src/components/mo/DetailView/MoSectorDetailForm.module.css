@@ -401,13 +401,13 @@
 }
 
 .mo-table td.second-column-cell {
-    text-align: right !important;
+    text-align: left !important;
     background-color: transparent;
     width: 45%;
     word-break: break-word;
     font-weight: 600;
     vertical-align: middle;
-    font-size: 13px;
+    font-size: 12px;
     overflow: visible;
 }
 
@@ -419,7 +419,8 @@
     word-break: break-word;
     font-weight: 600;
     vertical-align: middle;
-    font-size: 13px;
+    font-size: 12px;
+    color: #475569;
 }
 
 .mo-table td.third-column-cell {
@@ -431,6 +432,7 @@
     background-color: transparent !important;
     border: none !important;
     vertical-align: middle;
+    color: #475569;
 }
 
 /* Zebra striping — exclude status-colored cells so their bg shows through */
@@ -451,8 +453,8 @@
     box-sizing: border-box;
     cursor: pointer;
     line-height: 1;
-    color: #fff;
     border-radius: 0;
+    color: #475569;
 }
 
 /* when a cell needs to show wrapped content, allow it to expand */
@@ -473,8 +475,8 @@
     padding: 6px 3px !important;
     margin: 0 !important;
     font-weight: 400;
-    font-size: 13px;
-    color: #333;
+    font-size: 12px;
+    color: #475569;
     background: transparent;
     border: none !important;
     outline: none !important;
@@ -495,8 +497,8 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 400;
-    font-size: 13px;
-    color: #333;
+    font-size: 12px;
+    color: #475569;
     background: transparent;
     border: none !important;
     outline: none !important;
@@ -517,8 +519,8 @@
     padding: 3px 3px !important;
     margin: 0 !important;
     font-weight: 400;
-    font-size: 13px;
-    color: #333;
+    font-size: 12px;
+    color: #475569;
     background: transparent;
     border: none !important;
     outline: none !important;
@@ -559,8 +561,10 @@
     text-align: center !important;
     box-sizing: border-box;
     min-width: 40px;
-    width: 18%;
+    width: 14%;
     vertical-align: middle !important;
+    color: #475569;
+    padding: 6px 0px;
 }
 .mo-table td.group3-fourth-column-cell {
     background-color: transparent;
@@ -570,6 +574,7 @@
     width: 10%;
     vertical-align: top !important;
     border-right: 1px solid #e5e7eb;
+    color: #475569;
 }
 
 /* reduced width variant for discipline/group-5 fourth column */
@@ -801,6 +806,7 @@
     height: auto !important; /* allow autosize to control height */
     padding: 8px !important;
     overflow: visible !important; /* let the textarea grow the row */
+    color: #475569;
 }
 
 /* helper: variant of second column cell with left-aligned content (used for labels like 'Project XXXXX') */
@@ -838,6 +844,7 @@
     text-align: left !important;
     padding-left: 8px !important;
     box-sizing: border-box;
+    color: #475569;
 }
 
 /* radio group for select-like options (flex wrapping, each item grows) */

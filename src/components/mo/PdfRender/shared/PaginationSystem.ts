@@ -6,9 +6,9 @@
 
 // ─── Shared PDF Page Constants ────────────────────────────
 export const PDF = {
-  PAGE_WIDTH: 800,
-  PAGE_HEIGHT: 1100,
-  PAGE_HEADER_H: 220,
+  PAGE_WIDTH: 842,
+  PAGE_HEIGHT: 720,
+  PAGE_HEADER_H: 155,
   TABLE_HEADER_H: 40,
   ROW_HEIGHT: 24,
   ROW_PADDING: 8, // 4px top + 4px bottom

@@ -20,6 +20,14 @@ import NoDataMessage from "../../components/NoDataMessage";
 import { FaHouse } from "react-icons/fa6";
 import { LuLandmark } from "react-icons/lu";
 import { usePositionReports } from "../../hooks/usePositionReports";
+import {
+  clearMoDetailState,
+  clearMoDetailEditState,
+  clearMoReportState,
+  persistMoDetailState,
+  readSavedMoDetailState,
+  type MoDetailSource,
+} from "./moPersistence";
 
 type SubView =
   | "main"
@@ -38,20 +46,122 @@ type Props = {
   initialView?: "main" | "search"; // Initial section of the main view
 };
 
+type DetailSource = MoDetailSource;
+
+const MO_SUBVIEW_KEY = "mo_subview";
+const MO_REPORT_PARAMS_KEY = "mo_report_params";
+
+const VALID_SUBVIEWS: SubView[] = [
+  "main",
+  "list",
+  "new",
+  "detail",
+  "update",
+  "dashboard",
+  "pdfviewer",
+  "report",
+  "config",
+  "add",
+];
+
+function readSavedSubView(): SubView | null {
+  try {
+    const saved = localStorage.getItem(MO_SUBVIEW_KEY) as SubView | null;
+    if (saved && VALID_SUBVIEWS.includes(saved)) return saved;
+  } catch {
+    // localStorage unavailable (e.g. private mode) — ignore
+  }
+  return null;
+}
+
+function persistSubView(v: SubView) {
+  try {
+    localStorage.setItem(MO_SUBVIEW_KEY, v);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearPersistedSubView() {
+  try {
+    localStorage.removeItem(MO_SUBVIEW_KEY);
+    localStorage.removeItem(MO_REPORT_PARAMS_KEY);
+  } catch {
+    // ignore
+  }
+  clearMoDetailState();
+  clearMoDetailEditState();
+  clearMoReportState();
+}
+
+function readSavedReportParams(): {
+  deptId?: number;
+  date?: string;
+} {
+  try {
+    const raw = localStorage.getItem(MO_REPORT_PARAMS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore parse / storage errors
+  }
+  return {};
+}
+
+function persistReportParams(deptId?: number, date?: string) {
+  try {
+    localStorage.setItem(
+      MO_REPORT_PARAMS_KEY,
+      JSON.stringify({ deptId, date }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function getInitialSubView(initialView?: "main" | "search"): SubView {
+  if (initialView === "search") return "report";
+
+  const saved = readSavedSubView();
+  if (!saved) return "main";
+
+  if (saved === "detail" && !readSavedMoDetailState()) {
+    return "main";
+  }
+
+  return saved;
+}
+
 export default function MoHome(props: Props) {
-  const [subView, setSubView] = useState<SubView>(
-    props.initialView === "search" ? "report" : "main",
+  const [subView, setSubViewState] = useState<SubView>(() =>
+    getInitialSubView(props.initialView),
   );
+  const savedDetailState = useMemo(() => readSavedMoDetailState(), []);
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(
+    savedDetailState?.itemId ?? null,
+  );
+
+  // Wrap the raw setState so every subview change is automatically
+  // persisted to localStorage — this is what survives a hard refresh.
+  function setSubView(v: SubView) {
+    setSubViewState(v);
+    persistSubView(v);
+  }
+
   const [selectedItem, setSelectedItem] = useState<SectorReport | null>(null);
-  const [detailSource, setDetailSource] = useState<"main" | "list" | "report">(
-    "main",
+  const [detailSource, setDetailSource] = useState<DetailSource>(
+    savedDetailState?.source ?? "main",
   );
+
+  // Restore report params (deptId / date) if we came back into "report"
+  // subview after a refresh.
+  const savedReportParams = useMemo(() => readSavedReportParams(), []);
+
   const [reportInitialDeptId, setReportInitialDeptId] = useState<
     number | undefined
-  >();
+  >(subView === "report" ? savedReportParams.deptId : undefined);
   const [reportInitialDate, setReportInitialDate] = useState<
     string | undefined
-  >();
+  >(subView === "report" ? savedReportParams.date : undefined);
 
   const [showNotFoundError, setShowNotFoundError] = useState(false);
   const [notFoundErrorMessage, setNotFoundErrorMessage] = useState("");
@@ -116,6 +226,29 @@ export default function MoHome(props: Props) {
         });
     }
   }, [fetchWithPosition]);
+
+  useEffect(() => {
+    if (subView !== "detail" || selectedItemId == null) return;
+
+    const found = reports.find(
+      (report) => Number(report.id) === Number(selectedItemId),
+    );
+
+    if (found) {
+      if (selectedItem?.id !== found.id) {
+        setSelectedItem(found);
+      }
+      return;
+    }
+
+    if (!isLoading && !showLoading) {
+      clearMoDetailState();
+      clearMoDetailEditState();
+      setSelectedItem(null);
+      setSelectedItemId(null);
+      setSubView("main");
+    }
+  }, [reports, isLoading, selectedItem, selectedItemId, showLoading, subView]);
 
   const deptName = currentEmployee?.department_name;
 
@@ -210,10 +343,14 @@ export default function MoHome(props: Props) {
   };
 
   function openList() {
+    clearMoDetailState();
+    clearMoDetailEditState();
     setSubView("list");
   }
 
   function openNew() {
+    clearMoDetailState();
+    clearMoDetailEditState();
     setSubView("add");
   }
 
@@ -224,6 +361,7 @@ export default function MoHome(props: Props) {
       return;
     }
     if (props.onBackHome) {
+      clearPersistedSubView();
       props.onBackHome();
     } else {
       window.history.back();
@@ -234,17 +372,24 @@ export default function MoHome(props: Props) {
     return (
       <MoListPage
         onCancel={() => {
+          clearMoDetailState();
+          clearMoDetailEditState();
           setSubView("main");
           refreshMainView();
         }}
         onOpenDetail={(item) => {
+          persistMoDetailState(item.id, "list");
+          setSelectedItemId(item.id);
           setSelectedItem(item);
           setDetailSource("list");
           setSubView("detail");
         }}
         onOpenReport={(deptId, date) => {
+          clearMoDetailState();
+          clearMoReportState();
           setReportInitialDeptId(deptId);
           setReportInitialDate(date);
+          persistReportParams(deptId, date);
           setSubView("report");
         }}
       />
@@ -255,6 +400,8 @@ export default function MoHome(props: Props) {
     return (
       <MoAddNewPage
         onCancel={() => {
+          clearMoDetailState();
+          clearMoDetailEditState();
           setSubView("main");
           refreshMainView();
         }}
@@ -268,13 +415,23 @@ export default function MoHome(props: Props) {
         initialDeptId={reportInitialDeptId}
         initialDate={reportInitialDate}
         onCancel={() => {
+          clearMoReportState();
+          clearMoDetailEditState();
           setSubView("list");
         }}
       />
     );
   }
 
-  if (subView === "detail" && selectedItem) {
+  if (subView === "detail") {
+    if (!selectedItem) {
+      return (
+        <div className={styles["mo-home-page"]}>
+          <MoLoadingPopup open message="กำลังโหลดข้อมูล..." />
+        </div>
+      );
+    }
+
     const backToView =
       detailSource === "list"
         ? "list"
@@ -285,6 +442,10 @@ export default function MoHome(props: Props) {
       <MoDetailPage
         item={selectedItem}
         onCancel={() => {
+          clearMoDetailState();
+          clearMoDetailEditState();
+          setSelectedItemId(null);
+          setSelectedItem(null);
           setSubView(backToView);
           if (backToView === "main" || backToView === "list") {
             refreshMainView();
@@ -298,6 +459,8 @@ export default function MoHome(props: Props) {
     return (
       <MoConfigPage
         onCancel={() => {
+          clearMoDetailState();
+          clearMoDetailEditState();
           setSubView("main");
           refreshMainView();
         }}
@@ -361,6 +524,8 @@ export default function MoHome(props: Props) {
                     ) {
                       fetchReportById(found.id)
                         .then(() => {
+                          persistMoDetailState(found.id, "main");
+                          setSelectedItemId(found.id);
                           setSelectedItem(found);
                           setDetailSource("main");
                           setSubView("detail");

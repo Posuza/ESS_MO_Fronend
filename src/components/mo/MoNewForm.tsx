@@ -20,6 +20,55 @@ export type LocationOption = {
   divisions: DivisionOption[];
 };
 
+// Define the form data type for persistence
+type FormData = {
+  selectedDepartment: number;
+  selectedSubLocation: string;
+  // Group 1 - Personnel
+  dept_guard_post_count: string;
+  dept_current_personnel_count: string;
+  dept_missing_regular_count: string;
+  dept_missing_personnel_count: string;
+  dept_supplement_count: string;
+  dept_recruitment_count: string;
+  dept_reserve_units_count: string;
+  dept_reserve_personnel_count: string;
+  // Group 2 - Leave
+  leave_personal_count: string;
+  leave_sick_count: string;
+  leave_absent_count: string;
+  leave_deserted_count: string;
+  leave_resigned_count: string;
+  leave_terminated_count: string;
+  // Group 3 - Shift
+  shift_18_count: string;
+  shift_24_count: string;
+  shift_36_count: string;
+  // Group 4 - Training
+  training_shift_change_count: string;
+  training_planned_count: string;
+  training_duty_control_count: string;
+  // Discipline items
+  discipline_phone_count: string;
+  discipline_belt_count: string;
+  discipline_badge_count: string;
+  discipline_uniform_count: string;
+  // Dynamic group 2 items
+  dynamicGroup2: Array<{
+    key: string;
+    label: string;
+    value: string;
+    isActive: boolean;
+  }>;
+  // Dynamic group 3 items
+  dynamicGroup3: Array<{
+    label: string;
+    detail: string;
+    status: string;
+    note: string;
+  }>;
+};
+
 type Props = {
   onCancel?: () => void;
   selectedLocation?: string;
@@ -30,6 +79,9 @@ type Props = {
 export default function MoNewForm(props: Props) {
   const { createReport, authEmployee, fetchDistinctDisciplineTypes } =
     useStore();
+
+  // Generate unique key for form data persistence based on employee code
+  const formPersistenceKey = `moNewForm_${authEmployee?.employee_code || "anonymous"}`;
 
   // Fetch all distinct discipline types (key + label only) from the data
   const [distinctDisciplineTypes, setDistinctDisciplineTypes] = useState<
@@ -51,9 +103,30 @@ export default function MoNewForm(props: Props) {
   // Derive locations from the dictionary array
   const locations = locationOptions.map((o) => o.department);
 
-  const [selectedDepartment, setSelectedDepartment] = useState<number>(
-    authEmployee?.department_id ?? locations[0]?.id ?? 1,
-  );
+  // Check if we have saved form data in localStorage
+  const [savedFormData, setSavedFormData] = useState<FormData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load saved form data from localStorage
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem(formPersistenceKey);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData) as FormData;
+        setSavedFormData(parsedData);
+      }
+    } catch (error) {
+      console.error("Failed to load form data from localStorage", error);
+    }
+    setIsLoading(false);
+  }, [formPersistenceKey]);
+
+  // Initialize selectedDepartment from saved data or defaults
+  const [selectedDepartment, setSelectedDepartment] = useState<number>(() => {
+    if (savedFormData?.selectedDepartment)
+      return savedFormData.selectedDepartment;
+    return authEmployee?.department_id ?? locations[0]?.id ?? 1;
+  });
 
   // Derive divisionOptions for the currently selected department
   const currentLocation = locationOptions.find(
@@ -61,7 +134,12 @@ export default function MoNewForm(props: Props) {
   );
   const divisionOptions = currentLocation?.divisions ?? [];
 
-  const [selectedSubLocation, setSelectedSubLocation] = useState<string>("");
+  // Initialize selectedSubLocation from saved data or defaults
+  const [selectedSubLocation, setSelectedSubLocation] = useState<string>(() => {
+    if (savedFormData?.selectedSubLocation)
+      return savedFormData.selectedSubLocation;
+    return "";
+  });
 
   // Auto-select first available division
   const availableSubSectorOptions = divisionOptions.filter(
@@ -102,7 +180,25 @@ export default function MoNewForm(props: Props) {
   // status state per-row (initialized after groups mount)
   const [rowStatus, setRowStatus] = useState<Record<string, number>>({});
   // dynamicGroup3 must exist before this effect runs, declare it here (hydrated later)
-  const [dynamicGroup3, setDynamicGroup3] = useState(() => [] as any[]);
+  const [dynamicGroup3, setDynamicGroup3] = useState(() => {
+    if (savedFormData?.dynamicGroup3) {
+      return [
+        {
+          key: "meeting",
+          title: "เข้าพบผู้ว่าจ้าง",
+          items: savedFormData.dynamicGroup3,
+        },
+      ];
+    }
+    return [
+      {
+        key: "meeting",
+        title: "เข้าพบผู้ว่าจ้าง",
+        items: [],
+      },
+    ];
+  });
+
   useEffect(() => {
     const init: Record<string, number> = {};
     // initialize only for group3 items (index-based)
@@ -116,6 +212,56 @@ export default function MoNewForm(props: Props) {
     });
     setRowStatus(init);
   }, [dynamicGroup3]);
+
+  // Initialize dynamicGroup2 from saved data or defaults
+  const [dynamicGroup2, setDynamicGroup2] = useState(() => {
+    if (savedFormData?.dynamicGroup2) {
+      return [
+        {
+          key: "discipline",
+          title: "วินัยและการลงโทษ",
+          items: savedFormData.dynamicGroup2,
+        },
+      ];
+    }
+
+    return [
+      {
+        key: "discipline",
+        title: "วินัยและการลงโทษ",
+        items: [
+          {
+            key: "discipline_phone_count",
+            label: "เล่นโทรศัพท์มือถือ :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_belt_count",
+            label: "ไม่มีเข็มขัด :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_badge_count",
+            label: "ไม่แขวนบัตร :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_uniform_count",
+            label: "ชุดชำรุดเก่า :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+        ],
+      },
+    ];
+  });
 
   const cycleStatus = (idx: number) => {
     setDynamicGroup3((prev) =>
@@ -276,6 +422,53 @@ export default function MoNewForm(props: Props) {
     },
   ];
 
+  // Initialize group1 counts from saved data or defaults
+  const [counts, setCounts] = useState<Record<string, string>>(() => {
+    if (savedFormData) {
+      return {
+        dept_guard_post_count: savedFormData.dept_guard_post_count || "0",
+        dept_current_personnel_count:
+          savedFormData.dept_current_personnel_count || "0",
+        dept_missing_regular_count:
+          savedFormData.dept_missing_regular_count || "0",
+        dept_missing_personnel_count:
+          savedFormData.dept_missing_personnel_count || "0",
+        dept_supplement_count: savedFormData.dept_supplement_count || "0",
+        dept_recruitment_count: savedFormData.dept_recruitment_count || "0",
+        dept_reserve_units_count: savedFormData.dept_reserve_units_count || "0",
+        dept_reserve_personnel_count:
+          savedFormData.dept_reserve_personnel_count || "0",
+        leave_personal_count: savedFormData.leave_personal_count || "0",
+        leave_sick_count: savedFormData.leave_sick_count || "0",
+        leave_absent_count: savedFormData.leave_absent_count || "0",
+        leave_deserted_count: savedFormData.leave_deserted_count || "0",
+        leave_resigned_count: savedFormData.leave_resigned_count || "0",
+        leave_terminated_count: savedFormData.leave_terminated_count || "0",
+        shift_18_count: savedFormData.shift_18_count || "0",
+        shift_24_count: savedFormData.shift_24_count || "0",
+        shift_36_count: savedFormData.shift_36_count || "0",
+        training_shift_change_count:
+          savedFormData.training_shift_change_count || "0",
+        training_planned_count: savedFormData.training_planned_count || "0",
+        training_duty_control_count:
+          savedFormData.training_duty_control_count || "0",
+        discipline_phone_count: savedFormData.discipline_phone_count || "0",
+        discipline_belt_count: savedFormData.discipline_belt_count || "0",
+        discipline_badge_count: savedFormData.discipline_badge_count || "0",
+        discipline_uniform_count: savedFormData.discipline_uniform_count || "0",
+      };
+    }
+
+    // Default initialization
+    const initialCounts: Record<string, string> = {};
+    [...group1, ...dynamicGroup2].forEach((g) =>
+      g.items.forEach((it) => {
+        initialCounts[it.key] = (it as any).value ?? "0";
+      }),
+    );
+    return initialCounts;
+  });
+
   const group2 = [
     {
       key: "discipline",
@@ -313,8 +506,85 @@ export default function MoNewForm(props: Props) {
     },
   ];
 
-  // make group2 editable at runtime (so the plus button can add rows)
-  const [dynamicGroup2, setDynamicGroup2] = useState(() => group2);
+  // Save form data to localStorage whenever any form field changes
+  useEffect(() => {
+    if (isLoading) return;
+
+    const formData: FormData = {
+      selectedDepartment,
+      selectedSubLocation,
+      dept_guard_post_count: counts.dept_guard_post_count || "0",
+      dept_current_personnel_count: counts.dept_current_personnel_count || "0",
+      dept_missing_regular_count: counts.dept_missing_regular_count || "0",
+      dept_missing_personnel_count: counts.dept_missing_personnel_count || "0",
+      dept_supplement_count: counts.dept_supplement_count || "0",
+      dept_recruitment_count: counts.dept_recruitment_count || "0",
+      dept_reserve_units_count: counts.dept_reserve_units_count || "0",
+      dept_reserve_personnel_count: counts.dept_reserve_personnel_count || "0",
+      leave_personal_count: counts.leave_personal_count || "0",
+      leave_sick_count: counts.leave_sick_count || "0",
+      leave_absent_count: counts.leave_absent_count || "0",
+      leave_deserted_count: counts.leave_deserted_count || "0",
+      leave_resigned_count: counts.leave_resigned_count || "0",
+      leave_terminated_count: counts.leave_terminated_count || "0",
+      shift_18_count: counts.shift_18_count || "0",
+      shift_24_count: counts.shift_24_count || "0",
+      shift_36_count: counts.shift_36_count || "0",
+      training_shift_change_count: counts.training_shift_change_count || "0",
+      training_planned_count: counts.training_planned_count || "0",
+      training_duty_control_count: counts.training_duty_control_count || "0",
+      discipline_phone_count: counts.discipline_phone_count || "0",
+      discipline_belt_count: counts.discipline_belt_count || "0",
+      discipline_badge_count: counts.discipline_badge_count || "0",
+      discipline_uniform_count: counts.discipline_uniform_count || "0",
+      dynamicGroup2: dynamicGroup2.flatMap((g) => g.items),
+      dynamicGroup3: dynamicGroup3.flatMap((g) => g.items),
+    };
+
+    try {
+      localStorage.setItem(formPersistenceKey, JSON.stringify(formData));
+    } catch (error) {
+      console.error("Failed to save form data to localStorage", error);
+    }
+  }, [
+    selectedDepartment,
+    selectedSubLocation,
+    counts.dept_guard_post_count,
+    counts.dept_current_personnel_count,
+    counts.dept_missing_regular_count,
+    counts.dept_missing_personnel_count,
+    counts.dept_supplement_count,
+    counts.dept_recruitment_count,
+    counts.dept_reserve_units_count,
+    counts.dept_reserve_personnel_count,
+    counts.leave_personal_count,
+    counts.leave_sick_count,
+    counts.leave_absent_count,
+    counts.leave_deserted_count,
+    counts.leave_resigned_count,
+    counts.leave_terminated_count,
+    counts.shift_18_count,
+    counts.shift_24_count,
+    counts.shift_36_count,
+    counts.training_shift_change_count,
+    counts.training_planned_count,
+    counts.training_duty_control_count,
+    counts.discipline_phone_count,
+    counts.discipline_belt_count,
+    counts.discipline_badge_count,
+    counts.discipline_uniform_count,
+    dynamicGroup2,
+    dynamicGroup3,
+    formPersistenceKey,
+    isLoading,
+  ]);
+
+  // Function to clear form data from localStorage when form is successfully submitted
+  const clearFormData = () => {
+    localStorage.removeItem(formPersistenceKey);
+  };
+
+  // modal state for adding a row into group2 (discipline)
   const [showAddGroup2, setShowAddGroup2] = useState(false);
   const [newGroup2Label, setNewGroup2Label] = useState("");
   const [newGroup2Unit, setNewGroup2Unit] = useState("คน");
@@ -570,28 +840,6 @@ export default function MoNewForm(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // initialize counts from item defaults (each item has value: "0")
-  const initialCounts = (() => {
-    const acc: Record<string, string> = {};
-    group1.forEach((g) =>
-      g.items.forEach((it) => {
-        acc[it.key] = (it as { value: string }).value ?? "0";
-      }),
-    );
-    group2.forEach((g) =>
-      g.items.forEach((it) => {
-        acc[it.key] = (it as { value: string }).value ?? "0";
-      }),
-    );
-    // group3 items have inline note — skip counts
-    return acc;
-  })();
-
-  // inline-edit counts for third-column cells (initialized from groups)
-  const [counts, setCounts] = useState<Record<string, string>>(
-    () => initialCounts,
-  );
-
   // open/closed state per group to render sections dynamically
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     [...group1, ...dynamicGroup2, ...group3].reduce(
@@ -660,7 +908,8 @@ export default function MoNewForm(props: Props) {
     const digits = String(v || "").replace(/\D/g, "");
     if (digits === "") return "0";
     const n = digits.replace(/^0+/, "");
-    return n === "" ? "0" : n;
+    // Limit to 15 digits to stay within JavaScript safe integer range
+    return n === "" ? "0" : n.slice(0, 15);
   };
 
   // sanitize any pre-existing counts on mount (in case invalid values were stored before)
@@ -911,6 +1160,9 @@ export default function MoNewForm(props: Props) {
 
       setIsSubmitting(false);
       setShowSuccess(true);
+
+      // Clear form data from localStorage after successful submission
+      clearFormData();
     } catch (err: unknown) {
       setIsSubmitting(false);
       const msg = err instanceof Error ? err.message : String(err);

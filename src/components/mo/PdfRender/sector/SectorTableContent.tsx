@@ -112,7 +112,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                       backgroundColor: headerBg,
                       color: headerColor,
                       fontWeight: 700,
-                      fontSize: 8,
+                      fontSize: 7,
                       padding: "6px 6px",
                       textAlign: "left",
                     }}
@@ -125,7 +125,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                       backgroundColor: headerBg,
                       color: headerColor,
                       fontWeight: 700,
-                      fontSize: 8,
+                      fontSize: 7,
                       padding: "6px 4px",
                       textAlign: "left",
                     }}
@@ -143,7 +143,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                         textAlign: "center",
                         padding: "10px",
                         color: "#000000",
-                        fontSize: 8,
+                        fontSize: 7,
                         fontWeight: 500,
                       }}
                     >
@@ -157,9 +157,14 @@ export default function SectorTableContent({ item, groups }: Props) {
                       <tr key={it.key || i}>
                         <td
                           style={{
-                            fontSize: 8,
-                            padding: "6px 6px",
+                            fontSize: 7,
+                            padding: "6px 2px",
+                            width: 26,
+                            minWidth: 26,
+                            maxWidth: 26,
                             verticalAlign: "middle",
+                            textAlign: "center",
+                            color: "#000000",
                           }}
                         >
                           {idx + 1}.{itemNum}
@@ -167,9 +172,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           colSpan={2}
                           style={{
-                            fontSize: 8,
+                            fontSize: 7,
                             padding: "6px 6px",
                             textAlign: "left",
+                            color: "#000000",
                           }}
                         >
                           {it.label}
@@ -177,10 +183,12 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           style={{
                             color: statusBg(it.status),
-                            fontWeight: 700,
                             textAlign: "center",
-                            padding: "6px 6px",
-                            fontSize: 8,
+                            padding: "6px 4px",
+                            fontSize: 7,
+                            width: 50,
+                            minWidth: 50,
+                            maxWidth: 50,
                           }}
                         >
                           {statusLabel(it.status)}
@@ -198,8 +206,13 @@ export default function SectorTableContent({ item, groups }: Props) {
                       <tr key={r.key}>
                         <td
                           style={{
-                            fontSize: 8,
-                            padding: "6px 6px",
+                            fontSize: 7,
+                            padding: "6px 2px",
+                            width: 26,
+                            minWidth: 26,
+                            maxWidth: 26,
+                            textAlign: "center",
+                            color: "#000000",
                           }}
                         >
                           {idx + 1}.{itemNum}
@@ -207,8 +220,9 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           style={{
                             textAlign: "left",
-                            fontSize: 8,
+                            fontSize: 7,
                             padding: "6px 6px",
+                            color: "#000000",
                           }}
                         >
                           {r.label}
@@ -216,13 +230,14 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           style={{
                             textAlign: "center",
-                            fontSize: 8,
-                            padding: "6px 4px",
-                            width: 40,
-                            minWidth: 40,
-                            maxWidth: 40,
+                            fontSize: 7,
+                            padding: "6px 2px",
+                            width: 30,
+                            minWidth: 30,
+                            maxWidth: 30,
                             whiteSpace: "normal",
                             wordBreak: "break-word",
+                            color: "#000000",
                           }}
                         >
                           {value}
@@ -230,13 +245,14 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           style={{
                             textAlign: "center",
-                            fontSize: 8,
-                            padding: "6px 4px",
-                            width: 36,
-                            minWidth: 36,
-                            maxWidth: 36,
+                            fontSize: 7,
+                            padding: "6px 2px",
+                            width: 28,
+                            minWidth: 28,
+                            maxWidth: 28,
                             whiteSpace: "normal",
                             wordBreak: "break-word",
+                            color: "#000000",
                           }}
                         >
                           {r.unit}

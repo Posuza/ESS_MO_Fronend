@@ -106,7 +106,7 @@ export default function NoDataMessage() {
         style={{
           margin: 0,
           color: "#173f7a",
-          fontSize: "clamp(20px, 6vw, 26px)",
+          fontSize: "clamp(16px, 4.5vw, 20px)",
           fontWeight: 900,
           lineHeight: 1.28,
           letterSpacing: "0.1px",

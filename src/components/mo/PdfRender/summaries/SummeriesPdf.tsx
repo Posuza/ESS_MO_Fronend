@@ -20,11 +20,7 @@ import {
   type PdfGroup,
   type PdfGroupItem,
 } from "../shared/PaginationSystem";
-import {
-  group1,
-  dynamicGroup2,
-  group3Static,
-} from "./summaryGroups";
+import { group1, dynamicGroup2, group3Static } from "./summaryGroups";
 import {
   projectStatusCount,
   itemValueFn,
@@ -33,7 +29,11 @@ import {
   SUMMARY_STYLES,
 } from "./summaryHelpers";
 import { renderSingleGroup } from "./SummaryTableContent";
-import { PdfPageHeader, PdfPageFooter, TotalPagesContext } from "../shared/PdfPageLayout";
+import {
+  PdfPageHeader,
+  PdfPageFooter,
+  TotalPagesContext,
+} from "../shared/PdfPageLayout";
 import SectorTableContent from "../sector/SectorTableContent";
 import SectorDetailContent from "../sector/SectorDetailContent";
 import "./SummeriesPdf.module.css";

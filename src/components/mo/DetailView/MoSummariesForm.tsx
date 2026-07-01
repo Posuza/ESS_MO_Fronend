@@ -352,32 +352,28 @@ export default function MoSummariesForm(props: Props) {
             {/* Column headers */}
             <tr>
               <td colSpan={2} className={styles["second-column-header-cell"]}>
-                <strong>หัวข้อ</strong>
+                หัวข้อ
               </td>
               {cols.map((c) => (
                 <td
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  <strong>
-                    {(() => {
-                      const name = String(c.division_name ?? "");
-                      const m = name.match(/เขต\s+[\d.]+/);
-                      if (m) return m[0];
-                      const words = name.trim().split(/\s+/);
-                      return words.length >= 2
-                        ? words
-                            .slice(0, 2)
-                            .map((w) => w.charAt(0))
-                            .join("")
-                        : name;
-                    })()}
-                  </strong>
+                  {(() => {
+                    const name = String(c.division_name ?? "");
+                    const m = name.match(/เขต\s+[\d.]+/);
+                    if (m) return m[0];
+                    const words = name.trim().split(/\s+/);
+                    return words.length >= 2
+                      ? words
+                          .slice(0, 2)
+                          .map((w) => w.charAt(0))
+                          .join("")
+                      : name;
+                  })()}
                 </td>
               ))}
-              <td className={styles["third-column-header2-cell"]}>
-                <strong>รวม</strong>
-              </td>
+              <td className={styles["third-column-header2-cell"]}>รวม</td>
               <td className={styles["fourth-column-header-cell"]} />
             </tr>
 
@@ -556,9 +552,7 @@ export default function MoSummariesForm(props: Props) {
                   </strong>
                 </td>
               ))}
-              <td className={styles["third-column-header2-cell"]}>
-                <strong>รวม</strong>
-              </td>
+              <td className={styles["third-column-header2-cell"]}>รวม</td>
               <td className={styles["fourth-column-header-cell"]} />
             </tr>
 
