@@ -118,6 +118,16 @@ function toQuery(filters?: SectorReportFilters): string {
   return qs ? `?${qs}` : "";
 }
 
+/** Error that carries the HTTP status code alongside the message. */
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = "HttpError";
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_URL}/mo-daily-transactions${path}`;
   const res = await fetch(url, {
@@ -138,7 +148,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
         : data?.detail
           ? JSON.stringify(data.detail)
           : `API error ${res.status}`;
-    throw new Error(detail);
+    throw new HttpError(res.status, detail);
   }
   if (res.status === 204) return undefined as T;
 

@@ -14,7 +14,7 @@ type Props = {
 
 export default function Login({ onLoginSuccess }: Props) {
   const [empCode, setEmpCode] = useState(
-    () => localStorage.getItem("emp_code") || "",
+    () => sessionStorage.getItem("emp_code") || "",
   );
   const [pin, setPin] = useState("");
   const [forgotOpen, setForgotOpen] = useState(false);

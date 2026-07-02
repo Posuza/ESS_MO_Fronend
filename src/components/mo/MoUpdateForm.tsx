@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, ChevronRight, PinIcon, PlusIcon, X } from "lucide-react";
 import styles from "./MoUpdateForm.module.css";
 import { useStore } from "../../store/store";
+import { HttpError } from "../../services/moReporTransaction.Service";
 import {
   ConfirmCancelDialog,
   ConfirmSubmitDialog,
@@ -29,6 +30,9 @@ type Props = {
   onDirtyChange?: (dirty: boolean) => void;
   isDirty?: boolean;
   onRequestSave?: () => void;
+  /** Called after a failed save — parent should refetch fresh data from backend */
+  onRefreshData?: () => Promise<void> | void;
+  onReportNotFound?: (message: string) => void;
   // ── Approval state owned by parent (MoDetailPage) ──
   externalApprovalStatus?: "PENDING" | "APPROVED" | "REJECTED";
   onApprovalStatusChange?: (
@@ -86,11 +90,13 @@ export default function MoUpdateForm(props: Props) {
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showFail, setShowFail] = useState(false);
+  const [failMessage, setFailMessage] = useState("");
 
-  // Update loading popup with minimum 2-second display time
+  // Update loading popup with minimum 1.5-second display time
   const [isUpdating, setIsUpdating] = useState(false);
   const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const MIN_UPDATE_MS = 2000;
+  const MIN_UPDATE_MS = 1500;
 
   useEffect(() => {
     return () => {
@@ -805,6 +811,17 @@ export default function MoUpdateForm(props: Props) {
     };
   }, [props.reportData]);
 
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingRaw, setEditingRaw] = useState<string>("0");
+
+  const toDigitString = (v: string) => {
+    const digits = String(v || "").replace(/\D/g, "");
+    if (digits === "") return "0";
+    const n = digits.replace(/^0+/, "");
+    // Limit to 15 digits to stay within JavaScript safe integer range
+    return n === "" ? "0" : n.slice(0, 15);
+  };
+
   const isDirty = (() => {
     const snap = initialSnapshotRef.current;
     if (!snap) return false;
@@ -813,6 +830,10 @@ export default function MoUpdateForm(props: Props) {
     }
     for (const key of Object.keys(counts)) {
       if (!(key in snap.counts) && counts[key] !== "0") return true;
+    }
+    // Also detect changes while cursor is in the field (not yet committed to counts)
+    if (editingKey && editingRaw !== toDigitString(counts[editingKey] ?? "0")) {
+      return true;
     }
     const currentProjects =
       dynamicGroup3.find((g: any) => g.key === "meeting")?.items ?? [];
@@ -895,8 +916,6 @@ export default function MoUpdateForm(props: Props) {
     ),
   );
 
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [editingRaw, setEditingRaw] = useState<string>("0");
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   const labelInputRef = useRef<HTMLTextAreaElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -949,14 +968,6 @@ export default function MoUpdateForm(props: Props) {
       return next;
     });
   }, []);
-
-  const toDigitString = (v: string) => {
-    const digits = String(v || "").replace(/\D/g, "");
-    if (digits === "") return "0";
-    const n = digits.replace(/^0+/, "");
-    // Limit to 15 digits to stay within JavaScript safe integer range
-    return n === "" ? "0" : n.slice(0, 15);
-  };
 
   const handleTextareaChange = (
     key: string,
@@ -1197,7 +1208,7 @@ export default function MoUpdateForm(props: Props) {
         await createReport(payload as any);
       }
 
-      // Ensure minimum 2-second display time
+      // Ensure minimum 1.5-second display time
       const elapsed = Date.now() - startTime;
       const remaining = MIN_UPDATE_MS - elapsed;
       if (remaining > 0) {
@@ -1213,7 +1224,13 @@ export default function MoUpdateForm(props: Props) {
     } catch (err: unknown) {
       setIsUpdating(false);
       const msg = err instanceof Error ? err.message : String(err);
-      alert(`เกิดข้อผิดพลาดในการบันทึก: ${msg}`);
+      // If the report was deleted by someone else (404), tell the parent to navigate back
+      if (err instanceof HttpError && err.status === 404) {
+        props.onReportNotFound?.(msg);
+        return;
+      }
+      setFailMessage(msg);
+      setShowFail(true);
     }
   };
 
@@ -1316,7 +1333,7 @@ export default function MoUpdateForm(props: Props) {
                     colSpan={1}
                     className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
                   >
-                    {idx + 1}.
+                    {idx + 1}
                   </th>
                   <th
                     colSpan={3}
@@ -1346,7 +1363,7 @@ export default function MoUpdateForm(props: Props) {
                   {g.items.map((r, itemIdx) => (
                     <tr key={r.key}>
                       <td className={styles["first-column-cell"]}>
-                        6.{itemIdx + 1}
+                        {idx + 1}.{itemIdx + 1}
                       </td>
                       <td className={styles["group3-second-column-cell"]}>
                         {r.label}
@@ -2222,6 +2239,17 @@ export default function MoUpdateForm(props: Props) {
         variant="success"
         title="บันทึกรายงานสำเร็จ!"
         description="ระบบได้ทำการบันทึกข้อมูลของคุณเรียบร้อยแล้ว"
+      />
+      <InfoModel
+        open={showFail}
+        onClose={async () => {
+          setShowFail(false);
+          await props.onRefreshData?.();
+          handleReset();
+        }}
+        variant="error"
+        title="เกิดข้อผิดพลาดในการบันทึก"
+        description={failMessage}
       />
     </>
   );

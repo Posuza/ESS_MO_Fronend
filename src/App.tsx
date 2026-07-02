@@ -29,8 +29,8 @@ type PunchType = "in" | "out";
 
 export default function App() {
   // Restore session on refresh — if emp_code exists in localStorage, skip login
-  const savedRoute = localStorage.getItem("app_route") as Route | null;
-  const isLoggedIn = !!localStorage.getItem("emp_code");
+  const savedRoute = sessionStorage.getItem("app_route") as Route | null;
+  const isLoggedIn = !!sessionStorage.getItem("emp_code");
   const initialRoute: Route = savedRoute && isLoggedIn ? savedRoute : "login";
   const [stack, setStack] = useState<Route[]>([initialRoute]);
   const route = stack[stack.length - 1];
@@ -38,7 +38,7 @@ export default function App() {
   // Persist current route to localStorage so refresh keeps the same page
   useEffect(() => {
     if (route !== "login") {
-      localStorage.setItem("app_route", route);
+      sessionStorage.setItem("app_route", route);
     }
   }, [route]);
 
@@ -47,9 +47,9 @@ export default function App() {
   const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
 
   const checkSession = useCallback(() => {
-    const loginTime = localStorage.getItem("login_time");
+    const loginTime = sessionStorage.getItem("login_time");
     if (loginTime && Date.now() - Number(loginTime) > SESSION_TIMEOUT_MS) {
-      localStorage.clear();
+      sessionStorage.clear();
       window.location.reload();
     }
   }, []);
@@ -84,7 +84,7 @@ export default function App() {
   // ===== Navigation helpers =====
   const reset = (r: Route) => {
     setStack([r]);
-    if (r === "login") localStorage.removeItem("app_route");
+    if (r === "login") sessionStorage.removeItem("app_route");
   };
 
   const push = (r: Route) =>
@@ -97,7 +97,7 @@ export default function App() {
     setShowLogoutPopup(true);
 
     // Start logout in background — popup waits
-    const code = localStorage.getItem("emp_code");
+    const code = sessionStorage.getItem("emp_code");
     const p = useStore.getState().logout(code || "");
     logoutPromiseRef.current = p;
 
@@ -118,7 +118,7 @@ export default function App() {
   const onLogoutRetry = useCallback(() => {
     setLogoutStatus("attempt");
     // Re-run logout
-    const code = localStorage.getItem("emp_code");
+    const code = sessionStorage.getItem("emp_code");
     const p = useStore.getState().logout(code || "");
     logoutPromiseRef.current = p;
     p.then((ok) => {

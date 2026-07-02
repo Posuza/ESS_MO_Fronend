@@ -67,11 +67,11 @@ export default function MoReportPage({
   const storeLoading = useStore((state) => state.isLoading);
 
   // Page loading popup — same concept as MoHome
-  // Shows until: min 2s passed AND store is no longer loading
+  // Shows until: min 1.5s passed AND store is no longer loading
   const [showLoading, setShowLoading] = useState(true);
   const pageLoadStartRef = useRef(0);
   const pageLoadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const MIN_PAGE_LOAD_MS = 2000;
+  const MIN_PAGE_LOAD_MS = 1500;
 
   useEffect(() => {
     pageLoadStartRef.current = Date.now();

@@ -18,12 +18,12 @@ export default function MoAddNewPage({ onCancel }: Props) {
     (s) => s.fetchTodayDepartmentReportDivisions,
   );
 
-  // Loading popup with minimum 2-second display time
+  // Loading popup with minimum 1.5-second display time
   const [showLoading, setShowLoading] = useState(true);
   const loadingStartRef = useRef(0);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchDoneRef = useRef({ divisions: false, reports: false });
-  const MIN_LOADING_MS = 2000;
+  const MIN_LOADING_MS = 1500;
 
   // Cleanup timer on unmount
   useEffect(() => {

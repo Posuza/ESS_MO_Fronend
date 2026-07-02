@@ -90,11 +90,11 @@ export default function MoListPage({
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  // Loading popup — shows on mount and during search (min 2s)
+  // Loading popup — shows on mount and during search (min 1.5s)
   const [showLoading, setShowLoading] = useState(true);
   const pageLoadStartRef = useRef(0);
   const pageLoadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const MIN_PAGE_LOAD_MS = 2000;
+  const MIN_PAGE_LOAD_MS = 1500;
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function MoListPage({
     };
   }, []);
 
-  // Track store loading — show popup while loading, hide after min 2s
+  // Track store loading — show popup while loading, hide after min 1.5s
   useEffect(() => {
     if (storeLoading) {
       if (pageLoadTimerRef.current) clearTimeout(pageLoadTimerRef.current);

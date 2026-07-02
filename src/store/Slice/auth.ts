@@ -49,7 +49,7 @@ export interface AuthSlice {
 }
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
-  authEmployee: JSON.parse(localStorage.getItem("auth_employee") || "null"),
+  authEmployee: JSON.parse(sessionStorage.getItem("auth_employee") || "null"),
   authLoading: false,
   authError: null,
   authErrorKey: null,
@@ -71,10 +71,10 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
         const displayName =
           `${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
 
-        localStorage.setItem("emp_code", emp.employee_code);
-        localStorage.setItem("display_name", displayName);
-        localStorage.setItem("auth_employee", JSON.stringify(emp));
-        localStorage.setItem("login_time", String(Date.now()));
+        sessionStorage.setItem("emp_code", emp.employee_code);
+        sessionStorage.setItem("display_name", displayName);
+        sessionStorage.setItem("auth_employee", JSON.stringify(emp));
+        sessionStorage.setItem("login_time", String(Date.now()));
 
         set({ authEmployee: emp, authLoading: false, authError: null });
         return true;
@@ -96,9 +96,9 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   logout: async (employee_code) => {
     const result = await authService.logout(employee_code);
     if (result.success) {
-      localStorage.removeItem("emp_code");
-      localStorage.removeItem("display_name");
-      localStorage.removeItem("auth_employee");
+      sessionStorage.removeItem("emp_code");
+      sessionStorage.removeItem("display_name");
+      sessionStorage.removeItem("auth_employee");
       set({ authEmployee: null, authError: null });
     }
     return result.success;

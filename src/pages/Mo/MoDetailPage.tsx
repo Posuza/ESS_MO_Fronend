@@ -9,7 +9,10 @@ import {
 } from "../../components/mo/popup";
 import MoUpdateForm from "../../components/mo/MoUpdateForm";
 import { useStore } from "../../store/store";
-import type { SectorReport } from "../../services/moReporTransaction.Service";
+import type {
+  SectorReport,
+  HttpError,
+} from "../../services/moReporTransaction.Service";
 import { canApprove } from "../../utils/positionAccess";
 import {
   clearMoDetailEditState,
@@ -75,18 +78,18 @@ export default function MoDetailPage(props: Props) {
   const [showFetchError, setShowFetchError] = useState(false);
   const [fetchErrorMessage, setFetchErrorMessage] = useState("");
 
-  // Delete loading popup with minimum 2-second display time
+  // Delete loading popup with minimum 1.5-second display time
   const [isDeleting, setIsDeleting] = useState(false);
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const MIN_DELETE_MS = 2000;
+  const MIN_DELETE_MS = 1500;
 
-  // Initial page loading — don't mount form until data is ready + min 2s
+  // Initial page loading — don't mount form until data is ready + min 1.5s
   const [pageDataReady, setPageDataReady] = useState(false);
   const [pageMinTimePassed, setPageMinTimePassed] = useState(false);
   const showPageLoading = !(pageDataReady && pageMinTimePassed);
 
   useEffect(() => {
-    const timer = setTimeout(() => setPageMinTimePassed(true), 2000);
+    const timer = setTimeout(() => setPageMinTimePassed(true), 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -216,7 +219,9 @@ export default function MoDetailPage(props: Props) {
       })
       .catch((err) => {
         setIsDeleting(false);
-        alert(`เกิดข้อผิดพลาดในการลบ: ${err}`);
+        const msg = err instanceof Error ? err.message : String(err);
+        setFetchErrorMessage(msg);
+        setShowFetchError(true);
       });
   }
 
@@ -327,6 +332,24 @@ export default function MoDetailPage(props: Props) {
           // Pass approval state down so MoUpdateForm can include it in save payloads
           externalApprovalStatus={approvalStatus}
           onApprovalStatusChange={setApprovalStatus}
+          onReportNotFound={(message) => {
+            setFetchErrorMessage(message);
+            setShowFetchError(true);
+          }}
+          onRefreshData={async () => {
+            if (!props.item?.id) return;
+            try {
+              await fetchReportById(props.item.id);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              if (err instanceof HttpError && err.status === 404) {
+                clearMoDetailEditState();
+                if (props.onCancel) return props.onCancel();
+                return window.history.back();
+              }
+              throw err;
+            }
+          }}
         />
       )}
 
