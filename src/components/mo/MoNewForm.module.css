@@ -15,14 +15,22 @@
     min-height: 36px;
 }
 .pin-icon {
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
-    font-weight: bold;
-    color: #0b4bd6 !important; /* match the blue text */
-    fill: currentColor !important;
+    color: #014f86 !important;
     stroke: currentColor !important;
-    margin-right: 2px; /* tiny gap if needed */
+    opacity: 0.95;
+    margin-right: 0;
+}
+
+.pin-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
 }
 
 .sector-cell-bodytext {

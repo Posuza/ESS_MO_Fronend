@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import {
   ArrowLeft,
-  FlagTriangleRightIcon,
+  MapPin,
   Table2Icon,
   FileDown,
   Share2,
@@ -470,8 +470,7 @@ export default function MoReportPage({
             <tbody>
               <tr>
                 <td colSpan={1} className={`${styles["first-column-cell"]}`}>
-                  {/*<PinIcon className={styles["pin-icon"]} />*/}
-                  <FlagTriangleRightIcon className={styles["pin-icon"]} />
+                  <MapPin className={styles["pin-icon"]} />
                 </td>
                 <td colSpan={3} className={styles["sector-cell-bodytext"]}>
                   {(() => {
@@ -511,8 +510,8 @@ export default function MoReportPage({
           >
             {/*<BsFillFileEarmarkPdfFill className={styles["pdf-icon"]} />*/}
             <span>รายงาน PDF</span>
-            {selectedTransactionId && (
-              <FlagTriangleRightIcon className={styles["pin-icon-on-pdf"]} />
+            {viewMode === "pdf" && selectedTransactionId && (
+              <MapPin className={styles["pin-icon-on-pdf"]} />
             )}
           </div>
         </div>

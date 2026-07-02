@@ -16,7 +16,7 @@ export const API_CONFIG = {
   },
   getAuthHeader: () => {
     const token = localStorage.getItem("token");
-    const employeeCode = localStorage.getItem("emp_code") || "";
+    const employeeCode = sessionStorage.getItem("emp_code") || "";
     const lat = localStorage.getItem("geo_lat");
     const lng = localStorage.getItem("geo_lng");
     const geoStatus = localStorage.getItem("geo_status");

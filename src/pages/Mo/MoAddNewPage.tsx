@@ -17,6 +17,7 @@ export default function MoAddNewPage({ onCancel }: Props) {
   const fetchTodayDepartmentReportDivisions = useStore(
     (s) => s.fetchTodayDepartmentReportDivisions,
   );
+  const isDirector = getAccessLevel(authEmployee?.position_id) === AccessLevel.ALL_DEPT;
 
   // Loading popup with minimum 1.5-second display time
   const [showLoading, setShowLoading] = useState(true);
@@ -49,10 +50,9 @@ export default function MoAddNewPage({ onCancel }: Props) {
     }
   }
 
-  // Department selection
-  const [selectedDepartment] = useState<number>(
-    authEmployee?.department_id ?? 1,
-  );
+  // Department is fixed to the authenticated employee's department.
+  // Using a derived value avoids getting stuck on the initial fallback.
+  const selectedDepartment = authEmployee?.department_id ?? 1;
 
   // List of divisions (เขต) for this department
   const [divisionList, setDivisionList] = useState<
@@ -139,7 +139,7 @@ export default function MoAddNewPage({ onCancel }: Props) {
           selectedLocation={undefined}
           onCancel={onCancel}
           locationOptions={locationOptions}
-          usedSubLocations={usedDivisionNames}
+          usedSubLocations={isDirector ? [] : usedDivisionNames}
         />
       )}
       <div className={styles["mo-back-outer"]}>

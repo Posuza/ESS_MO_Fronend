@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, ChevronRight, PinIcon, PlusIcon, X } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, PlusIcon, X } from "lucide-react";
 import styles from "./MoNewForm.module.css";
 import { useStore } from "../../store/store";
 import { ConfirmCancelDialog, InfoModel, MoLoadingPopup } from "./popup";
@@ -141,7 +141,6 @@ export default function MoNewForm(props: Props) {
     return "";
   });
 
-  // Auto-select first available division
   const availableSubSectorOptions = divisionOptions.filter(
     (d) => !usedSubLocations.includes(d.shortName),
   );
@@ -1214,7 +1213,7 @@ export default function MoNewForm(props: Props) {
               <tbody>
                 <tr>
                   <td colSpan={1} className={`${styles["first-column-cell"]} `}>
-                    <PinIcon className={styles["pin-icon"]} />
+                    <MapPin className={styles["pin-icon"]} />
                   </td>
                   <td
                     colSpan={3}
@@ -1238,9 +1237,10 @@ export default function MoNewForm(props: Props) {
                           </option>
                         ))}
                       </select>
-                    ) : availableSubSectorOptions.length === 1 ? (
+                    ) : availableSubSectorOptions.length >= 1 ? (
                       <span className={styles["sector-cell-single-value"]}>
-                        {availableSubSectorOptions[0].shortName}
+                        {selectedSubLocation ||
+                          availableSubSectorOptions[0].shortName}
                       </span>
                     ) : (
                       <span className={styles["sector-cell-single-value"]}>

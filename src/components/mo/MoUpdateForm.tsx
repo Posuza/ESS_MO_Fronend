@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, ChevronRight, PinIcon, PlusIcon, X } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, PlusIcon, X } from "lucide-react";
 import styles from "./MoUpdateForm.module.css";
 import { useStore } from "../../store/store";
 import { HttpError } from "../../services/moReporTransaction.Service";
@@ -1292,7 +1292,7 @@ export default function MoUpdateForm(props: Props) {
             <tbody>
               <tr>
                 <td colSpan={1} className={`${styles["first-column-cell"]} `}>
-                  <PinIcon className={styles["pin-icon"]} />
+                  <MapPin className={styles["pin-icon"]} />
                 </td>
                 <td
                   colSpan={3}
@@ -1734,9 +1734,31 @@ export default function MoUpdateForm(props: Props) {
               </thead>
               {openGroups[g.key] && (
                 <tbody>
-                  {g.items
-                    .filter((r: any) => r.isActive === true)
-                    .map((r: any, itemIdx: number) => (
+                  {(() => {
+                    const activeItems = g.items.filter(
+                      (r: any) => r.isActive === true,
+                    );
+                    if (activeItems.length === 0 && !props.isEditing) {
+                      return (
+                        <tr>
+                          <td
+                            colSpan={props.isEditing ? 5 : 4}
+                            style={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                              color: "#9ca3af",
+                              fontStyle: "italic",
+                              padding: "10px",
+                              border: "0.8px solid #ccc",
+                            }}
+                          >
+                            ไม่มีข้อมูลวินัยและการลงโทษ
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return activeItems.map((r: any, itemIdx: number) => (
                       <tr key={r.key}>
                         <td className={styles["first-column-cell"]}>
                           5.{itemIdx + 1}
@@ -1786,7 +1808,8 @@ export default function MoUpdateForm(props: Props) {
                           </td>
                         )}
                       </tr>
-                    ))}
+                    ));
+                  })()}
                   {props.isEditing && (
                     <tr style={{ cursor: "pointer" }} onClick={openAddGroup2}>
                       <td className={styles["first-column-cell"]}>
@@ -2039,82 +2062,104 @@ export default function MoUpdateForm(props: Props) {
               </thead>
               {openGroups[g.key] && (
                 <tbody>
-                  {g.items.map((r: any, itemIdx: number) => (
-                    <tr key={itemIdx}>
-                      <td className={styles["first-column-cell"]}>
-                        6.{itemIdx + 1}
-                      </td>
-                      <td className={styles["group3-second-column-cell"]}>
-                        <div
-                          onClick={() =>
-                            props.isEditing ? handleOpenRow(itemIdx) : undefined
-                          }
-                          style={{
-                            cursor: props.isEditing ? "pointer" : "default",
-                          }}
-                        >
-                          {r.label}
-                        </div>
-                      </td>
-                      <td
-                        className={`${styles["group3-third-column-cell"]} ${styles[`status-${r.status ?? statusOptions[rowStatus[String(itemIdx)] ?? 0].key}`]} `}
-                        onClick={() => {
-                          if (props.isEditing) {
-                            handleOpenRow(itemIdx);
-                          } else {
-                            cycleStatus(itemIdx);
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
+                  {(() => {
+                    if (g.items.length === 0 && !props.isEditing) {
+                      return (
+                        <tr>
+                          <td
+                            colSpan={props.isEditing ? 5 : 4}
+                            style={{
+                              textAlign: "center",
+                              verticalAlign: "middle",
+                              color: "#9ca3af",
+                              fontStyle: "italic",
+                              padding: "10px",
+                              border: "0.8px solid #ccc",
+                            }}
+                          >
+                            ไม่มีข้อมูลโครงการ
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return g.items.map((r: any, itemIdx: number) => (
+                      <tr key={itemIdx}>
+                        <td className={styles["first-column-cell"]}>
+                          6.{itemIdx + 1}
+                        </td>
+                        <td className={styles["group3-second-column-cell"]}>
+                          <div
+                            onClick={() =>
+                              props.isEditing ? handleOpenRow(itemIdx) : undefined
+                            }
+                            style={{
+                              cursor: props.isEditing ? "pointer" : "default",
+                            }}
+                          >
+                            {r.label}
+                          </div>
+                        </td>
+                        <td
+                          className={`${styles["group3-third-column-cell"]} ${styles[`status-${r.status ?? statusOptions[rowStatus[String(itemIdx)] ?? 0].key}`]} `}
+                          onClick={() => {
                             if (props.isEditing) {
                               handleOpenRow(itemIdx);
                             } else {
                               cycleStatus(itemIdx);
                             }
-                          }
-                        }}
-                      >
-                        {(() => {
-                          const key =
-                            r.status ??
-                            statusOptions[rowStatus[String(itemIdx)] ?? 0].key;
-                          const opt =
-                            statusOptions.find((s) => s.key === key) ??
-                            statusOptions[0];
-                          return opt.label;
-                        })()}
-                      </td>
-                      <td className={`${styles["group3-fourth-column-cell"]} `}>
-                        <button
-                          type="button"
-                          className={styles["action-link"]}
-                          onClick={() => handleOpenRow(itemIdx)}
-                        >
-                          คลิกดู
-                        </button>
-                      </td>
-                      {props.isEditing && (
-                        <td
-                          className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
-                          onClick={() => handleRemoveGroup3Item(g.key, itemIdx)}
+                          }}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
-                              handleRemoveGroup3Item(g.key, itemIdx);
+                              if (props.isEditing) {
+                                handleOpenRow(itemIdx);
+                              } else {
+                                cycleStatus(itemIdx);
+                              }
                             }
                           }}
                         >
-                          ลบ
+                          {(() => {
+                            const key =
+                              r.status ??
+                              statusOptions[rowStatus[String(itemIdx)] ?? 0].key;
+                            const opt =
+                              statusOptions.find((s) => s.key === key) ??
+                              statusOptions[0];
+                            return opt.label;
+                          })()}
                         </td>
-                      )}
-                    </tr>
-                  ))}
+                        <td className={`${styles["group3-fourth-column-cell"]} `}>
+                          <button
+                            type="button"
+                            className={styles["action-link"]}
+                            onClick={() => handleOpenRow(itemIdx)}
+                          >
+                            คลิกดู
+                          </button>
+                        </td>
+                        {props.isEditing && (
+                          <td
+                            className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
+                            onClick={() => handleRemoveGroup3Item(g.key, itemIdx)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleRemoveGroup3Item(g.key, itemIdx);
+                              }
+                            }}
+                          >
+                            ลบ
+                          </td>
+                        )}
+                      </tr>
+                    ));
+                  })()}
                   {props.isEditing && (
                     <tr
                       style={{ cursor: "pointer" }}

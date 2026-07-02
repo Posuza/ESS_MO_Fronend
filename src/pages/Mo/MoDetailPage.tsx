@@ -394,19 +394,21 @@ export default function MoDetailPage(props: Props) {
         </div>
       )}
 
-      <div className={styles["mo-back-outer"]}>
-        <button
-          type="button"
-          className={styles["mo-back-btn"]}
-          onClick={() => {
-            clearMoDetailEditState();
-            if (props.onCancel) return props.onCancel();
-            return window.history.back();
-          }}
-        >
-          ย้อนกลับ
-        </button>
-      </div>
+      {!isEditing && (
+        <div className={styles["mo-back-outer"]}>
+          <button
+            type="button"
+            className={styles["mo-back-btn"]}
+            onClick={() => {
+              clearMoDetailEditState();
+              if (props.onCancel) return props.onCancel();
+              return window.history.back();
+            }}
+          >
+            ย้อนกลับ
+          </button>
+        </div>
+      )}
     </>
   );
 }

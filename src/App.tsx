@@ -28,14 +28,14 @@ type Route =
 type PunchType = "in" | "out";
 
 export default function App() {
-  // Restore session on refresh — if emp_code exists in localStorage, skip login
+  // Restore session on refresh — if emp_code exists in sessionStorage, skip login
   const savedRoute = sessionStorage.getItem("app_route") as Route | null;
   const isLoggedIn = !!sessionStorage.getItem("emp_code");
   const initialRoute: Route = savedRoute && isLoggedIn ? savedRoute : "login";
   const [stack, setStack] = useState<Route[]>([initialRoute]);
   const route = stack[stack.length - 1];
 
-  // Persist current route to localStorage so refresh keeps the same page
+  // Persist current route to sessionStorage so refresh keeps the same page
   useEffect(() => {
     if (route !== "login") {
       sessionStorage.setItem("app_route", route);

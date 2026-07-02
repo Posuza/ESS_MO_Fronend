@@ -25,6 +25,148 @@ const DEPARTMENT_NAMES: Record<number, string> = {
   9: "ฝ่ายปฎิบัติการภาค 9 (ทดสอบ)",
 };
 
+type CalendarCell = {
+  date: Date;
+  isCurrentMonth: boolean;
+};
+
+const THAI_DATE_LOCALE = "th-TH-u-ca-buddhist";
+const THAI_WEEKDAY_LOCALE = "th-TH";
+
+const thaiShortDatePartsFormatter = new Intl.DateTimeFormat(THAI_DATE_LOCALE, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+const thaiMonthYearPartsFormatter = new Intl.DateTimeFormat(
+  THAI_DATE_LOCALE,
+  {
+    month: "long",
+    year: "numeric",
+  },
+);
+
+const thaiWeekdayShortFormatter = new Intl.DateTimeFormat(
+  THAI_WEEKDAY_LOCALE,
+  {
+    weekday: "short",
+  },
+);
+
+function getIntlPart(
+  formatter: Intl.DateTimeFormat,
+  date: Date,
+  type: Intl.DateTimeFormatPart["type"],
+) {
+  return (
+    formatter.formatToParts(date).find((part) => part.type === type)?.value ??
+    ""
+  );
+}
+
+function normalizeThaiWeekdayShort(value: string) {
+  return value.replace(/\.$/, "");
+}
+
+function getThaiWeekdaysShort() {
+  const startDate = new Date();
+
+  startDate.setHours(12, 0, 0, 0);
+  startDate.setDate(startDate.getDate() - startDate.getDay());
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + index);
+    return normalizeThaiWeekdayShort(thaiWeekdayShortFormatter.format(date));
+  });
+}
+
+const THAI_WEEKDAYS = getThaiWeekdaysShort();
+
+function getTodayYYYYMMDD() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function parseYYYYMMDD(value: string) {
+  if (!value) return undefined;
+
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+
+  if (!year || !month || !day) return undefined;
+
+  return new Date(year, month - 1, day);
+}
+
+function formatDateToYYYYMMDD(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateThaiShort(value: string) {
+  const date = parseYYYYMMDD(value);
+
+  if (!date) return "เลือกวันที่";
+
+  const day = getIntlPart(thaiShortDatePartsFormatter, date, "day");
+  const month = getIntlPart(thaiShortDatePartsFormatter, date, "month");
+  const year = getIntlPart(thaiShortDatePartsFormatter, date, "year");
+
+  return `${day} ${month} ${year}`;
+}
+
+function getCalendarTitle(date: Date) {
+  const month = getIntlPart(thaiMonthYearPartsFormatter, date, "month");
+  const year = getIntlPart(thaiMonthYearPartsFormatter, date, "year");
+
+  return `${month} ${year}`;
+}
+
+function getCalendarCells(monthDate: Date): CalendarCell[] {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+
+  const firstDate = new Date(year, month, 1);
+  const firstDayIndex = firstDate.getDay();
+
+  const currentMonthDays = new Date(year, month + 1, 0).getDate();
+  const previousMonthDays = new Date(year, month, 0).getDate();
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const dayNumber = index - firstDayIndex + 1;
+
+    if (dayNumber <= 0) {
+      return {
+        date: new Date(year, month - 1, previousMonthDays + dayNumber),
+        isCurrentMonth: false,
+      };
+    }
+
+    if (dayNumber > currentMonthDays) {
+      return {
+        date: new Date(year, month + 1, dayNumber - currentMonthDays),
+        isCurrentMonth: false,
+      };
+    }
+
+    return {
+      date: new Date(year, month, dayNumber),
+      isCurrentMonth: true,
+    };
+  });
+}
+
 type ReportListItem = SectorReport & {
   location?: string;
   create_at?: string;
@@ -46,7 +188,9 @@ export default function MoListPage({
 }: Props) {
   const authEmployee = useStore((s) => s.authEmployee);
   const empCode = authEmployee?.employee_code;
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    () => new Date().toISOString().split("T")[0],
+  );
 
   const currentDept = useMemo<{ id: number; name: string } | null>(() => {
     if (authEmployee?.department_id && authEmployee?.department_name) {
@@ -87,8 +231,11 @@ export default function MoListPage({
 
   // Position check: only position_id 1 or 5 can see the Department Group
   const canSeeDeptGroup = [1, 5].includes(Number(currentEmployee?.position_id));
-
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  const datePickerWrapRef = useRef<HTMLDivElement>(null);
+  const [activeDatePicker, setActiveDatePicker] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    return parseYYYYMMDD(getTodayYYYYMMDD()) ?? new Date();
+  });
 
   // Loading popup — shows on mount and during search (min 1.5s)
   const [showLoading, setShowLoading] = useState(true);
@@ -123,7 +270,38 @@ export default function MoListPage({
     }
   }, [storeLoading, showLoading]);
 
-  function submitSearch() {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (datePickerWrapRef.current?.contains(target)) {
+        return;
+      }
+
+      setActiveDatePicker(false);
+    };
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveDatePicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, []);
+
+  const calendarCells = useMemo(
+    () => getCalendarCells(calendarMonth),
+    [calendarMonth],
+  );
+
+  async function submitSearch() {
     if (!selectedLocation && !selectedDate) return;
 
     let targetSectorId: number | undefined = undefined;
@@ -159,9 +337,20 @@ export default function MoListPage({
       Object.assign(payload, filters);
     }
 
-    fetchReports(payload);
+    await fetchReports(payload);
     setLastSearchedLocation(selectedLocation);
     setLastSearchedDate(selectedDate);
+  }
+
+  function openDatePicker() {
+    setCalendarMonth(parseYYYYMMDD(selectedDate) ?? new Date());
+    setActiveDatePicker(true);
+  }
+
+  function handleSelectDate(dateText: string) {
+    setSelectedDate(dateText);
+    setCalendarMonth(parseYYYYMMDD(dateText) ?? new Date());
+    setActiveDatePicker(false);
   }
 
   function goBack() {
@@ -244,6 +433,7 @@ export default function MoListPage({
     if (!currentDept?.id) return;
     const today = new Date().toISOString().split("T")[0];
     setSelectedDate(today);
+    setCalendarMonth(parseYYYYMMDD(today) ?? new Date());
     if (currentEmployee) {
       const filters = buildReportFilters(currentEmployee, {
         start_date: today,
@@ -332,24 +522,107 @@ export default function MoListPage({
 
         <label className={styles["search-field-group"]}>
           <span className={styles["search-label"]}>จากวันที่</span>
-          <div className={styles["date-input-wrapper"]}>
-            <CalendarDays size={14} className={styles["date-icon"]} />
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className={styles["guts-mo-search-input"]}
-              max={new Date().toISOString().split("T")[0]}
-              onClick={(e) => {
-                e.currentTarget.showPicker();
-              }}
-            />
+          <div className={styles["date-picker-wrap"]} ref={datePickerWrapRef}>
+            <button
+              type="button"
+              className={styles["date-control"]}
+              onClick={openDatePicker}
+              aria-label="เลือกวันที่"
+            >
+              <span className={styles["control-icon"]}>
+                <CalendarDays size={14} strokeWidth={2.5} />
+              </span>
+
+              <span className={styles["date-display"]}>
+                {formatDateThaiShort(selectedDate)}
+              </span>
+            </button>
+
+            {activeDatePicker && (
+              <div className={styles["date-popover"]}>
+                <div className={styles["calendar-box"]}>
+                  <div className={styles["calendar-header"]}>
+                    <button
+                      type="button"
+                      className={styles["calendar-nav-button"]}
+                      onClick={() =>
+                        setCalendarMonth(
+                          (prev) =>
+                            new Date(
+                              prev.getFullYear(),
+                              prev.getMonth() - 1,
+                              1,
+                            ),
+                        )
+                      }
+                      aria-label="เดือนก่อนหน้า"
+                    >
+                      ‹
+                    </button>
+
+                    <strong className={styles["calendar-title"]}>
+                      {getCalendarTitle(calendarMonth)}
+                    </strong>
+
+                    <button
+                      type="button"
+                      className={styles["calendar-nav-button"]}
+                      onClick={() =>
+                        setCalendarMonth(
+                          (prev) =>
+                            new Date(
+                              prev.getFullYear(),
+                              prev.getMonth() + 1,
+                              1,
+                            ),
+                        )
+                      }
+                      aria-label="เดือนถัดไป"
+                    >
+                      ›
+                    </button>
+                  </div>
+
+                  <div className={styles["calendar-weekdays"]}>
+                    {THAI_WEEKDAYS.map((weekday) => (
+                      <span key={weekday} className={styles["calendar-weekday"]}>
+                        {weekday}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className={styles["calendar-grid"]}>
+                    {calendarCells.map((cell) => {
+                      const cellValue = formatDateToYYYYMMDD(cell.date);
+                      const isSelected = cellValue === selectedDate;
+                      const isToday = cellValue === getTodayYYYYMMDD();
+
+                      return (
+                        <button
+                          key={cellValue}
+                          type="button"
+                          className={`${styles["calendar-cell"]} ${
+                            cell.isCurrentMonth
+                              ? styles["calendar-cell-current"]
+                              : styles["calendar-cell-other"]
+                          } ${isSelected ? styles["calendar-cell-selected"] : ""} ${
+                            isToday ? styles["calendar-cell-today"] : ""
+                          }`}
+                          onClick={() => handleSelectDate(cellValue)}
+                        >
+                          {cell.date.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </label>
 
         <button
-          className={`${styles["mo-search-clear"]} ${hasSearchChanged && !storeLoading ? styles["mo-search-clear-highlighted"] : ""}`}
+          className={`${styles["mo-search-clear"]} ${hasSearchChanged ? styles["mo-search-clear-highlighted"] : ""}`}
           aria-label="ค้นหา"
           onClick={submitSearch}
           type="button"

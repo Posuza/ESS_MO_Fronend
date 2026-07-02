@@ -200,12 +200,22 @@ select.guts-mo-search-input option {
 }
 
 .pin-icon {
-    width: 18px !important;
-    height: 18px !important;
-    color: #003366 !important;
-    fill: currentColor !important;
+    width: 16px !important;
+    height: 16px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: #014f86 !important;
     stroke: currentColor !important;
-    margin-right: 2px;
+    opacity: 0.95;
+    margin-right: 0;
+}
+
+.pin-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
 }
 
 .sector-cell-bodytext {
@@ -445,19 +455,28 @@ select.guts-mo-search-input option {
 }
 
 .pin-icon-on-pdf {
-    position: absolute;
-    bottom: 3px;
-    left: 3px;
-    width: 10px !important;
-    height: 10px !important;
-    color: #003366 !important;
-    fill: currentColor !important;
+    position: static;
+    width: 12px !important;
+    height: 12px !important;
+    color: #014f86 !important;
     stroke: currentColor !important;
-    background: white;
-    border: 1px solid #003366;
+    background: transparent;
+    border: 0;
     border-radius: 3px;
-    padding: 1.5px;
+    padding: 0;
     box-sizing: content-box;
+    margin-left: 4px;
+    flex: 0 0 auto;
+}
+
+.pin-icon-on-pdf svg {
+    width: 10px;
+    height: 10px;
+    display: block;
+}
+
+.toggle-btn.active .pin-icon-on-pdf {
+    color: #ffffff !important;
 }
 
 .mo-back-btn {
