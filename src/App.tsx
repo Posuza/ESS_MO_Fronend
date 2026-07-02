@@ -59,9 +59,12 @@ export default function App() {
     checkSession();
   }, [route, checkSession]);
 
-  // Also check on user interaction (click, keydown, scroll)
+  // Extend session on user interaction (click, keydown, scroll)
+  // — resets the 2-hour timer so active users don't get kicked out
   useEffect(() => {
-    const handleActivity = () => checkSession();
+    const handleActivity = () => {
+      sessionStorage.setItem("login_time", String(Date.now()));
+    };
     window.addEventListener("click", handleActivity);
     window.addEventListener("keydown", handleActivity);
     window.addEventListener("scroll", handleActivity);
@@ -70,7 +73,7 @@ export default function App() {
       window.removeEventListener("keydown", handleActivity);
       window.removeEventListener("scroll", handleActivity);
     };
-  }, [checkSession]);
+  }, []);
 
   const [lastInAt, setLastInAt] = useState<string | null>(null);
   const [lastOutAt, setLastOutAt] = useState<string | null>(null);
