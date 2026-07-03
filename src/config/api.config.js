@@ -15,11 +15,11 @@ export const API_CONFIG = {
     Accept: "application/json",
   },
   getAuthHeader: () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const employeeCode = sessionStorage.getItem("emp_code") || "";
-    const lat = localStorage.getItem("geo_lat");
-    const lng = localStorage.getItem("geo_lng");
-    const geoStatus = localStorage.getItem("geo_status");
+    const lat = sessionStorage.getItem("geo_lat");
+    const lng = sessionStorage.getItem("geo_lng");
+    const geoStatus = sessionStorage.getItem("geo_status");
 
     return {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
