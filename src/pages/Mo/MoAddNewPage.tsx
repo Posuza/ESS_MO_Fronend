@@ -17,7 +17,6 @@ export default function MoAddNewPage({ onCancel }: Props) {
   const fetchTodayDepartmentReportDivisions = useStore(
     (s) => s.fetchTodayDepartmentReportDivisions,
   );
-  const isDirector = getAccessLevel(authEmployee?.position_id) === AccessLevel.ALL_DEPT;
 
   // Loading popup with minimum 1.5-second display time
   const [showLoading, setShowLoading] = useState(true);
@@ -62,8 +61,14 @@ export default function MoAddNewPage({ onCancel }: Props) {
   // Which division names already have reports submitted today
   const [usedDivisionNames, setUsedDivisionNames] = useState<string[]>([]);
 
+  // Filter out divisions that already have a report submitted today
+  const availableDivisions = useMemo(
+    () => divisionList.filter((d) => !usedDivisionNames.includes(d.name)),
+    [divisionList, usedDivisionNames],
+  );
+
   // Combine departments and their divisions into one dictionary array
-  // key = department, value = list of divisions
+  // Only includes divisions that have NOT been reported yet today
   const locationOptions = useMemo(() => {
     const dept = authEmployee?.department_name
       ? {
@@ -76,11 +81,11 @@ export default function MoAddNewPage({ onCancel }: Props) {
       ? [
           {
             department: dept,
-            divisions: divisionList,
+            divisions: availableDivisions,
           },
         ]
       : [];
-  }, [authEmployee, divisionList]);
+  }, [authEmployee, availableDivisions]);
 
   // Fetch divisions — filtered by position access level
   useEffect(() => {
@@ -118,11 +123,8 @@ export default function MoAddNewPage({ onCancel }: Props) {
     if (!selectedDepartment) return;
     fetchTodayDepartmentReportDivisions(selectedDepartment)
       .then((reported) => {
-        // Extract short names (e.g. "เขต 1.1") for usedSubLocations
-        const names = reported.map((r) => {
-          const m = r.division_name.match(/เขต\s+[\d.]+/);
-          return m ? m[0] : r.division_name;
-        });
+        // Use full division names for comparison
+        const names = reported.map((r) => r.division_name);
         setUsedDivisionNames(names);
       })
       .finally(() => {
@@ -139,7 +141,6 @@ export default function MoAddNewPage({ onCancel }: Props) {
           selectedLocation={undefined}
           onCancel={onCancel}
           locationOptions={locationOptions}
-          usedSubLocations={isDirector ? [] : usedDivisionNames}
         />
       )}
       <div className={styles["mo-back-outer"]}>

@@ -2089,7 +2089,11 @@ export default function MoNewForm(props: Props) {
             className={[styles["guts-btn"], styles["guts-submit-btn"]].join(
               " ",
             )}
-            disabled={!hasAnyData() || isSubmitting}
+            disabled={
+              !hasAnyData() ||
+              isSubmitting ||
+              availableSubSectorOptions.length === 0
+            }
           >
             บันทึกรายงาน
           </button>

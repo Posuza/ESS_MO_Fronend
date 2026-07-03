@@ -300,6 +300,7 @@ export default function MoHome(props: Props) {
     fetchDivisionCounts();
   }
 
+  const noActiveDivisions = totalDivisionCount === 0;
   const allDivisionsReported =
     totalDivisionCount > 0 && usedDivisionCount >= totalDivisionCount;
 
@@ -573,14 +574,16 @@ export default function MoHome(props: Props) {
         <button
           type="button"
           className={styles["mo-home-addnew"]}
-          disabled={allDivisionsReported}
+          disabled={allDivisionsReported || noActiveDivisions}
           onClick={() => {
             openNew();
           }}
         >
-          {allDivisionsReported
-            ? "บันทึกรายงานแล้วทุกพื้นที่"
-            : "บันทึกรายงานประจำวันวันนี้"}
+          {noActiveDivisions
+            ? "ไม่มีหน่วยงานที่สามารถบันทึกรายงานได้"
+            : allDivisionsReported
+              ? "บันทึกรายงานแล้วทุกพื้นที่"
+              : "บันทึกรายงานประจำวันวันนี้"}
         </button>
       </div>
       <div className={styles["guts-mo-btn"]}>
