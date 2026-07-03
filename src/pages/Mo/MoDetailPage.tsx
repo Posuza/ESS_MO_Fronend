@@ -9,10 +9,8 @@ import {
 } from "../../components/mo/popup";
 import MoUpdateForm from "../../components/mo/MoUpdateForm";
 import { useStore } from "../../store/store";
-import type {
-  SectorReport,
-  HttpError,
-} from "../../services/moReporTransaction.Service";
+import type { SectorReport } from "../../services/moReporTransaction.Service";
+import { HttpError } from "../../services/moReporTransaction.Service";
 import { canApprove } from "../../utils/positionAccess";
 import {
   clearMoDetailEditState,
