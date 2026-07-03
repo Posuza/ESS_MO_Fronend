@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Header from "../../layout/Header";
 import styles from "./Mo.module.css";
 import MoHome from "./MoHome";
 import { useStore } from "../../store/store";
+import { clearAllMoPersistedState } from "./moPersistence";
 
 type Props = {
   onBackHome?: () => void;
@@ -46,6 +47,12 @@ export default function Mo({ onBackHome }: Props) {
   const authEmployee = useStore((state) => state.authEmployee);
   const [roundDate, setRoundDate] = useState(formatRoundDate(new Date()));
 
+  // Clear persisted subview when leaving Mo so the next entry starts at main view
+  const handleBackHome = useCallback(() => {
+    clearAllMoPersistedState();
+    onBackHome?.();
+  }, [onBackHome]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setRoundDate(formatRoundDate(new Date()));
@@ -79,7 +86,7 @@ export default function Mo({ onBackHome }: Props) {
           <div className={styles["guts-meta-date"]}>{roundDate}</div>
         </div>
 
-        <MoHome onBackHome={onBackHome} />
+        <MoHome onBackHome={handleBackHome} />
       </section>
     </div>
   );

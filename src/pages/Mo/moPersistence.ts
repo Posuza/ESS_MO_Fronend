@@ -57,7 +57,10 @@ export function readSavedMoDetailState(): SavedMoDetailState | null {
 }
 
 export function persistMoDetailState(itemId: number, source: MoDetailSource) {
-  writeJson(MO_DETAIL_STATE_KEY, { itemId, source } satisfies SavedMoDetailState);
+  writeJson(MO_DETAIL_STATE_KEY, {
+    itemId,
+    source,
+  } satisfies SavedMoDetailState);
 }
 
 export function clearMoDetailState() {
@@ -82,10 +85,7 @@ export function readSavedMoDetailEditState(): SavedMoDetailEditState | null {
   return saved;
 }
 
-export function persistMoDetailEditState(
-  itemId: number,
-  isEditing: boolean,
-) {
+export function persistMoDetailEditState(itemId: number, isEditing: boolean) {
   writeJson(MO_DETAIL_EDIT_STATE_KEY, {
     itemId,
     isEditing,
@@ -127,4 +127,29 @@ export function clearMoReportState() {
   } catch {
     // Ignore storage failures.
   }
+}
+
+/** Keys used by MoHome.tsx for subview and report-params persistence.
+ *  sessionStorage so they survive F5 refresh but auto-clear on tab close. */
+const MO_SUBVIEW_KEY = "mo_subview";
+const MO_REPORT_PARAMS_KEY = "mo_report_params";
+
+function ssRemoveItem(key: string) {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+/**
+ * Clears all Mo-related persisted state.
+ * Call this when leaving Mo so the next entry starts at the main view.
+ */
+export function clearAllMoPersistedState() {
+  ssRemoveItem(MO_SUBVIEW_KEY);
+  ssRemoveItem(MO_REPORT_PARAMS_KEY);
+  clearMoDetailState();
+  clearMoDetailEditState();
+  clearMoReportState();
 }

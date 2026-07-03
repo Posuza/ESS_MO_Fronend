@@ -66,17 +66,17 @@ const VALID_SUBVIEWS: SubView[] = [
 
 function readSavedSubView(): SubView | null {
   try {
-    const saved = localStorage.getItem(MO_SUBVIEW_KEY) as SubView | null;
+    const saved = sessionStorage.getItem(MO_SUBVIEW_KEY) as SubView | null;
     if (saved && VALID_SUBVIEWS.includes(saved)) return saved;
   } catch {
-    // localStorage unavailable (e.g. private mode) — ignore
+    // sessionStorage unavailable — ignore
   }
   return null;
 }
 
 function persistSubView(v: SubView) {
   try {
-    localStorage.setItem(MO_SUBVIEW_KEY, v);
+    sessionStorage.setItem(MO_SUBVIEW_KEY, v);
   } catch {
     // ignore storage errors
   }
@@ -84,8 +84,8 @@ function persistSubView(v: SubView) {
 
 function clearPersistedSubView() {
   try {
-    localStorage.removeItem(MO_SUBVIEW_KEY);
-    localStorage.removeItem(MO_REPORT_PARAMS_KEY);
+    sessionStorage.removeItem(MO_SUBVIEW_KEY);
+    sessionStorage.removeItem(MO_REPORT_PARAMS_KEY);
   } catch {
     // ignore
   }
@@ -99,7 +99,7 @@ function readSavedReportParams(): {
   date?: string;
 } {
   try {
-    const raw = localStorage.getItem(MO_REPORT_PARAMS_KEY);
+    const raw = sessionStorage.getItem(MO_REPORT_PARAMS_KEY);
     if (raw) return JSON.parse(raw);
   } catch {
     // ignore parse / storage errors
@@ -109,12 +109,12 @@ function readSavedReportParams(): {
 
 function persistReportParams(deptId?: number, date?: string) {
   try {
-    localStorage.setItem(
+    sessionStorage.setItem(
       MO_REPORT_PARAMS_KEY,
       JSON.stringify({ deptId, date }),
     );
   } catch {
-    // ignore
+    // ignore storage errors
   }
 }
 
