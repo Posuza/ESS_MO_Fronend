@@ -23,6 +23,7 @@ import {
 } from "./PdfRender/shared/exportPdf";
 import SectorPdf from "./PdfRender/sector/SectorPdf";
 import SummeriesPdf from "./PdfRender/summaries/SummeriesPdf";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import MoLoadingPopup from "./popup/MoLoadingPopup";
 import "./PdfViewer.css";
 
@@ -60,8 +61,8 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
       if (w > 0) {
-        // A4 landscape at 72 DPI ≈ 842pt wide. Fit width with padding.
-        const pageW = Math.min(842, w - 40);
+        // Fit PDF page width to container (capped at A4 landscape 842pt)
+        const pageW = Math.min(842, w);
         const f = pageW / 842;
         // Auto-fit page width — also locks min zoom so page never smaller than container
         setScale(f);
@@ -88,8 +89,11 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
     const el = containerRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      setScale((s) => Math.min(3, Math.max(minScale, s - e.deltaY * 0.002)));
+      // Only zoom when Ctrl/Meta is held — otherwise let the container scroll naturally
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        setScale((s) => Math.min(3, Math.max(minScale, s - e.deltaY * 0.002)));
+      }
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -196,13 +200,31 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
     <>
       <MoLoadingPopup open={!!loading} message="กำลังสร้าง PDF..." />
       <div className="pdf-viewer-wrapper">
+        {/* ─── Floating zoom indicator (top-right) ─────────── */}
+        <div className="pdf-zoom-controls">
+          <button
+            className="pdf-zoom-btn"
+            onClick={() => setScale((s) => Math.max(minScale, s - 0.1))}
+            title="ซูมออก"
+          >
+            <ZoomOut size={14} />
+          </button>
+          <button
+            className="pdf-zoom-btn"
+            onClick={() => setScale((s) => Math.min(3, s + 0.1))}
+            title="ซูมเข้า"
+          >
+            <ZoomIn size={14} />
+          </button>
+        </div>
+
         <div className="pdf-container" ref={containerRef}>
           <div
             style={{
               zoom: scale,
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              alignItems: "flex-start",
               gap: 16,
               padding: "10px 0",
             }}
