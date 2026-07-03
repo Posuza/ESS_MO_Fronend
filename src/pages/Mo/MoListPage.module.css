@@ -357,7 +357,7 @@ select.guts-mo-search-input {
 /* ─── Section header ──────────────────────────────────────── */
 .department-section-header {
     display: flex;
-    border-radius: 8px;
+    border-radius: 3px;
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
@@ -368,7 +368,7 @@ select.guts-mo-search-input {
 }
 .division-section-header {
     display: flex;
-    border-radius: 8px;
+    border-radius: 3px;
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
@@ -382,7 +382,7 @@ select.guts-mo-search-input {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-weight: 700;
+    font-weight: 500;
     font-size: 14px;
     flex-shrink: 0;
 }
@@ -416,7 +416,6 @@ select.guts-mo-search-input {
     border-radius: 6px;
     padding: 2px 8px;
     font-size: 12px;
-    font-weight: 700;
 }
 
 .section-date {
@@ -561,7 +560,6 @@ select.guts-mo-search-input {
 
 .dept-card-body {
     margin: 0 8px 8px 45px;
-    padding: 8px 12px;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -622,7 +620,7 @@ select.guts-mo-search-input {
 
 .dept-card-title {
     font-weight: 500;
-    font-size: 13px;
+    font-size: 11px;
     color: var(--blueText, #1b2b4a);
     white-space: nowrap;
     overflow: hidden;
@@ -697,22 +695,22 @@ select.guts-mo-search-input {
 }
 
 .status-dot {
-    width: 27px;
-    height: 27px;
+    width: 24px;
+    height: 24px;
     border-radius: 999px;
     border: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 700;
     line-height: 1;
 }
 
 .status-dot svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     display: block;
 }
 
@@ -751,7 +749,7 @@ select.guts-mo-search-input {
 }
 
 .card-title {
-    font-weight: 500;
+    font-weight: 300;
     font-size: calc(var(--mo-card-title-size) - 1px);
     color: #1b2b4a;
     white-space: nowrap;
@@ -876,7 +874,7 @@ select.guts-mo-search-input {
 .detail-value {
     min-width: 0;
     color: #0f172a;
-    font-weight: 500;
+    font-weight: 300;
     font-size: 11px;
     text-align: right;
     overflow-wrap: anywhere;
