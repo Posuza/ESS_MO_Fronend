@@ -7,6 +7,7 @@ import {
   getAccessLevel,
   AccessLevel,
   canApprove,
+  isReadOnly,
 } from "../../utils/positionAccess";
 import MoReportPage from "./MoReportPage";
 import MoListPage from "./MoListPage";
@@ -175,6 +176,8 @@ export default function MoHome(props: Props) {
   const fetchTodayDepartmentReportDivisions = useStore(
     (s) => s.fetchTodayDepartmentReportDivisions,
   );
+  const positionActive = useStore((s) => s.positionActive);
+  const checkPositionActive = useStore((s) => s.checkPositionActive);
 
   // Local loading state with minimum 1.5-second display time
   const [showLoading, setShowLoading] = useState(true);
@@ -226,6 +229,13 @@ export default function MoHome(props: Props) {
         });
     }
   }, [fetchWithPosition]);
+
+  // Fresh position-active check on every mount (not relying on stale login data)
+  useEffect(() => {
+    if (currentEmployee?.position_id) {
+      checkPositionActive();
+    }
+  }, [currentEmployee?.employee_code, checkPositionActive]);
 
   useEffect(() => {
     if (subView !== "detail" || selectedItemId == null) return;
@@ -286,7 +296,10 @@ export default function MoHome(props: Props) {
   }
 
   useEffect(() => {
-    fetchDivisionCounts();
+    // Read-only users (position 3,4 or deactivated) don't need division counts
+    if (!isReadOnly(currentEmployee?.position_id, positionActive)) {
+      fetchDivisionCounts();
+    }
   }, [
     currentEmployee?.department_id,
     fetchDivisionsByDepartment,
@@ -570,11 +583,16 @@ export default function MoHome(props: Props) {
         )}
       </div>
 
+      {/* Read-only users (position 3,4 or deactivated) see the action, but cannot use it. */}
       <div className={styles["guts-mo-btn"]}>
         <button
           type="button"
           className={styles["mo-home-addnew"]}
-          disabled={allDivisionsReported || noActiveDivisions}
+          disabled={
+            isReadOnly(currentEmployee?.position_id, positionActive) ||
+            allDivisionsReported ||
+            noActiveDivisions
+          }
           onClick={() => {
             openNew();
           }}

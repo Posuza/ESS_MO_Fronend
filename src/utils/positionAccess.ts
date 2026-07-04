@@ -26,13 +26,33 @@ export function getAccessLevel(positionId?: number | null): AccessLevel {
     case 4:
       return AccessLevel.OWN_ONLY;
     default:
-      return AccessLevel.OWN_ONLY; 
+      return AccessLevel.OWN_ONLY;
   }
 }
 
 /** Whether this position can approve/reject reports. */
-export function canApprove(positionId?: number | null): boolean {
+export function canApprove(
+  positionId?: number | null,
+  positionIsActive?: boolean,
+): boolean {
+  // Deactivated positions cannot approve
+  if (positionIsActive === false) return false;
   return positionId === 1 || positionId === 5;
+}
+
+/**
+ * Whether this position is read-only (can only VIEW reports, never create/edit/delete).
+ *
+ * Read-only positions: 3, 4, any unknown position, OR deactivated positions.
+ */
+export function isReadOnly(
+  positionId?: number | null,
+  positionIsActive?: boolean,
+): boolean {
+  // Deactivated positions are always read-only
+  if (positionIsActive === false) return true;
+  const level = getAccessLevel(positionId);
+  return level === AccessLevel.OWN_ONLY;
 }
 
 /**

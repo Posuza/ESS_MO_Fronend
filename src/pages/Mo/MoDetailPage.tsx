@@ -11,7 +11,7 @@ import MoUpdateForm from "../../components/mo/MoUpdateForm";
 import { useStore } from "../../store/store";
 import type { SectorReport } from "../../services/moReporTransaction.Service";
 import { HttpError } from "../../services/moReporTransaction.Service";
-import { canApprove } from "../../utils/positionAccess";
+import { canApprove, isReadOnly } from "../../utils/positionAccess";
 import {
   clearMoDetailEditState,
   persistMoDetailEditState,
@@ -111,6 +111,7 @@ export default function MoDetailPage(props: Props) {
   >(null);
 
   const currentEmployee = useStore((state) => state.authEmployee);
+  const positionActive = useStore((s) => s.positionActive);
   const { deleteReport, fetchReportById, currentReport } = useStore();
 
   // Fetch fresh data on mount — if report was deleted, show error and go back
@@ -164,7 +165,7 @@ export default function MoDetailPage(props: Props) {
   const itemCreatedBy = props.item?.created_by ?? currentReport?.created_by;
 
   // Check if current user has approval authority (Director / Deputy Director)
-  const isApprover = canApprove(currentEmployee?.position_id);
+  const isApprover = canApprove(currentEmployee?.position_id, positionActive);
 
   // Director-level users can approve
   const isDirector = isApprover;
@@ -174,8 +175,12 @@ export default function MoDetailPage(props: Props) {
   const reportDate = props.item?.report_date ?? currentReport?.report_date;
   const isReportDateToday = today === reportDate;
 
-  // User can edit/delete only on the report's date and if they are an approver OR the creator
+  // User can edit/delete only:
+  //   - Not read-only (position 3,4 or deactivated cannot edit/delete at all)
+  //   - Report date is today
+  //   - They are an approver OR the original creator
   const canEditData =
+    !isReadOnly(currentEmployee?.position_id, positionActive) &&
     !!currentEmployee &&
     isReportDateToday &&
     (isApprover ||
@@ -352,45 +357,49 @@ export default function MoDetailPage(props: Props) {
       )}
 
       {/* ── Director-only approval buttons — only after initial loading ── */}
-      {isDirector && !isEditing && !showPageLoading && isReportDateToday && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            padding: 0,
-          }}
-        >
-          {/* อนุมัติรายงาน — hidden once already approved */}
-          {approvalStatus !== "APPROVED" && (
+      {isDirector &&
+        !isReadOnly(currentEmployee?.position_id, positionActive) &&
+        !isEditing &&
+        !showPageLoading &&
+        isReportDateToday && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              padding: 0,
+            }}
+          >
+            {/* อนุมัติรายงาน — hidden once already approved */}
+            {approvalStatus !== "APPROVED" && (
+              <button
+                type="button"
+                className={`${styles["guts-approve-btn"]} ${styles["status-pill"]} ${getApprovalStatusClass(
+                  reportData?.approved_status as string,
+                  styles,
+                )}`}
+                onClick={handleApprove}
+              >
+                อนุมัติรายงาน
+              </button>
+            )}
+
+            {/* ส่งกลับแก้ไข หลังอนุมัติ — only active when currently APPROVED */}
             <button
               type="button"
-              className={`${styles["guts-approve-btn"]} ${styles["status-pill"]} ${getApprovalStatusClass(
-                reportData?.approved_status as string,
-                styles,
-              )}`}
-              onClick={handleApprove}
+              className={styles["guts-reactive-btn"]}
+              disabled={approvalStatus !== "APPROVED"}
+              style={
+                approvalStatus !== "APPROVED"
+                  ? { opacity: 0.4, cursor: "not-allowed" }
+                  : {}
+              }
+              onClick={handleSendBack}
             >
-              อนุมัติรายงาน
+              ผู้อำนวยการส่งกลับให้ผู้จัดการแก้ไข
             </button>
-          )}
-
-          {/* ส่งกลับแก้ไข หลังอนุมัติ — only active when currently APPROVED */}
-          <button
-            type="button"
-            className={styles["guts-reactive-btn"]}
-            disabled={approvalStatus !== "APPROVED"}
-            style={
-              approvalStatus !== "APPROVED"
-                ? { opacity: 0.4, cursor: "not-allowed" }
-                : {}
-            }
-            onClick={handleSendBack}
-          >
-            ผู้อำนวยการส่งกลับให้ผู้จัดการแก้ไข
-          </button>
-        </div>
-      )}
+          </div>
+        )}
 
       {!isEditing && (
         <div className={styles["mo-back-outer"]}>

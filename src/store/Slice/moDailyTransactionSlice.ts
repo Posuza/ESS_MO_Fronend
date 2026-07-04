@@ -5,6 +5,7 @@ import {
   type EmployeeTodayReport,
   type DistinctDiscipline,
 } from "../../services/moReporTransaction.Service";
+import type { AuthEmployee } from "./auth";
 
 export interface SectorReportFilters {
   department_id?: number;
@@ -21,6 +22,10 @@ export interface SectorReportSlice {
   isLoading: boolean;
   error: string | null;
   reportCache: Record<string, SectorReport[]>; // Add reportCache to the interface
+
+  /** Fresh position-active check (refetched on MoHome mount). */
+  positionActive: boolean;
+  positionActiveLoading: boolean;
 
   fetchReports: (filters?: SectorReportFilters) => Promise<SectorReport[]>;
   fetchReportById: (id: number) => Promise<void>;
@@ -52,9 +57,24 @@ export interface SectorReportSlice {
   fetchTodayDepartmentReportDivisions: (
     departmentId: number,
   ) => Promise<{ division_id: number; division_name: string }[]>;
+
+  /**
+   * Fresh DB check of the current employee's position active status.
+   * Returns ``true`` if the position is active.
+   */
+  checkPositionActive: () => Promise<boolean>;
 }
 
-export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
+type SectorReportSliceDependencies = {
+  authEmployee: AuthEmployee | null;
+};
+
+export const createSectorReportSlice: StateCreator<
+  SectorReportSlice & SectorReportSliceDependencies,
+  [],
+  [],
+  SectorReportSlice
+> = (
   set,
   get,
 ) => ({
@@ -63,6 +83,8 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   isLoading: false,
   error: null,
   reportCache: {},
+  positionActive: true,
+  positionActiveLoading: false,
 
   fetchReports: async (filters?: SectorReportFilters) => {
     const cacheKey = JSON.stringify(filters || {});
@@ -70,6 +92,11 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
     set({ isLoading: true, error: null });
     console.log("SectorReportSlice: Fetching with filters:", filters);
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        set({ reports: [], isLoading: false });
+        return [];
+      }
       const reports = await sectorReportService.getAll(filters);
       // Update cache and state
       set((state) => ({
@@ -87,6 +114,11 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   fetchReportById: async (id: number) => {
     set({ isLoading: true, error: null });
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        set({ currentReport: null, isLoading: false });
+        return;
+      }
       const currentReport = await sectorReportService.getById(id);
       set({ currentReport, isLoading: false });
     } catch (error: any) {
@@ -98,6 +130,10 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   createReport: async (data: any) => {
     set({ isLoading: true, error: null });
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        throw new Error("ตำแหน่งนี้ถูกปิดใช้งาน ไม่สามารถดำเนินการได้");
+      }
       const newReport = await sectorReportService.create(data);
       set((state) => ({
         reports: [newReport, ...state.reports],
@@ -112,6 +148,10 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   updateReport: async (id: number, data: any) => {
     set({ isLoading: true, error: null });
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        throw new Error("ตำแหน่งนี้ถูกปิดใช้งาน ไม่สามารถดำเนินการได้");
+      }
       const updatedReport = await sectorReportService.update(id, data);
       set((state) => ({
         reports: state.reports.map((r) => (r.id === id ? updatedReport : r)),
@@ -128,6 +168,10 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   deleteReport: async (id: number) => {
     set({ isLoading: true, error: null });
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        throw new Error("ตำแหน่งนี้ถูกปิดใช้งาน ไม่สามารถดำเนินการได้");
+      }
       await sectorReportService.delete(id);
       set((state) => ({
         reports: state.reports.filter((r) => r.id !== id),
@@ -144,6 +188,16 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   fetchEmployeeTodayReport: async (departmentId, empCode) => {
     set({ isLoading: true, error: null });
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        set({ isLoading: false });
+        return {
+          hasReport: false,
+          divisionName: "",
+          disciplines: [],
+          disciplineExtraFields: [],
+        };
+      }
       const result = await sectorReportService.getEmployeeTodayReport(
         departmentId,
         empCode,
@@ -159,6 +213,11 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   fetchTodayDepartmentReportDivisions: async (departmentId) => {
     set({ isLoading: true, error: null });
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        set({ isLoading: false });
+        return [];
+      }
       const result =
         await sectorReportService.getTodayDepartmentReportDivisions(
           departmentId,
@@ -174,12 +233,65 @@ export const createSectorReportSlice: StateCreator<SectorReportSlice> = (
   fetchDistinctDisciplineTypes: async () => {
     set({ isLoading: true, error: null });
     try {
+      const positionActive = await get().checkPositionActive();
+      if (!positionActive) {
+        set({ isLoading: false });
+        return [];
+      }
       const result = await sectorReportService.getDistinctDisciplineTypes();
       set({ isLoading: false });
       return result;
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
       throw error;
+    }
+  },
+
+  checkPositionActive: async () => {
+    set({ positionActiveLoading: true });
+    try {
+      const result = await sectorReportService.checkPositionActive();
+      set((state) => {
+        let nextEmployee = state.authEmployee;
+
+        if (state.authEmployee) {
+          const mergedEmployee = {
+            ...state.authEmployee,
+            position_id: result.position_id,
+            position_name: result.position_name ?? state.authEmployee.position_name,
+            department_id: result.department_id,
+            department_name:
+              result.department_name ?? state.authEmployee.department_name,
+            division_id: result.division_id,
+            division_name: result.division_name ?? state.authEmployee.division_name,
+          };
+          const hasEmployeeChanged =
+            mergedEmployee.position_id !== state.authEmployee.position_id ||
+            mergedEmployee.position_name !== state.authEmployee.position_name ||
+            mergedEmployee.department_id !== state.authEmployee.department_id ||
+            mergedEmployee.department_name !== state.authEmployee.department_name ||
+            mergedEmployee.division_id !== state.authEmployee.division_id ||
+            mergedEmployee.division_name !== state.authEmployee.division_name;
+
+          nextEmployee = hasEmployeeChanged
+            ? mergedEmployee
+            : state.authEmployee;
+        }
+
+        if (nextEmployee) {
+          sessionStorage.setItem("auth_employee", JSON.stringify(nextEmployee));
+        }
+
+        return {
+          authEmployee: nextEmployee,
+          positionActive: result.position_is_active,
+          positionActiveLoading: false,
+        };
+      });
+      return result.position_is_active;
+    } catch {
+      set({ positionActive: false, positionActiveLoading: false });
+      return false;
     }
   },
 });

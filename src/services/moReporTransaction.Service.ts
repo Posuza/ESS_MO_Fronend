@@ -100,6 +100,20 @@ export interface EmployeeTodayReport {
   }>;
 }
 
+export interface EmployeePositionStatus {
+  employee_code: string;
+  employee_is_active: boolean;
+  position_id: number;
+  position_name: string | null;
+  position_is_active: boolean;
+  department_id: number;
+  department_name: string | null;
+  department_is_active: boolean;
+  division_id: number;
+  division_name: string | null;
+  division_is_active: boolean;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 /** Map frontend filter keys to backend query params. */
@@ -246,6 +260,14 @@ export const sectorReportService = {
       // If fetching reports fails, return at least the standard types
       return Array.from(standardMap.values());
     }
+  },
+
+  /**
+   * Fresh DB check — does the current employee's position allow MO access?
+   * Returns fresh employee scope and position active state.
+   */
+  async checkPositionActive() {
+    return request<EmployeePositionStatus>("/employee-position-active");
   },
 
   /**
