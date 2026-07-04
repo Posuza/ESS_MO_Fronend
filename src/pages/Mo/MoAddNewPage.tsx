@@ -75,11 +75,10 @@ export default function MoAddNewPage({ onCancel }: Props) {
     fetchAvailableReportDivisions(selectedDepartment)
       .then((divs) => {
         const opts = divs.map((d) => {
-          const m = d.division_name.match(/เขต\s+[\d.]+/);
           return {
             id: d.division_id,
             name: d.division_name,
-            shortName: m ? m[0] : d.division_name,
+            shortName: d.division_name,
           };
         });
         setDivisionList(opts);
