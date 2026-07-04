@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import MoNewForm from "../../components/mo/MoNewForm";
 import { useStore } from "../../store/store";
-import { getAccessLevel, AccessLevel } from "../../utils/positionAccess";
 import { MoLoadingPopup } from "../../components/mo/popup";
 import styles from "./MoAddNewPage.module.css";
 
@@ -11,18 +10,14 @@ type Props = {
 
 export default function MoAddNewPage({ onCancel }: Props) {
   const authEmployee = useStore((s) => s.authEmployee);
-  const fetchDivisionsByDepartment = useStore(
-    (s) => s.fetchDivisionsByDepartment,
-  );
-  const fetchTodayDepartmentReportDivisions = useStore(
-    (s) => s.fetchTodayDepartmentReportDivisions,
+  const fetchAvailableReportDivisions = useStore(
+    (s) => s.fetchAvailableReportDivisions,
   );
 
   // Loading popup with minimum 1.5-second display time
   const [showLoading, setShowLoading] = useState(true);
   const loadingStartRef = useRef(0);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fetchDoneRef = useRef({ divisions: false, reports: false });
   const MIN_LOADING_MS = 1500;
 
   // Cleanup timer on unmount
@@ -34,18 +29,15 @@ export default function MoAddNewPage({ onCancel }: Props) {
     };
   }, []);
 
-  function onFetchDone(type: "divisions" | "reports") {
-    fetchDoneRef.current[type] = true;
-    if (fetchDoneRef.current.divisions && fetchDoneRef.current.reports) {
-      const elapsed = Date.now() - loadingStartRef.current;
-      const remaining = MIN_LOADING_MS - elapsed;
-      if (remaining > 0) {
-        loadingTimerRef.current = setTimeout(() => {
-          setShowLoading(false);
-        }, remaining);
-      } else {
+  function onFetchDone() {
+    const elapsed = Date.now() - loadingStartRef.current;
+    const remaining = MIN_LOADING_MS - elapsed;
+    if (remaining > 0) {
+      loadingTimerRef.current = setTimeout(() => {
         setShowLoading(false);
-      }
+      }, remaining);
+    } else {
+      setShowLoading(false);
     }
   }
 
@@ -58,17 +50,7 @@ export default function MoAddNewPage({ onCancel }: Props) {
     { id: number; name: string; shortName: string }[]
   >([]);
 
-  // Which division names already have reports submitted today
-  const [usedDivisionNames, setUsedDivisionNames] = useState<string[]>([]);
-
-  // Filter out divisions that already have a report submitted today
-  const availableDivisions = useMemo(
-    () => divisionList.filter((d) => !usedDivisionNames.includes(d.name)),
-    [divisionList, usedDivisionNames],
-  );
-
   // Combine departments and their divisions into one dictionary array
-  // Only includes divisions that have NOT been reported yet today
   const locationOptions = useMemo(() => {
     const dept = authEmployee?.department_name
       ? {
@@ -81,18 +63,18 @@ export default function MoAddNewPage({ onCancel }: Props) {
       ? [
           {
             department: dept,
-            divisions: availableDivisions,
+            divisions: divisionList,
           },
         ]
       : [];
-  }, [authEmployee, availableDivisions]);
+  }, [authEmployee, divisionList]);
 
-  // Fetch divisions — filtered by position access level
+  // Fetch active divisions that do not already have today's report.
   useEffect(() => {
     if (!selectedDepartment) return;
-    fetchDivisionsByDepartment(selectedDepartment)
+    fetchAvailableReportDivisions(selectedDepartment)
       .then((divs) => {
-        let opts = divs.map((d) => {
+        const opts = divs.map((d) => {
           const m = d.division_name.match(/เขต\s+[\d.]+/);
           return {
             id: d.division_id,
@@ -100,37 +82,12 @@ export default function MoAddNewPage({ onCancel }: Props) {
             shortName: m ? m[0] : d.division_name,
           };
         });
-
-        // Filter by position: managers see all, others see only their division
-        const level = getAccessLevel(authEmployee?.position_id);
-        if (level !== AccessLevel.ALL_DEPT) {
-          const empDivId = (authEmployee as { division_id?: number })
-            ?.division_id;
-          if (empDivId != null) {
-            opts = opts.filter((d) => d.id === empDivId);
-          }
-        }
-
         setDivisionList(opts);
       })
       .finally(() => {
-        onFetchDone("divisions");
+        onFetchDone();
       });
-  }, [selectedDepartment, fetchDivisionsByDepartment, authEmployee]);
-
-  // Fetch today's already-reported divisions for this department
-  useEffect(() => {
-    if (!selectedDepartment) return;
-    fetchTodayDepartmentReportDivisions(selectedDepartment)
-      .then((reported) => {
-        // Use full division names for comparison
-        const names = reported.map((r) => r.division_name);
-        setUsedDivisionNames(names);
-      })
-      .finally(() => {
-        onFetchDone("reports");
-      });
-  }, [selectedDepartment, fetchTodayDepartmentReportDivisions]);
+  }, [selectedDepartment, fetchAvailableReportDivisions]);
 
   return (
     <>

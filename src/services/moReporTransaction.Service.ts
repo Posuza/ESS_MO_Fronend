@@ -271,30 +271,14 @@ export const sectorReportService = {
   },
 
   /**
-   * Fetch today's reports for a department.
+   * Fetch active divisions that do not already have today's report.
    */
-  async getTodayDepartmentReportDivisions(
+  async getAvailableReportDivisions(
     departmentId: number,
-  ): Promise<{ division_id: number; division_name: string }[]> {
-    const today = new Date().toISOString().slice(0, 10);
-    const reports = await this.getAll({
-      department_id: departmentId,
-      start_date: today,
-      end_date: today,
-    });
-
-    const seen = new Set<number>();
-    const result: { division_id: number; division_name: string }[] = [];
-    for (const r of reports) {
-      if (r.division_id && !seen.has(r.division_id)) {
-        seen.add(r.division_id);
-        result.push({
-          division_id: r.division_id,
-          division_name: r.division_name,
-        });
-      }
-    }
-    return result;
+  ): Promise<{ division_id: number; division_name: string; department_id: number }[]> {
+    return request<
+      { division_id: number; division_name: string; department_id: number }[]
+    >(`/available-report-divisions?department_id=${departmentId}`);
   },
 
   /**

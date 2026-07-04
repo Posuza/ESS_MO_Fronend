@@ -50,13 +50,9 @@ export interface SectorReportSlice {
    */
   fetchDistinctDisciplineTypes: () => Promise<DistinctDiscipline[]>;
 
-  /**
-   * Fetch today's reports for a department.
-   * Returns division id + name for each report submitted today in this department.
-   */
-  fetchTodayDepartmentReportDivisions: (
+  fetchAvailableReportDivisions: (
     departmentId: number,
-  ) => Promise<{ division_id: number; division_name: string }[]>;
+  ) => Promise<{ division_id: number; division_name: string; department_id: number }[]>;
 
   /**
    * Fresh DB check of the current employee's position active status.
@@ -210,7 +206,7 @@ export const createSectorReportSlice: StateCreator<
     }
   },
 
-  fetchTodayDepartmentReportDivisions: async (departmentId) => {
+  fetchAvailableReportDivisions: async (departmentId) => {
     set({ isLoading: true, error: null });
     try {
       const positionActive = await get().checkPositionActive();
@@ -219,9 +215,7 @@ export const createSectorReportSlice: StateCreator<
         return [];
       }
       const result =
-        await sectorReportService.getTodayDepartmentReportDivisions(
-          departmentId,
-        );
+        await sectorReportService.getAvailableReportDivisions(departmentId);
       set({ isLoading: false });
       return result;
     } catch (error: any) {

@@ -133,6 +133,9 @@ export default function MoNewForm(props: Props) {
     (o) => o.department.id === selectedDepartment,
   );
   const divisionOptions = currentLocation?.divisions ?? [];
+  const availableSubSectorOptions = divisionOptions.filter(
+    (d) => !usedSubLocations.includes(d.shortName),
+  );
 
   // Initialize selectedSubLocation from saved data or defaults
   const [selectedSubLocation, setSelectedSubLocation] = useState<string>(() => {
@@ -141,12 +144,16 @@ export default function MoNewForm(props: Props) {
     return "";
   });
 
-  const availableSubSectorOptions = divisionOptions.filter(
-    (d) => !usedSubLocations.includes(d.shortName),
-  );
-
   useEffect(() => {
-    if (availableSubSectorOptions.length > 0 && !selectedSubLocation) {
+    if (availableSubSectorOptions.length === 0) {
+      if (selectedSubLocation) setSelectedSubLocation("");
+      return;
+    }
+
+    const selectedStillAvailable = availableSubSectorOptions.some(
+      (option) => option.shortName === selectedSubLocation,
+    );
+    if (!selectedStillAvailable) {
       setSelectedSubLocation(availableSubSectorOptions[0].shortName);
     }
   }, [availableSubSectorOptions, selectedSubLocation]);
@@ -1080,8 +1087,10 @@ export default function MoNewForm(props: Props) {
       division_name:
         selectedSubLocation || availableSubSectorOptions[0]?.shortName || "",
       division_id:
-        divisionOptions.find((d) => d.shortName === selectedSubLocation)?.id ||
-        divisionOptions[0]?.id ||
+        availableSubSectorOptions.find(
+          (d) => d.shortName === selectedSubLocation,
+        )?.id ||
+        availableSubSectorOptions[0]?.id ||
         0,
       department_name: authEmployee?.department_name || "",
       created_by: authEmployee?.employee_code || "ADMIN",
@@ -1239,8 +1248,7 @@ export default function MoNewForm(props: Props) {
                       </select>
                     ) : availableSubSectorOptions.length >= 1 ? (
                       <span className={styles["sector-cell-single-value"]}>
-                        {selectedSubLocation ||
-                          availableSubSectorOptions[0].shortName}
+                        {availableSubSectorOptions[0].shortName}
                       </span>
                     ) : (
                       <span className={styles["sector-cell-single-value"]}>

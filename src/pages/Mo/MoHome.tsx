@@ -3,12 +3,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 
 import { useStore } from "../../store/store";
 import { type SectorReport } from "../../services/moReporTransaction.Service";
-import {
-  getAccessLevel,
-  AccessLevel,
-  canApprove,
-  isReadOnly,
-} from "../../utils/positionAccess";
+import { canApprove, isReadOnly } from "../../utils/positionAccess";
 import MoReportPage from "./MoReportPage";
 import MoListPage from "./MoListPage";
 import MoAddNewPage from "./MoAddNewPage";
@@ -170,11 +165,8 @@ export default function MoHome(props: Props) {
   const currentEmployee = useStore((state) => state.authEmployee);
   const { reports, isLoading, fetchWithPosition } = usePositionReports();
   const fetchReportById = useStore((s) => s.fetchReportById);
-  const fetchDivisionsByDepartment = useStore(
-    (s) => s.fetchDivisionsByDepartment,
-  );
-  const fetchTodayDepartmentReportDivisions = useStore(
-    (s) => s.fetchTodayDepartmentReportDivisions,
+  const fetchAvailableReportDivisions = useStore(
+    (s) => s.fetchAvailableReportDivisions,
   );
   const positionActive = useStore((s) => s.positionActive);
   const checkPositionActive = useStore((s) => s.checkPositionActive);
@@ -262,37 +254,16 @@ export default function MoHome(props: Props) {
 
   const deptName = currentEmployee?.department_name;
 
-  // Track whether all divisions already have reports submitted today
-  const [totalDivisionCount, setTotalDivisionCount] = useState(0);
-  const [usedDivisionCount, setUsedDivisionCount] = useState(0);
+  const [availableDivisionCount, setAvailableDivisionCount] = useState(0);
 
-  // Filter division data by position access level
-  const filterByPosition = (
-    divs: { division_id: number }[],
-  ): { division_id: number }[] => {
-    const level = getAccessLevel(currentEmployee?.position_id);
-    if (level === AccessLevel.ALL_DEPT) return divs;
-    const empDivId = (currentEmployee as { division_id?: number })?.division_id;
-    if (empDivId != null) {
-      return divs.filter((d) => d.division_id === empDivId);
-    }
-    return [];
-  };
-
-  // Fetch division counts (with position filtering)
+  // Fetch active divisions that can still create today's report.
   function fetchDivisionCounts() {
     if (!currentEmployee?.department_id) return;
-    const deptId = currentEmployee.department_id;
-
-    fetchDivisionsByDepartment(deptId).then((divs) => {
-      const filtered = filterByPosition(divs);
-      setTotalDivisionCount(filtered.length);
-    });
-
-    fetchTodayDepartmentReportDivisions(deptId).then((reported) => {
-      const filtered = filterByPosition(reported);
-      setUsedDivisionCount(filtered.length);
-    });
+    fetchAvailableReportDivisions(currentEmployee.department_id).then(
+      (divisions) => {
+        setAvailableDivisionCount(divisions.length);
+      },
+    );
   }
 
   useEffect(() => {
@@ -302,8 +273,7 @@ export default function MoHome(props: Props) {
     }
   }, [
     currentEmployee?.department_id,
-    fetchDivisionsByDepartment,
-    fetchTodayDepartmentReportDivisions,
+    fetchAvailableReportDivisions,
   ]);
 
   // Refresh all main-view data (reports + division counts)
@@ -313,9 +283,7 @@ export default function MoHome(props: Props) {
     fetchDivisionCounts();
   }
 
-  const noActiveDivisions = totalDivisionCount === 0;
-  const allDivisionsReported =
-    totalDivisionCount > 0 && usedDivisionCount >= totalDivisionCount;
+  const noAvailableDivisions = availableDivisionCount === 0;
 
   const locationTable = useMemo(() => {
     if (!currentEmployee?.department_id) return [];
@@ -590,18 +558,15 @@ export default function MoHome(props: Props) {
           className={styles["mo-home-addnew"]}
           disabled={
             isReadOnly(currentEmployee?.position_id, positionActive) ||
-            allDivisionsReported ||
-            noActiveDivisions
+            noAvailableDivisions
           }
           onClick={() => {
             openNew();
           }}
         >
-          {noActiveDivisions
+          {noAvailableDivisions
             ? "ไม่มีหน่วยงานที่สามารถบันทึกรายงานได้"
-            : allDivisionsReported
-              ? "บันทึกรายงานแล้วทุกพื้นที่"
-              : "บันทึกรายงานประจำวันวันนี้"}
+            : "บันทึกรายงานประจำวันวันนี้"}
         </button>
       </div>
       <div className={styles["guts-mo-btn"]}>
