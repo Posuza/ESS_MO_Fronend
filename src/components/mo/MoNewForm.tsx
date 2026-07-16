@@ -47,12 +47,9 @@ type FormData = {
   // Group 4 - Training
   training_shift_change_count: string;
   training_planned_count: string;
-  training_duty_control_count: string;
-  // Discipline items
-  discipline_phone_count: string;
-  discipline_belt_count: string;
-  discipline_badge_count: string;
-  discipline_uniform_count: string;
+  training_supervise_onsite_count: string;
+  training_supervise_virtual_simulation_count: string;
+
   // Dynamic group 2 items
   dynamicGroup2: Array<{
     key: string;
@@ -178,7 +175,7 @@ export default function MoNewForm(props: Props) {
 
   // status options for group3 rows (cycle on click)
   const statusOptions = [
-    { label: "ปกติ", key: "normal" },
+    // { label: "ปกติ", key: "normal" }, // temporarily disabled
     { label: "ผิดปกติ", key: "warning" },
     { label: "ฉุกเฉิน", key: "danger" },
   ];
@@ -237,34 +234,77 @@ export default function MoNewForm(props: Props) {
         title: "วินัยและการลงโทษ",
         items: [
           {
-            key: "discipline_phone_count",
-            label: "เล่นโทรศัพท์มือถือ :",
+            key: "discipline_sleeping_on_duty_count",
+            label: "หลับเวร :",
             unit: "คน",
             value: "0",
             isActive: false,
           },
           {
-            key: "discipline_belt_count",
-            label: "ไม่มีเข็มขัด :",
+            key: "discipline_abandoning_post_count",
+            label: "ทิ้งจุด :",
             unit: "คน",
             value: "0",
             isActive: false,
           },
           {
-            key: "discipline_badge_count",
-            label: "ไม่แขวนบัตร :",
+            key: "discipline_absent_work_count",
+            label: "ขาดงาน :",
             unit: "คน",
             value: "0",
             isActive: false,
           },
           {
-            key: "discipline_uniform_count",
-            label: "ชุดชำรุดเก่า :",
+            key: "discipline_early_leaved_duty_count",
+            label: "ออกเวรก่อนเวลา :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_using_phone_on_duty_count",
+            label: "เล่นโทรศัพท์ :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_client_complained_count",
+            label: "ผู้ว่าจ้างตำหนิ :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_improper_attire_count",
+            label: "แต่งการไม่เรียบร้อย :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_failed_write_report_count",
+            label: "ไม่เขียนรายงาน :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_early_write_report_count",
+            label: "เขียนรายงานล่วงหน้า :",
+            unit: "คน",
+            value: "0",
+            isActive: false,
+          },
+          {
+            key: "discipline_using_drugs_on_duty_count",
+            label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
             unit: "คน",
             value: "0",
             isActive: false,
           },
         ],
+
       },
     ];
   });
@@ -292,6 +332,12 @@ export default function MoNewForm(props: Props) {
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
         {
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่ :",
+          unit: "คน",
+          value: "0",
+        },
+        {
           key: "dept_guard_post_count",
           label: "จุดรักษาการณ์ :",
           unit: "หน่วยงาน",
@@ -318,12 +364,6 @@ export default function MoNewForm(props: Props) {
         {
           key: "dept_supplement_count",
           label: "จัดกำลังพลเสริมพิเศษ :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_recruitment_count",
-          label: "สรรหาผู้สมัครงานใหม่ :",
           unit: "คน",
           value: "0",
         },
@@ -371,8 +411,8 @@ export default function MoNewForm(props: Props) {
           value: "0",
         },
         {
-          key: "leave_terminated_count",
-          label: "ไล่ออก :",
+          key: "leave_terminate_count",
+          label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :",
           unit: "คน",
           value: "0",
         },
@@ -404,7 +444,7 @@ export default function MoNewForm(props: Props) {
     },
     {
       key: "training",
-      title: "อบรมและควบคุมหน้าที่งาน",
+      title: "อบรมและควบคุมหน้างาน",
       items: [
         {
           key: "training_shift_change_count",
@@ -419,8 +459,14 @@ export default function MoNewForm(props: Props) {
           value: "0",
         },
         {
-          key: "training_duty_control_count",
-          label: "ควบคุมหน้าที่งาน :",
+          key: "training_supervise_onsite_count",
+          label: "ควบคุมหน้างาน :",
+          unit: "หน่วยงาน",
+          value: "0",
+        },
+        {
+          key: "training_supervise_virtual_simulation_count",
+          label: "จำลองสถานการณ์เสมือนจริง :",
           unit: "หน่วยงาน",
           value: "0",
         },
@@ -456,12 +502,11 @@ export default function MoNewForm(props: Props) {
         training_shift_change_count:
           savedFormData.training_shift_change_count || "0",
         training_planned_count: savedFormData.training_planned_count || "0",
-        training_duty_control_count:
-          savedFormData.training_duty_control_count || "0",
-        discipline_phone_count: savedFormData.discipline_phone_count || "0",
-        discipline_belt_count: savedFormData.discipline_belt_count || "0",
-        discipline_badge_count: savedFormData.discipline_badge_count || "0",
-        discipline_uniform_count: savedFormData.discipline_uniform_count || "0",
+        training_supervise_onsite_count:
+          savedFormData.training_supervise_onsite_count || "0",
+        training_supervise_virtual_simulation_count:
+          savedFormData.training_supervise_virtual_simulation_count || "0",
+
       };
     }
 
@@ -481,34 +526,77 @@ export default function MoNewForm(props: Props) {
       title: "วินัยและการลงโทษ",
       items: [
         {
-          key: "discipline_phone_count",
-          label: "เล่นโทรศัพท์มือถือ :",
+          key: "discipline_sleeping_on_duty_count",
+          label: "หลับเวร :",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
-          key: "discipline_belt_count",
-          label: "ไม่มีเข็มขัด :",
+          key: "discipline_abandoning_post_count",
+          label: "ทิ้งจุด :",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
-          key: "discipline_badge_count",
-          label: "ไม่แขวนบัตร :",
+          key: "discipline_absent_work_count",
+          label: "ขาดงาน :",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
-          key: "discipline_uniform_count",
-          label: "ชุดชำรุดเก่า :",
+          key: "discipline_early_leaved_duty_count",
+          label: "ออกเวรก่อนเวลา :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_using_phone_on_duty_count",
+          label: "เล่นโทรศัพท์ :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_client_complained_count",
+          label: "ผู้ว่าจ้างตำหนิ :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_improper_attire_count",
+          label: "แต่งการไม่เรียบร้อย :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_failed_write_report_count",
+          label: "ไม่เขียนรายงาน :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_early_write_report_count",
+          label: "เขียนรายงานล่วงหน้า :",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_using_drugs_on_duty_count",
+          label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
           unit: "คน",
           value: "0",
           isActive: false,
         },
       ],
+
     },
   ];
 
@@ -538,11 +626,9 @@ export default function MoNewForm(props: Props) {
       shift_36_count: counts.shift_36_count || "0",
       training_shift_change_count: counts.training_shift_change_count || "0",
       training_planned_count: counts.training_planned_count || "0",
-      training_duty_control_count: counts.training_duty_control_count || "0",
-      discipline_phone_count: counts.discipline_phone_count || "0",
-      discipline_belt_count: counts.discipline_belt_count || "0",
-      discipline_badge_count: counts.discipline_badge_count || "0",
-      discipline_uniform_count: counts.discipline_uniform_count || "0",
+      training_supervise_onsite_count: counts.training_supervise_onsite_count || "0",
+      training_supervise_virtual_simulation_count: counts.training_supervise_virtual_simulation_count || "0",
+
       dynamicGroup2: dynamicGroup2.flatMap((g) => g.items),
       dynamicGroup3: dynamicGroup3.flatMap((g) => g.items),
     };
@@ -574,11 +660,9 @@ export default function MoNewForm(props: Props) {
     counts.shift_36_count,
     counts.training_shift_change_count,
     counts.training_planned_count,
-    counts.training_duty_control_count,
-    counts.discipline_phone_count,
-    counts.discipline_belt_count,
-    counts.discipline_badge_count,
-    counts.discipline_uniform_count,
+    counts.training_supervise_onsite_count,
+    counts.training_supervise_virtual_simulation_count,
+
     dynamicGroup2,
     dynamicGroup3,
     formPersistenceKey,
@@ -719,7 +803,7 @@ export default function MoNewForm(props: Props) {
   const [showAddGroup3, setShowAddGroup3] = useState(false);
   const [newGroup3Label, setNewGroup3Label] = useState("");
   const [newGroup3Detail, setNewGroup3Detail] = useState("");
-  const [newGroup3Status, setNewGroup3Status] = useState("normal");
+  const [newGroup3Status, setNewGroup3Status] = useState("warning");
   const [newGroup3Note, setNewGroup3Note] = useState("");
   const [editingGroup3Index, setEditingGroup3Index] = useState<number | null>(
     null,
@@ -730,7 +814,7 @@ export default function MoNewForm(props: Props) {
     setEditingGroup3Index(null);
     setNewGroup3Label("");
     setNewGroup3Detail("");
-    setNewGroup3Status("normal");
+    setNewGroup3Status("warning");
     setNewGroup3Note("");
   };
 
@@ -738,7 +822,7 @@ export default function MoNewForm(props: Props) {
     setEditingGroup3Index(null);
     setNewGroup3Label("");
     setNewGroup3Detail("");
-    setNewGroup3Status("normal");
+    setNewGroup3Status("warning");
     setNewGroup3Note("");
     setShowAddGroup3(true);
   };
@@ -761,7 +845,7 @@ export default function MoNewForm(props: Props) {
     setEditingGroup3Index(idx);
     setNewGroup3Label(item.label ?? "");
     setNewGroup3Detail(item.detail ?? "");
-    setNewGroup3Status(item.status ?? "normal");
+    setNewGroup3Status(item.status ?? "warning");
     setNewGroup3Note(item.note ?? "");
     setShowAddGroup3(true);
   };
@@ -1138,7 +1222,7 @@ export default function MoNewForm(props: Props) {
           key: String(i + 1),
           name: it.label,
           detail: it.detail ?? "",
-          status: it.status ?? "normal",
+          status: it.status ?? "warning",
           note: it.note ?? "",
         });
       });
@@ -1881,7 +1965,7 @@ export default function MoNewForm(props: Props) {
                           <td className={styles["first-column-cell"]}>สถานะ</td>
                           <td className={`${styles["second-column-cell"]} `}>
                             <div className={styles["radio-group"]}>
-                              <label className={styles["radio-item"]}>
+                              {/* temporarily disabled
                                 <input
                                   type="radio"
                                   name="newGroup3Status"
@@ -1892,6 +1976,7 @@ export default function MoNewForm(props: Props) {
                                 />
                                 <span>ปกติ</span>
                               </label>
+                              */}
                               <label className={styles["radio-item"]}>
                                 <input
                                   type="radio"

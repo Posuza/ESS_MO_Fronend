@@ -19,12 +19,13 @@
     margin: 0;
     width: 842px;
     min-width: unset;
-    min-height: 720px;
+    height: 596px;
+    overflow: hidden;
     flex-shrink: 0;
     background: white;
     border: 1px solid #c2ccda;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    padding: 23px 45px;
+    padding: 10px 38px 20px;
     box-sizing: border-box;
     color: #000000;
     outline: 2px solid #1e3a8a;
@@ -124,7 +125,7 @@
 .mo-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto;
+    table-layout: fixed;
     border-top: 0.005px solid #d0d0d0;
 }
 
@@ -139,12 +140,12 @@
 }
 
 .mo-table td {
-    font-size: 5.6pt;
-    padding: 5px 3px;
+    font-size: 6px;
+    padding: 3px 2px;
 }
 
 .mo-table th {
-    font-size: 5.8pt;
+    font-size: 6px;
 }
 
 /* Default header */
@@ -152,7 +153,7 @@
     background-color: #d9d9d9;
     color: #000000;
     font-weight: 700;
-    padding: 5px 5px;
+    padding: 5px 4px;
 }
 
 /* Red-header variant */
@@ -176,7 +177,7 @@
 .mo-table td.fourth-column-cell,
 .mo-table td.fourth-column-header-cell,
 .mo-table td.five-column-cell {
-    padding: 5px 3px;
+    padding: 3px 2px;
     box-sizing: border-box;
 }
 
@@ -187,32 +188,33 @@
     text-align: left !important;
     font-weight: 400;
     color: #000000;
-    font-size: 5.6pt;
+    font-size: 6px;
     border-left: 0.005px solid #d0d0d0;
-    padding: 5px 6px;
+    padding: 3px 4px;
     background-color: transparent;
     vertical-align: middle;
 }
 
 .mo-table th.first-column-cell {
-    font-size: 5.8pt;
+    font-size: 6px;
     font-weight: 700;
     text-align: left !important;
     width: 1%;
     white-space: nowrap;
-    padding: 6px 6px;
+    padding: 3px 4px;
     border-left: 0.005px solid #d0d0d0;
 }
 
 /* Label column */
 .mo-table td.second-column-cell {
-    width: 99%;
+    width: auto;
     text-align: left !important;
+    overflow-wrap: anywhere;
     word-break: break-word;
     font-weight: 400;
     color: #000000;
-    font-size: 5.6pt;
-    padding: 5px 6px;
+    font-size: 6px;
+    padding: 3px 4px;
     background-color: transparent;
     vertical-align: middle;
     overflow: visible;
@@ -223,35 +225,36 @@
     text-align: center !important;
     background-color: transparent;
     font-weight: 500;
-    font-size: 5.8pt;
-    padding: 3px 6px;
-    min-width: 80px;
+    font-size: 6px;
+    padding: 3px 4px;
+    min-width: 60px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 /* Per-location column header */
 .mo-table td.third-column-header1-cell {
     width: 1%;
-    min-width: 32px;
-    max-width: 32px;
+    min-width: 22px;
+    max-width: 22px;
     white-space: normal;
     word-break: break-word;
     text-align: center !important;
     font-weight: 500;
-    font-size: 5.8pt;
-    padding: 3px 2px;
+    font-size: 6px;
+    padding: 3px 1px;
     background-color: transparent;
 }
 
 /* Total column header */
 .mo-table td.third-column-header2-cell {
     width: 1%;
-    min-width: 32px;
-    -width: 16px;
+    min-width: 22px;
     white-space: normal;
     word-break: break-word;
     text-align: center !important;
     font-weight: 500;
-    font-size: 5.8pt;
+    font-size: 6px;
     padding: 3px 1px;
     background-color: transparent;
 }
@@ -259,14 +262,14 @@
 /* Data count column */
 .mo-table td.third-column-cell {
     position: relative;
-    width: 32px;
-    min-width: 32px;
-    max-width: 32px;
-    padding: 4px 2px;
+    width: 22px;
+    min-width: 22px;
+    max-width: 22px;
+    padding: 3px 1px;
     white-space: normal;
     word-break: break-word;
     text-align: center !important;
-    font-size: 5.6pt;
+    font-size: 6px;
     font-weight: 400;
     color: #000000;
 }
@@ -274,10 +277,11 @@
 /* Standalone width constraint — ensures CSS Modules compound-selector
    scoping doesn't break the column width even if .mo-table td. prefix
    isn't resolved correctly */
+/* Standalone width constraint */
 .third-column-cell {
-    width: 32px !important;
-    min-width: 32px !important;
-    max-width: 32px !important;
+    width: 22px !important;
+    min-width: 22px !important;
+    max-width: 22px !important;
     white-space: normal !important;
     word-break: break-word !important;
 }
@@ -285,7 +289,7 @@
 .third-column-header1-cell,
 .third-column-header2-cell {
     width: 1% !important;
-    max-width: 32px !important;
+    max-width: 22px !important;
     white-space: normal !important;
     word-break: break-word !important;
 }
@@ -304,8 +308,8 @@
     white-space: normal;
     word-break: break-word;
     text-align: center !important;
-    padding: 4px 0;
-    font-size: 5.6pt;
+    padding: 3px 2px;
+    font-size: 6px;
     font-weight: 400;
     color: #000000;
 }
@@ -313,8 +317,8 @@
 .mo-table td.fourth-column-header-cell {
     background-color: transparent;
     text-align: center !important;
-    font-size: 5.8pt;
-    padding: 3px 0;
+    font-size: 6px;
+    padding: 3px 2px;
 }
 
 /* Danger variant for discipline unit column */
@@ -326,20 +330,22 @@
     word-break: break-word !important;
     text-align: center !important;
     font-weight: 700;
-    font-size: 5.6pt;
+    font-size: 6px;
+    padding: 3px 2px !important;
 }
 
 /* Group-3 second column */
 .mo-table td.group3-second-column-cell {
-    padding: 5px 3px;
+    padding: 3px 4px;
     text-align: left !important;
     background-color: transparent;
-    width: 45%;
+    width: auto;
+    overflow-wrap: anywhere;
     word-break: break-word;
     font-weight: 400;
     color: #000000;
     vertical-align: middle;
-    font-size: 5.6pt;
+    font-size: 6px;
 }
 
 /* wrap cell for long numbers */
@@ -356,6 +362,7 @@
 /* ═══════════════════════════════════════════════════════════
    TABLE HEADER INNER LAYOUT
    ═══════════════════════════════════════════════════════════ */
+/* ─── TABLE HEADER INNER LAYOUT */
 
 .mo-table-header {
     padding: 0 !important;
@@ -368,13 +375,13 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 4px;
+    padding: 2px 2px;
 }
 
 .mo-header p {
     margin: 0;
     padding: 0;
-    font-size: 5.8pt;
+    font-size: 7px;
     font-weight: 700;
     flex: 1 1 auto;
     text-align: left;
@@ -405,17 +412,18 @@
 /* ═══════════════════════════════════════════════════════════
    DATA CELL TEXT DISPLAY
    ═══════════════════════════════════════════════════════════ */
+/* ─── DATA CELL TEXT DISPLAY */
 
 .third-column-text {
     display: block;
     width: 100%;
     box-sizing: border-box;
-    padding: 1px 1px;
+    padding: 0;
     margin: 0;
     font-weight: 400;
-    font-size: 5.6pt;
+    font-size: 7px;
     color: #000000;
-    line-height: 1.2;
+    line-height: 1.1;
     text-align: center;
     white-space: normal;
     word-break: break-word;
@@ -424,10 +432,6 @@
 /* ═══════════════════════════════════════════════════════════
    STATUS BADGES (group3 rows)
    ═══════════════════════════════════════════════════════════ */
-
-.status-normal {
-    color: #4caf50 !important;
-}
 
 .status-warning {
     color: #ff9800 !important;

@@ -15,8 +15,9 @@ import {
   groupDefs,
   buildGroup2Disciplines,
   buildGroup3Projects,
-} from "./sectorGroups";
-import "./SectorTableContent.module.css";
+  buildGroup4GuardMovements,
+} from "./DivisionGroups";
+import "./DivisionTableContent.module.css";
 
 type Props = {
   item: any;
@@ -25,9 +26,9 @@ type Props = {
 
 // ─── Helpers ─────────────────────────────────────────────────
 const statusBg = (s: string) =>
-  s === "warning" ? "#ff9800" : s === "danger" ? "#b71c1c" : "#4caf50";
+  s === "danger" ? "#b71c1c" : "#ff9800";
 const statusLabel = (s: string) =>
-  ({ normal: "ปกติ", warning: "ผิดปกติ", danger: "ฉุกเฉิน" })[s] ?? "ปกติ";
+  ({ warning: "ผิดปกติ", danger: "ฉุกเฉิน" })[s] ?? "ผิดปกติ";
 
 // ─── Component ──────────────────────────────────────────────
 export default function SectorTableContent({ item, groups }: Props) {
@@ -35,6 +36,7 @@ export default function SectorTableContent({ item, groups }: Props) {
 
   const group2Disciplines = buildGroup2Disciplines(data);
   const group3Projects = buildGroup3Projects(data);
+  const group4GuardMovements = buildGroup4GuardMovements(data);
 
   const resolveGroup = (key: string): LocalPdfGroup | null => {
     const from1 = groupDefs.find((g) => g.key === key);
@@ -46,6 +48,14 @@ export default function SectorTableContent({ item, groups }: Props) {
         group3Projects[0] ?? {
           key: "meeting",
           title: "เข้าพบผู้ว่าจ้าง",
+          items: [],
+        }
+      );
+    if (key === "guard_movements")
+      return (
+        group4GuardMovements[0] ?? {
+          key: "guard_movements",
+          title: "การเปลี่ยนแปลงจุดรักษาการณ์",
           items: [],
         }
       );
@@ -65,7 +75,28 @@ export default function SectorTableContent({ item, groups }: Props) {
     ...groupDefs,
     ...group2Disciplines,
     ...(group3Projects.length > 0 ? [group3Projects[0]] : []),
+    ...(group4GuardMovements.length > 0 ? group4GuardMovements : []),
   ];
+
+  // Helper: aggregate guard movement items by status (preserving order)
+  // Status is dynamic text — no "normal" fallback.
+  function aggregateGuardStatuses(items: PdfGroupItem[]) {
+    const seen = new Set<string>();
+    const result: { status: string; count: number }[] = [];
+    for (const it of items) {
+      const s = it.status || "-";
+      if (!seen.has(s)) {
+        seen.add(s);
+        result.push({ status: s, count: 0 });
+      }
+    }
+    for (const it of items) {
+      const s = it.status || "-";
+      const found = result.find((r) => r.status === s);
+      if (found) found.count += Number(it.value ?? 1) || 1;
+    }
+    return result;
+  }
 
   return (
     <div
@@ -83,12 +114,13 @@ export default function SectorTableContent({ item, groups }: Props) {
         if (idx < 0) return null;
         const isDiscipline = group2Disciplines.some((x) => x.key === g.key);
         const isGroup3 = g.key === "meeting";
+        const isGroup4 = g.key === "guard_movements";
         const headerBg = "#d9d9d9";
         const headerColor = "#000000";
 
         return (
           <div
-            key={g.key}
+            key={`${g.key}-${g._itemOffset ?? 0}`}
             style={{
               gridColumn: "span 2",
               width: "100%",
@@ -99,10 +131,17 @@ export default function SectorTableContent({ item, groups }: Props) {
             <table
               style={{
                 width: "100%",
+                tableLayout: "fixed",
                 borderCollapse: "collapse",
                 borderTop: "0.005px solid #d0d0d0",
               }}
             >
+              <colgroup>
+                <col style={{ width: 22 }} />
+                <col />
+                <col style={{ width: 24 }} />
+                <col style={{ width: isGroup3 ? 44 : 22 }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th
@@ -113,8 +152,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                       color: headerColor,
                       fontWeight: 700,
                       fontSize: 7,
-                      padding: "6px 6px",
+                      padding: "4px 4px",
                       textAlign: "left",
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-word",
                     }}
                   >
                     {idx + 1}
@@ -126,7 +167,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                       color: headerColor,
                       fontWeight: 700,
                       fontSize: 7,
-                      padding: "6px 4px",
+                      padding: "4px 3px",
                       textAlign: "left",
                     }}
                   >
@@ -141,15 +182,75 @@ export default function SectorTableContent({ item, groups }: Props) {
                       colSpan={4}
                       style={{
                         textAlign: "center",
-                        padding: "10px",
+                        padding: "6px",
                         color: "#000000",
-                        fontSize: 7,
+                        fontSize: 6,
                         fontWeight: 500,
                       }}
                     >
-                      {isGroup3 ? "ไม่มีข้อมูล" : "-"}
+                      {isDiscipline || isGroup3 || isGroup4 ? "ไม่มีข้อมูล" : "-"}
                     </td>
                   </tr>
+                ) : isGroup4 ? (
+                  // Group 4 — guard movements: aggregate by status
+                  aggregateGuardStatuses(g.items).map((st, i) => (
+                    <tr key={st.status}>
+                      <td
+                        style={{
+                          fontSize: 6,
+                          padding: "3px 2px",
+                          width: 22,
+                          minWidth: 22,
+                          maxWidth: 22,
+                          verticalAlign: "middle",
+                          textAlign: "center",
+                          color: "#000000",
+                        }}
+                      >
+                        {idx + 1}.{(g._itemOffset || 0) + i + 1}
+                      </td>
+                      <td
+                        style={{
+                          fontSize: 6,
+                          padding: "3px 4px",
+                          textAlign: "left",
+                          overflowWrap: "anywhere",
+                          wordBreak: "break-word",
+                          color: "#000000",
+                        }}
+                      >
+                        {st.status}
+                      </td>
+                      <td
+                        style={{
+                          color: "#000000",
+                          textAlign: "center",
+                          padding: "3px 2px",
+                          fontSize: 7,
+                          width: 24,
+                          minWidth: 24,
+                          maxWidth: 24,
+                        }}
+                      >
+                        {st.count}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: "center",
+                          fontSize: 7,
+                          padding: "3px 2px",
+                          width: 22,
+                          minWidth: 22,
+                          maxWidth: 22,
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                          color: "#000000",
+                        }}
+                      >
+                        หน่วยงาน
+                      </td>
+                    </tr>
+                  ))
                 ) : isGroup3 ? (
                   g.items.map((it: any, i: number) => {
                     const itemNum = (g._itemOffset || 0) + i + 1;
@@ -158,10 +259,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           style={{
                             fontSize: 7,
-                            padding: "6px 2px",
-                            width: 26,
-                            minWidth: 26,
-                            maxWidth: 26,
+                            padding: "3px 2px",
+                            width: 22,
+                            minWidth: 22,
+                            maxWidth: 22,
                             verticalAlign: "middle",
                             textAlign: "center",
                             color: "#000000",
@@ -173,8 +274,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                           colSpan={2}
                           style={{
                             fontSize: 7,
-                            padding: "6px 6px",
+                            padding: "3px 4px",
                             textAlign: "left",
+                            overflowWrap: "anywhere",
+                            wordBreak: "break-word",
                             color: "#000000",
                           }}
                         >
@@ -184,11 +287,11 @@ export default function SectorTableContent({ item, groups }: Props) {
                           style={{
                             color: statusBg(it.status),
                             textAlign: "center",
-                            padding: "6px 4px",
+                            padding: "3px 2px",
                             fontSize: 7,
-                            width: 50,
-                            minWidth: 50,
-                            maxWidth: 50,
+                            width: 44,
+                            minWidth: 44,
+                            maxWidth: 44,
                           }}
                         >
                           {statusLabel(it.status)}
@@ -207,10 +310,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           style={{
                             fontSize: 7,
-                            padding: "6px 2px",
-                            width: 26,
-                            minWidth: 26,
-                            maxWidth: 26,
+                            padding: "3px 2px",
+                            width: 22,
+                            minWidth: 22,
+                            maxWidth: 22,
                             textAlign: "center",
                             color: "#000000",
                           }}
@@ -220,8 +323,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                         <td
                           style={{
                             textAlign: "left",
+                            overflowWrap: "anywhere",
+                            wordBreak: "break-word",
                             fontSize: 7,
-                            padding: "6px 6px",
+                            padding: "3px 4px",
                             color: "#000000",
                           }}
                         >
@@ -231,10 +336,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                           style={{
                             textAlign: "center",
                             fontSize: 7,
-                            padding: "6px 2px",
-                            width: 30,
-                            minWidth: 30,
-                            maxWidth: 30,
+                            padding: "3px 2px",
+                            width: 24,
+                            minWidth: 24,
+                            maxWidth: 24,
                             whiteSpace: "normal",
                             wordBreak: "break-word",
                             color: "#000000",
@@ -246,10 +351,10 @@ export default function SectorTableContent({ item, groups }: Props) {
                           style={{
                             textAlign: "center",
                             fontSize: 7,
-                            padding: "6px 2px",
-                            width: 28,
-                            minWidth: 28,
-                            maxWidth: 28,
+                            padding: "3px 2px",
+                            width: 22,
+                            minWidth: 22,
+                            maxWidth: 22,
                             whiteSpace: "normal",
                             wordBreak: "break-word",
                             color: "#000000",

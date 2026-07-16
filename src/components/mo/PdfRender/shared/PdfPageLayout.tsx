@@ -14,13 +14,13 @@ export function PdfPageHeader({
   sectorName,
   title,
   data,
-  subLocation,
+  division,
 }: {
   pageNo?: number;
   sectorName: string;
   title: string;
   data: any;
-  subLocation?: string;
+  division?: string;
 }) {
   const formattedSectorName = sectorName
     ? sectorName.replace(/([ก-๙0-9]+)\s+([A-Za-z]+)/, "$1 | $2")
@@ -30,25 +30,16 @@ export function PdfPageHeader({
     <>
       <div className={styles.pdfHeaderRow}>
         <div className={styles.logoSection}>
-          <img src={logoGuts} alt="GUTS ESS" style={{ height: 60 }} />
+          <img src={logoGuts} alt="GUTS ESS" style={{ height: 68 }} />
         </div>
       </div>
       <div className={styles.pdfTitleBar}>{title}</div>
       <div className={styles.pdfMetaRow}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div className={styles.metaLocation}>
-            <span>
-              {formattedSectorName} {subLocation ? ` | ${subLocation}` : ""}
-            </span>
-          </div>
-        </div>
-        <div className={styles.metaDate}>{formatDate(data)}</div>
+        <span className={styles.metaSpacer} />
+        <span className={styles.metaLocation}>
+          {formattedSectorName} {division ? ` | ${division}` : ""}
+        </span>
+        <span className={styles.metaDate}>{formatDate(data)}</span>
       </div>
     </>
   );

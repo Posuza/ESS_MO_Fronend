@@ -14,15 +14,30 @@
 import { useMemo, type JSX } from "react";
 import {
   PDF,
-  tableHeight,
-  paginateWithGroupSplit,
+  divisionBodyRowCapacity,
+  divisionTableFitHeight,
+  summaryTableBodyRowCapacity,
+  summaryGridHeight,
+  groupGridHeight,
+  paginateDetailSections,
+  projectBlockHeight,
   getTablesPerRow,
+  splitDivisionGroupItems,
+  splitGroupItems,
   type PdfGroup,
   type PdfGroupItem,
+  type DetailSection,
 } from "../shared/PaginationSystem";
-import { group1, dynamicGroup2, group3Static } from "./summaryGroups";
+import {
+  group1,
+  buildGroup2ForSummary,
+  group3Static,
+  // buildGroup4ForSummary, // DISABLED — will use later
+  // buildGroup4GuardMovements, // DISABLED — will use later
+} from "./summaryGroups";
 import {
   projectStatusCount,
+  guardMovementStatusCount,
   itemValueFn,
   getCols,
   chunkCols,
@@ -34,8 +49,9 @@ import {
   PdfPageFooter,
   TotalPagesContext,
 } from "../shared/PdfPageLayout";
-import SectorTableContent from "../sector/SectorTableContent";
-import SectorDetailContent from "../sector/SectorDetailContent";
+import SectorTableContent from "../division/DivisionTableContent";
+import DivisionDetailContent from "../division/DivisionDetailContent";
+import { buildGroup2Disciplines } from "../division/DivisionGroups";
 import "./SummeriesPdf.module.css";
 
 type Props = {
@@ -84,6 +100,8 @@ export default function SummeriesPdf({
       isGroup3: boolean;
     };
 
+    // const dynamicGroup4 = buildGroup4ForSummary(summaryReports); // DISABLED — will use later
+    const dynamicGroup2 = buildGroup2ForSummary(summaryReports);
     const allGroups: GroupInfo[] = [
       ...group1.map((g, i) => ({
         g,
@@ -103,6 +121,12 @@ export default function SummeriesPdf({
         isRed: false,
         isGroup3: true,
       })),
+      // {
+      //   g: dynamicGroup4,
+      //   index: 7,
+      //   isRed: false,
+      //   isGroup3: false,
+      // }, // DISABLED — will use later
     ];
 
     for (const cols of colChunks) {
@@ -123,6 +147,9 @@ export default function SummeriesPdf({
 
       let pageGroups: GroupInfo[] = [];
       let usedHeight = 0;
+      const maxSummaryBodyRowsPerPage = summaryTableBodyRowCapacity(
+        PDF.AVAILABLE_H,
+      );
 
       const flushPage = () => {
         if (pageGroups.length === 0) return;
@@ -154,6 +181,7 @@ export default function SummeriesPdf({
                   SUMMARY_STYLES,
                   projectStatusCount,
                   itemValueFn,
+                  guardMovementStatusCount,
                   slot.g._itemOffset ?? 0,
                 ),
               )}
@@ -166,14 +194,45 @@ export default function SummeriesPdf({
         usedHeight = 0;
       };
 
+      const splitOversizedSummaryRow = (gridRow: GroupInfo[]): GroupInfo[][] => {
+        const rows: GroupInfo[][] = [];
+        let remaining = gridRow;
+
+        while (remaining.length > 0) {
+          const currentRow: GroupInfo[] = [];
+          const nextRow: GroupInfo[] = [];
+
+          for (const slot of remaining) {
+            if (
+              summaryGridHeight(slot.g, cols.length) <= PDF.AVAILABLE_H ||
+              slot.g.items.length === 0
+            ) {
+              currentRow.push(slot);
+              continue;
+            }
+
+            const { rendered, overflow } = splitGroupItems(
+              slot.g,
+              maxSummaryBodyRowsPerPage,
+            );
+            currentRow.push({ ...slot, g: rendered });
+            if (overflow) nextRow.push({ ...slot, g: overflow });
+          }
+
+          rows.push(currentRow);
+          remaining = nextRow;
+        }
+
+        return rows;
+      };
+
       // ─── Paginate by grid rows ─────────────────────────────
-      for (const gridRow of gridRows) {
+      for (const gridRow of gridRows.flatMap(splitOversizedSummaryRow)) {
         // Grid row height is determined by the tallest table in the row
         // (CSS grid forces all items in a row to share the same row height)
-        const maxItemsInRow = Math.max(
-          ...gridRow.map((item) => item.g.items.length),
-        );
-        const gridRowHeight = tableHeight(maxItemsInRow) + PDF.GAP;
+        const gridRowHeight =
+          Math.max(...gridRow.map((item) => summaryGridHeight(item.g, cols.length))) +
+          PDF.GAP;
 
         // If this grid row doesn't fit on the current page, flush to a new page
         if (
@@ -201,14 +260,13 @@ export default function SummeriesPdf({
     const allCols = getCols(summaryReports, data);
     const detailPages: JSX.Element[] = [];
     let pageNum = startPageNum;
-    const DETAILED_AVAILABLE_H = PDF.AVAILABLE_H - 35;
 
     allCols.forEach((col) => {
       // ── Build dynamic group3 from this column's actual projects ──
       const projectItems = (col.report.projects || []).map((p: any) => ({
         key: p.id ?? p.name ?? String(Math.random()),
         label: p.project_name ?? p.name ?? "-",
-        status: p.status ?? "normal",
+        status: p.status ?? "warning",
         unit: "หน่วยงาน",
       }));
       const dynamicGroup3: PdfGroup = {
@@ -216,10 +274,13 @@ export default function SummeriesPdf({
         title: "เข้าพบผู้ว่าจ้าง",
         items: projectItems,
       };
+      const dynamicGroup2 = buildGroup2Disciplines(col.report);
+      // const dynamicGroup4 = buildGroup4GuardMovements(col.report); // DISABLED — will use later
       const colDetailPdfGroups: PdfGroup[] = [
         ...group1,
-        ...dynamicGroup2.map((g) => g),
+        ...dynamicGroup2,
         dynamicGroup3,
+        // dynamicGroup4, // DISABLED — will use later
       ];
 
       // Page type 1: tables (grid-row-aware: SectorTableContent uses 3 per row)
@@ -233,6 +294,9 @@ export default function SummeriesPdf({
 
       let detailPageGroups: PdfGroup[] = [];
       let detailUsedHeight = 0;
+      const detailTableFitHeight = divisionTableFitHeight(PDF.AVAILABLE_H);
+      const maxDetailBodyRowsPerPage =
+        divisionBodyRowCapacity(PDF.AVAILABLE_H);
 
       const flushDetailPage = () => {
         if (detailPageGroups.length === 0) return;
@@ -243,7 +307,7 @@ export default function SummeriesPdf({
               sectorName={sectorName}
               title="รายงานประจำวันฝ่ายปฏิบัติการ"
               data={data}
-              subLocation={col.sub_location}
+              division={col.division}
             />
             <SectorTableContent item={col.report} groups={detailPageGroups} />
             <PdfPageFooter pageNo={pageNum} />
@@ -254,12 +318,47 @@ export default function SummeriesPdf({
         detailUsedHeight = 0;
       };
 
-      for (const gridRow of detailGridRows) {
-        const maxItemsInRow = Math.max(...gridRow.map((g) => g.items.length));
-        const gridRowHeight = tableHeight(maxItemsInRow) + PDF.GAP;
+      const splitOversizedDetailRow = (gridRow: PdfGroup[]): PdfGroup[][] => {
+        const rows: PdfGroup[][] = [];
+        let remaining = gridRow;
+
+        while (remaining.length > 0) {
+          const currentRow: PdfGroup[] = [];
+          const nextRow: PdfGroup[] = [];
+
+          for (const group of remaining) {
+            if (groupGridHeight(group) <= detailTableFitHeight || group.items.length === 0) {
+              currentRow.push(group);
+              continue;
+            }
+
+            let rowsToRender = maxDetailBodyRowsPerPage;
+            let split = splitDivisionGroupItems(group, rowsToRender);
+            while (
+              groupGridHeight(split.rendered) > detailTableFitHeight &&
+              rowsToRender > 1
+            ) {
+              rowsToRender--;
+              split = splitDivisionGroupItems(group, rowsToRender);
+            }
+            const { rendered, overflow } = split;
+            currentRow.push(rendered);
+            if (overflow) nextRow.push(overflow);
+          }
+
+          rows.push(currentRow);
+          remaining = nextRow;
+        }
+
+        return rows;
+      };
+
+      for (const gridRow of detailGridRows.flatMap(splitOversizedDetailRow)) {
+        const gridRowHeight =
+          Math.max(...gridRow.map((g) => groupGridHeight(g))) + PDF.GAP;
 
         if (
-          detailUsedHeight + gridRowHeight > DETAILED_AVAILABLE_H &&
+          detailUsedHeight + gridRowHeight > detailTableFitHeight &&
           detailPageGroups.length > 0
         ) {
           flushDetailPage();
@@ -273,59 +372,80 @@ export default function SummeriesPdf({
 
       flushDetailPage();
 
-      // Page type 2: project detail blocks
+      // Detail pages: Projects (group 6). Guard movements (group 7) disabled.
+      // Paginate using section-aware logic (mirrors _renderCombinedSections)
       const projects: PdfGroupItem[] = (col.report.projects || []).map(
         (p: any) => ({
           key: p.id ?? p.key ?? String(Math.random()),
           label: p.project_name ?? p.name ?? "-",
           detail: p.detail ?? "",
-          status: p.status ?? "normal",
+          status: p.status ?? "warning",
           note: p.note ?? "",
         }),
       );
+      // const guardMovementItems = buildGroup4GuardMovements(col.report).items; // DISABLED — will use later
 
-      if (projects.length === 0) {
+      const sections: DetailSection[] = [
+        {
+          groupIndex: 6,
+          title: "เข้าพบผู้ว่าจ้าง",
+          emptyText: "ยังไม่มีข้อมูลโครงการ",
+          items: projects,
+        },
+        // {
+        //   groupIndex: 7,
+        //   title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+        //   emptyText: "ยังไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์",
+        //   items: guardMovementItems,
+        // }, // DISABLED — will use later
+      ];
+
+      const detailChunks = paginateDetailSections(
+        sections,
+        PDF.AVAILABLE_H,
+        projectBlockHeight,
+      );
+
+      if (detailChunks.length === 0) {
         detailPages.push(
-          <div key={`detail-p-page-${col.id}-${pageNum}`} className="pdf-page">
+          <div key={`detail-page-${col.id}-${pageNum}`} className="pdf-page">
             <PdfPageHeader
               pageNo={pageNum}
               sectorName={sectorName}
               title="รายงานประจำวันฝ่ายปฏิบัติการ"
               data={data}
-              subLocation={col.sub_location}
+              division={col.division}
             />
-            <SectorDetailContent item={{ ...col.report, projects: [] }} />
+            <DivisionDetailContent
+              item={col.report}
+              projects={[]}
+              movements={[]}
+              renderProjects
+              renderMovements={false}
+            />
             <PdfPageFooter pageNo={pageNum} />
           </div>,
         );
         pageNum++;
       } else {
-        const projectGroup: PdfGroup = {
-          key: "meeting",
-          title: "เข้าพบผู้ว่าจ้าง",
-          items: projects,
-        };
-        const projectChunks = paginateWithGroupSplit(
-          [projectGroup],
-          DETAILED_AVAILABLE_H,
-          10,
-        );
-        projectChunks.forEach((chunk) => {
-          const chunkItems = chunk.flatMap((g) => g.items);
+        detailChunks.forEach((chunk) => {
           detailPages.push(
-            <div
-              key={`detail-p-page-${col.id}-${pageNum}`}
-              className="pdf-page"
-            >
+            <div key={`detail-page-${col.id}-${pageNum}`} className="pdf-page">
               <PdfPageHeader
                 pageNo={pageNum}
                 sectorName={sectorName}
                 title="รายงานประจำวันฝ่ายปฏิบัติการ"
                 data={data}
-                subLocation={col.sub_location}
+                division={col.division}
               />
-              <SectorDetailContent
-                item={{ ...col.report, projects: chunkItems }}
+              <DivisionDetailContent
+                item={col.report}
+                projects={chunk.projects}
+                movements={chunk.movements}
+                projectOffset={chunk.projectOffset}
+                movementOffset={0}
+                renderProjects={chunk.renderProjects}
+                renderMovements={false}
               />
               <PdfPageFooter pageNo={pageNum} />
             </div>,

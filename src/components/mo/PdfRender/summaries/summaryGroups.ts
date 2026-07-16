@@ -13,6 +13,19 @@
 
 import { type PdfGroup } from "../shared/PaginationSystem";
 
+const defaultDisciplineItems = [
+  { key: "discipline_sleeping_on_duty_count", label: "หลับเวร", unit: "คน" },
+  { key: "discipline_abandoning_post_count", label: "ทิ้งจุด", unit: "คน" },
+  { key: "discipline_absent_work_count", label: "ขาดงาน", unit: "คน" },
+  { key: "discipline_early_leaved_duty_count", label: "ออกเวรก่อนเวลา", unit: "คน" },
+  { key: "discipline_using_phone_on_duty_count", label: "เล่นโทรศัพท์", unit: "คน" },
+  { key: "discipline_client_complained_count", label: "ผู้ว่าจ้างตำหนิ", unit: "คน" },
+  { key: "discipline_improper_attire_count", label: "แต่งการไม่เรียบร้อย", unit: "คน" },
+  { key: "discipline_failed_write_report_count", label: "ไม่เขียนรายงาน", unit: "คน" },
+  { key: "discipline_early_write_report_count", label: "เขียนรายงานล่วงหน้า", unit: "คน" },
+  { key: "discipline_using_drugs_on_duty_count", label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน", unit: "คน" },
+];
+
 // ─── Group 1 — Department / Leave / Shift / Training ─────────
 // Cross-location summary: values per sub-location shown as columns.
 export const group1: PdfGroup[] = [
@@ -20,6 +33,11 @@ export const group1: PdfGroup[] = [
     key: "dept",
     title: "หน่วยงานที่รับผิดชอบ",
     items: [
+      {
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
+        unit: "คน",
+      },
       {
         key: "dept_guard_post_count",
         label: "จุดรักษาการณ์",
@@ -39,11 +57,6 @@ export const group1: PdfGroup[] = [
       {
         key: "dept_supplement_count",
         label: "จัดกำลังพลเสริมพิเศษ",
-        unit: "คน",
-      },
-      {
-        key: "dept_recruitment_count",
-        label: "สรรหาผู้สมัครงานใหม่",
         unit: "คน",
       },
       {
@@ -67,7 +80,11 @@ export const group1: PdfGroup[] = [
       { key: "leave_absent_count", label: "ขาดงาน", unit: "คน" },
       { key: "leave_deserted_count", label: "หนีหาย", unit: "คน" },
       { key: "leave_resigned_count", label: "ลาออก", unit: "คน" },
-      { key: "leave_terminated_count", label: "ไล่ออก", unit: "คน" },
+      {
+        key: "leave_terminated_count",
+        label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล",
+        unit: "คน",
+      },
     ],
   },
   {
@@ -81,7 +98,7 @@ export const group1: PdfGroup[] = [
   },
   {
     key: "training",
-    title: "อบรมและควบคุมหน้าที่งาน",
+    title: "อบรมและควบคุมหน้างาน",
     items: [
       {
         key: "training_shift_change_count",
@@ -94,31 +111,44 @@ export const group1: PdfGroup[] = [
         unit: "หน่วยงาน",
       },
       {
-        key: "training_duty_control_count",
-        label: "ควบคุมหน้าที่งาน",
+        key: "training_supervise_onsite_count",
+        label: "ควบคุมหน้างาน",
+        unit: "หน่วยงาน",
+      },
+      {
+        key: "training_supervise_virtual_simulation_count",
+        label: "จำลองสถานการณ์เสมือนจริง",
         unit: "หน่วยงาน",
       },
     ],
   },
 ];
 
-// ─── Group 2 — Discipline (static structure, dynamic values) ─
-export const dynamicGroup2: PdfGroup[] = [
-  {
-    key: "discipline",
-    title: "วินัยและการลงโทษ",
-    items: [
-      {
-        key: "discipline_phone_count",
-        label: "เล่นโทรศัพท์มือถือ",
-        unit: "คน",
-      },
-      { key: "discipline_belt_count", label: "ไม่มีเข็มขัด", unit: "คน" },
-      { key: "discipline_badge_count", label: "ไม่แขวนบัตร", unit: "คน" },
-      { key: "discipline_uniform_count", label: "ชุดชำรุดเก่า", unit: "คน" },
-    ],
-  },
-];
+// ─── Group 2 — Discipline (dynamic from report.disciplines) ─
+export function buildGroup2ForSummary(reports: any[]): PdfGroup[] {
+  const itemsByKey = new Map<string, { key: string; label: string; unit: string }>();
+
+  for (const report of reports || []) {
+    const raw = report?.disciplines;
+    if (!Array.isArray(raw)) continue;
+
+    for (const d of raw) {
+      const label = d.label ?? d.name ?? "-";
+      const key = String(d.key ?? label);
+      if (!itemsByKey.has(key)) {
+        itemsByKey.set(key, { key, label, unit: "คน" });
+      }
+    }
+  }
+
+  return [
+    {
+      key: "discipline",
+      title: "วินัยและการลงโทษ",
+      items: itemsByKey.size > 0 ? Array.from(itemsByKey.values()) : defaultDisciplineItems,
+    },
+  ];
+}
 
 // ─── Group 3 — Project status summary (static structure) ─────
 // Uses `status` field instead of a data key; values come from
@@ -128,9 +158,63 @@ export const group3Static: PdfGroup[] = [
     key: "meeting",
     title: "เข้าพบผู้ว่าจ้าง",
     items: [
-      { key: "normal", label: "ปกติ", status: "normal" },
-      { key: "warning", label: "ผิดปกติ", status: "warning" },
-      { key: "danger", label: "ฉุกเฉิน", status: "danger" },
+      { key: "warning", label: "ผิดปกติ", status: "warning", unit: "หน่วยงาน" },
+      { key: "danger", label: "ฉุกเฉิน", status: "danger", unit: "หน่วยงาน" },
     ],
   },
 ];
+
+// ─── Group 4 — Guard movement summary (dynamic statuses) ────
+// Builds items from unique statuses discovered across all reports.
+export function buildGroup4ForSummary(reports: any[]): PdfGroup {
+  const statusSet = new Set<string>();
+  for (const report of reports) {
+    const movements = report.guard_post_movements ?? [];
+    if (Array.isArray(movements)) {
+      for (const m of movements) {
+        statusSet.add(m.status);
+      }
+    }
+  }
+  const statuses = Array.from(statusSet);
+  return {
+    key: "guard_movements",
+    title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+    items:
+      statuses.length > 0
+        ? statuses.map((s) => ({
+            key: s,
+            label: s,
+            status: s,
+            unit: "หน่วยงาน",
+          }))
+        : [
+            {
+              key: "no_data",
+              label: "ไม่มีข้อมูล",
+              unit: "",
+            },
+          ],
+  };
+}
+
+// ─── Group 4 builder for detailed pages ─────────────────────
+// Builds a dynamic group from a report's guard_post_movements,
+// matching the structure in sectorGroups.ts for SectorTableContent.
+// Items carry all fields (detail, note) so they work for both
+// the grid table and the paginated detail blocks.
+export function buildGroup4GuardMovements(report: any): PdfGroup {
+  const movements = (report.guard_post_movements ?? []).map((m: any) => ({
+    key: m.name ?? String(Math.random()),
+    label: m.name ?? "-",
+    detail: m.detail ?? "",
+    status: m.status,
+    note: m.note ?? "",
+    unit: "หน่วยงาน",
+  }));
+  return {
+    key: "guard_movements",
+    title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+    items: movements,
+  };
+}

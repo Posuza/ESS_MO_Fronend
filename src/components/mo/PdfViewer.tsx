@@ -21,7 +21,7 @@ import {
   exportSectorPdf,
   exportSummariesPdf,
 } from "./PdfRender/shared/exportPdf";
-import SectorPdf from "./PdfRender/sector/SectorPdf";
+import DivisionPdf from "./PdfRender/division/DivisionPdf";
 import SummeriesPdf from "./PdfRender/summaries/SummeriesPdf";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import MoLoadingPopup from "./popup/MoLoadingPopup";
@@ -187,8 +187,8 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
   // ─── Determine which PDF page component to show ────────
   const previewContent = useMemo(() => {
     if (isSector) {
-      // Sector view: render PDF pages via SectorPdf
-      return <SectorPdf item={item} sectorName={sectorName} />;
+      // Sector view: render PDF pages via DivisionPdf
+      return <DivisionPdf item={item} sectorName={sectorName} />;
     }
     // Summary view: render PDF pages via SummeriesPdf
     return (

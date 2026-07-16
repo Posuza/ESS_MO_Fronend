@@ -59,10 +59,11 @@ export interface SectorReport {
   shift_24_count: number;
   shift_36_count: number;
 
-  // Group 4 — อบรมและควบคุมหน้าที่งาน
+  // Group 4 — อบรมและควบคุมหน้างาน
   training_shift_change_count: number;
   training_planned_count: number;
-  training_duty_control_count: number;
+  training_supervise_onsite_count: number;
+  training_supervise_virtual_simulation_count: number;
 
   // Group 5 — วินัยและการลงโทษ (dynamic array)
   disciplines: SectorReportDiscipline[];
@@ -211,51 +212,82 @@ export const sectorReportService = {
    * Fetch ALL distinct discipline types (key + label) from across all reports.
    */
   async getDistinctDisciplineTypes(): Promise<DistinctDiscipline[]> {
-    // Start with the 4 standard discipline types as baseline
+    // Start with the 10 standard discipline types as baseline
     const standardMap = new Map<string, DistinctDiscipline>([
       [
-        "discipline_phone_count",
-        { key: "discipline_phone_count", label: "เล่นโทรศัพท์มือถือ :" },
+        "discipline_sleeping_on_duty_count",
+        { key: "discipline_sleeping_on_duty_count", label: "หลับเวร :" },
       ],
       [
-        "discipline_belt_count",
-        { key: "discipline_belt_count", label: "ไม่มีเข็มขัด :" },
+        "discipline_abandoning_post_count",
+        { key: "discipline_abandoning_post_count", label: "ทิ้งจุด :" },
       ],
       [
-        "discipline_badge_count",
-        { key: "discipline_badge_count", label: "ไม่แขวนบัตร :" },
+        "discipline_absent_work_count",
+        { key: "discipline_absent_work_count", label: "ขาดงาน :" },
       ],
       [
-        "discipline_uniform_count",
-        { key: "discipline_uniform_count", label: "ชุดชำรุดเก่า :" },
+        "discipline_early_leaved_duty_count",
+        { key: "discipline_early_leaved_duty_count", label: "ออกเวรก่อนเวลา :" },
+      ],
+      [
+        "discipline_using_phone_on_duty_count",
+        { key: "discipline_using_phone_on_duty_count", label: "เล่นโทรศัพท์ :" },
+      ],
+      [
+        "discipline_client_complained_count",
+        { key: "discipline_client_complained_count", label: "ผู้ว่าจ้างตำหนิ :" },
+      ],
+      [
+        "discipline_improper_attire_count",
+        { key: "discipline_improper_attire_count", label: "แต่งการไม่เรียบร้อย :" },
+      ],
+      [
+        "discipline_failed_write_report_count",
+        { key: "discipline_failed_write_report_count", label: "ไม่เขียนรายงาน :" },
+      ],
+      [
+        "discipline_early_write_report_count",
+        { key: "discipline_early_write_report_count", label: "เขียนรายงานล่วงหน้า :" },
+      ],
+      [
+        "discipline_using_drugs_on_duty_count",
+        { key: "discipline_using_drugs_on_duty_count", label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :" },
       ],
     ]);
 
     // Merge with any additional types found in existing reports
     try {
       const allReports = await this.getAll();
-      const customSeen = new Set<string>();
-      const custom: { key: string; label: string }[] = [];
-
       for (const report of allReports) {
         for (const d of report.disciplines ?? []) {
-          if (d.key === "discipline_other_count") {
-            if (!customSeen.has(d.label)) {
-              customSeen.add(d.label);
-              custom.push({ key: "", label: d.label });
-            }
-          } else if (d.key && d.label) {
-            // Update or add standard/custom types from reports
+          if (!d.key || !d.label) continue;
+
+          // Skip the 10 standard discipline keys (already in standardMap)
+          if (standardMap.has(d.key)) {
+            // Just update label if it changed
             standardMap.set(d.key, { key: d.key, label: d.label });
+            continue;
           }
+
+          // Custom disciplines (discipline_custom_N) — deduplicate by label
+          if (d.key.startsWith("discipline_custom_")) {
+            const existingCustom = [...standardMap.values()].find(
+              (v) => v.label === d.label && v.key.startsWith("discipline_custom_"),
+            );
+            if (!existingCustom) {
+              standardMap.set(d.key, { key: d.key, label: d.label });
+            }
+            // If same label already exists, skip (dedup by label)
+            continue;
+          }
+
+          // Any other dynamic discipline key — add directly
+          standardMap.set(d.key, { key: d.key, label: d.label });
         }
       }
 
-      const result = Array.from(standardMap.values());
-      custom.forEach((c, i) => {
-        result.push({ key: `discipline_custom_${i + 1}`, label: c.label });
-      });
-      return result;
+      return Array.from(standardMap.values());
     } catch {
       // If fetching reports fails, return at least the standard types
       return Array.from(standardMap.values());

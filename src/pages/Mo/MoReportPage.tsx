@@ -412,10 +412,8 @@ export default function MoReportPage({
 
   const sectorNameForPdf = useMemo(() => {
     if (selectedTransactionRow) {
-      const nm = String(selectedTransactionRow.division_name ?? "");
-      const m = nm.match(/เขต\s+[\d.]+/);
-      const short = m ? m[0] : nm;
-      return `ฝ่ายปฏิบัติการภาค ${selectedTransactionRow.department_id} ${short}`;
+      const divisionName = String(selectedTransactionRow.division_name ?? "");
+      return `ฝ่ายปฏิบัติการภาค ${selectedTransactionRow.department_id} ${divisionName}`;
     }
     return selectedSectorName || "ฝ่ายปฏิบัติการภาค 9";
   }, [selectedTransactionRow, selectedSectorName]);
@@ -449,15 +447,13 @@ export default function MoReportPage({
                     <option value="">{currentDept?.name}</option>
 
                     {visibleReports.map((row: any) => {
-                      const nm = String(row.division_name ?? "");
-                      const m = nm.match(/เขต\s+[\d.]+/);
-                      const short = m ? m[0] : nm;
+                      const divisionName = String(row.division_name ?? "");
                       return (
                         <option
                           key={row.id || row.mo_daily_transaction_id}
                           value={String(row.id || row.mo_daily_transaction_id)}
                         >
-                          {short || row.division_name}
+                          {divisionName || row.division_name}
                         </option>
                       );
                     })}
@@ -473,13 +469,7 @@ export default function MoReportPage({
                   <MapPin className={styles["pin-icon"]} />
                 </td>
                 <td colSpan={3} className={styles["sector-cell-bodytext"]}>
-                  {(() => {
-                    const nm = String(
-                      selectedTransactionRow.division_name ?? "",
-                    );
-                    const m = nm.match(/เขต\s+[\d.]+/);
-                    return m ? m[0] : nm;
-                  })()}
+                  {String(selectedTransactionRow.division_name ?? "")}
                 </td>
               </tr>
             </tbody>

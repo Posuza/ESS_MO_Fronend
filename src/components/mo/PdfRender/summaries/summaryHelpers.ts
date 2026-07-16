@@ -15,7 +15,7 @@ import styles from "./SummeriesPdf.module.css";
 // ─── Column type ─────────────────────────────────────────────
 export type SummaryColumn = {
   id: number | string;
-  sub_location: string;
+  division: string;
   report: any;
 };
 
@@ -23,7 +23,9 @@ export type SummaryColumn = {
 
 /** Read a discipline value from either the disciplines array or direct key on report */
 export function disciplineValue(report: any, key: string): number {
-  const fromArray = report.disciplines?.find((it: any) => it.key === key);
+  const fromArray = report.disciplines?.find((it: any) =>
+    String(it.key ?? it.label ?? it.name) === String(key),
+  );
   if (fromArray) return Number(fromArray.value) || 0;
   return Number((report as any)[key]) || 0;
 }
@@ -31,12 +33,24 @@ export function disciplineValue(report: any, key: string): number {
 /** Count how many projects in a report have the given status */
 export function projectStatusCount(report: any, status: string): number {
   return (report.projects || []).filter(
-    (p: any) => (p.status || "normal") === status,
+    (p: any) => (p.status || "-") === status,
+  ).length;
+}
+
+/** Count how many guard movements in a report have the given status */
+// Status is dynamic text — no "normal" fallback.
+export function guardMovementStatusCount(report: any, status: string): number {
+  return (report.guard_post_movements || []).filter(
+    (m: any) => (m.status || "-") === status,
   ).length;
 }
 
 /** General item value reader — routes discipline keys through disciplineValue */
-export function itemValueFn(report: any, groupKey: string, key: string): number {
+export function itemValueFn(
+  report: any,
+  groupKey: string,
+  key: string,
+): number {
   if (groupKey === "discipline") return disciplineValue(report, key);
   return Number((report as any)[key]) || 0;
 }
@@ -49,15 +63,11 @@ export const MAX_COLS_PER_PAGE = 6;
 /** Build a SummaryColumn array from the list of reports for this date/sector */
 export function getCols(summaryReports: any[], data: any): SummaryColumn[] {
   const source = summaryReports.length > 0 ? summaryReports : [data];
-  return source.map((report: any) => {
-    const fullName = report.division_name || report.sub_location || "";
-    const m = String(fullName).match(/เขต\s+[\d.]+/);
-    return {
-      id: report.id || (report as any).mo_daily_transaction_id,
-      sub_location: m ? m[0] : fullName || "-",
-      report,
-    };
-  });
+  return source.map((report: any) => ({
+    id: report.id || (report as any).mo_daily_transaction_id,
+    division: report.division_name || "-",
+    report,
+  }));
 }
 
 /** Split columns into chunks of MAX_COLS_PER_PAGE for multi-page layouts */

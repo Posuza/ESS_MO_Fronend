@@ -35,6 +35,16 @@ interface StatusOption {
   key: string;
 }
 
+function shortDivisionName(value: unknown): string {
+  const name = String(value ?? "");
+  const match = name.match(/เขต\s+[\d.]+/);
+  if (match) return match[0];
+  const words = name.trim().split(/\s+/);
+  return words.length >= 2
+    ? words.slice(0, 2).map((word) => word.charAt(0)).join("")
+    : name;
+}
+
 export default function MoSummariesForm(props: Props) {
   const { authEmployee, fetchReports, reports, isLoading } = useStore();
 
@@ -94,6 +104,11 @@ export default function MoSummariesForm(props: Props) {
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
         {
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่ :",
+          unit: "คน",
+        },
+        {
           key: "dept_guard_post_count",
           label: "จุดรักษาการณ์ :",
           unit: "หน่วยงาน",
@@ -119,11 +134,6 @@ export default function MoSummariesForm(props: Props) {
           unit: "คน",
         },
         {
-          key: "dept_recruitment_count",
-          label: "สรรหาผู้สมัครงานใหม่ :",
-          unit: "คน",
-        },
-        {
           key: "dept_reserve_units_count",
           label: "จำนวนหน่วยงานสำรองเวร :",
           unit: "หน่วย",
@@ -144,7 +154,7 @@ export default function MoSummariesForm(props: Props) {
         { key: "leave_absent_count", label: "ขาดงาน :", unit: "คน" },
         { key: "leave_deserted_count", label: "หนีหาย :", unit: "คน" },
         { key: "leave_resigned_count", label: "ลาออก :", unit: "คน" },
-        { key: "leave_terminated_count", label: "ไล่ออก :", unit: "คน" },
+        { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :", unit: "คน" },
       ],
     },
     {
@@ -158,7 +168,7 @@ export default function MoSummariesForm(props: Props) {
     },
     {
       key: "4",
-      title: "อบรมและควบคุมหน้าที่งาน",
+      title: "อบรมและควบคุมหน้างาน",
       items: [
         {
           key: "training_shift_change_count",
@@ -171,8 +181,13 @@ export default function MoSummariesForm(props: Props) {
           unit: "หน่วยงาน",
         },
         {
-          key: "training_duty_control_count",
-          label: "ควบคุมหน้าที่งาน :",
+          key: "training_supervise_onsite_count",
+          label: "ควบคุมหน้างาน :",
+          unit: "หน่วยงาน",
+        },
+        {
+          key: "training_supervise_virtual_simulation_count",
+          label: "จำลองสถานการณ์เสมือนจริง :",
           unit: "หน่วยงาน",
         },
       ],
@@ -212,9 +227,8 @@ export default function MoSummariesForm(props: Props) {
     fieldKey: string,
   ): number => {
     // group5 disciplines (dynamic array)
-    if (fieldKey.startsWith("disc_")) {
-      const discKey = fieldKey.replace("disc_", "");
-      const disc = report.disciplines?.find((d) => d.key === discKey);
+    if (fieldKey.startsWith("discipline_")) {
+      const disc = report.disciplines?.find((d) => d.key === fieldKey);
       return disc ? Number(disc.value) || 0 : 0;
     }
     return Number((report as any)[fieldKey]) || 0;
@@ -227,7 +241,7 @@ export default function MoSummariesForm(props: Props) {
       (r.disciplines || []).forEach((d) => {
         console.log("📌 DISCIPLINE found:", d.key, d.label, d.value);
         if (!disciplineMap.has(d.key)) {
-          disciplineMap.set(d.key, { key: `disc_${d.key}`, label: d.label });
+          disciplineMap.set(d.key, { key: d.key, label: d.label });
         }
       });
     });
@@ -247,23 +261,53 @@ export default function MoSummariesForm(props: Props) {
           }))
         : [
             {
-              key: "disc_discipline_phone_count",
-              label: "เล่นโทรศัพท์มือถือ :",
+              key: "discipline_sleeping_on_duty_count",
+              label: "หลับเวร :",
               unit: "คน",
             },
             {
-              key: "disc_discipline_belt_count",
-              label: "ไม่มีเข็มขัด :",
+              key: "discipline_abandoning_post_count",
+              label: "ทิ้งจุด :",
               unit: "คน",
             },
             {
-              key: "disc_discipline_badge_count",
-              label: "ไม่แขวนบัตร :",
+              key: "discipline_absent_work_count",
+              label: "ขาดงาน :",
               unit: "คน",
             },
             {
-              key: "disc_discipline_uniform_count",
-              label: "ชุดชำรุดเก่า :",
+              key: "discipline_early_leaved_duty_count",
+              label: "ออกเวรก่อนเวลา :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_using_phone_on_duty_count",
+              label: "เล่นโทรศัพท์ :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_client_complained_count",
+              label: "ผู้ว่าจ้างตำหนิ :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_improper_attire_count",
+              label: "แต่งการไม่เรียบร้อย :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_failed_write_report_count",
+              label: "ไม่เขียนรายงาน :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_early_write_report_count",
+              label: "เขียนรายงานล่วงหน้า :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_using_drugs_on_duty_count",
+              label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
               unit: "คน",
             },
           ];
@@ -284,7 +328,7 @@ export default function MoSummariesForm(props: Props) {
           projectMap.set(p.id, {
             id: p.id,
             label: p.project_name ?? p.name ?? "-",
-            status: p.status || "normal",
+            status: p.status || "warning",
           });
         }
       });
@@ -314,7 +358,7 @@ export default function MoSummariesForm(props: Props) {
     const proj = report.projects?.find((p) => p.id === projId);
     return {
       value: proj ? 1 : 0,
-      status: proj?.status ?? "normal",
+      status: proj?.status ?? "warning",
     };
   };
 
@@ -359,18 +403,7 @@ export default function MoSummariesForm(props: Props) {
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  {(() => {
-                    const name = String(c.division_name ?? "");
-                    const m = name.match(/เขต\s+[\d.]+/);
-                    if (m) return m[0];
-                    const words = name.trim().split(/\s+/);
-                    return words.length >= 2
-                      ? words
-                          .slice(0, 2)
-                          .map((w) => w.charAt(0))
-                          .join("")
-                      : name;
-                  })()}
+                  {shortDivisionName(c.division_name)}
                 </td>
               ))}
               <td className={styles["third-column-header2-cell"]}>รวม</td>
@@ -445,37 +478,34 @@ export default function MoSummariesForm(props: Props) {
 
     // ── Status helpers ─────────────────────────────────────────────────
     const statusClass = (s: string): string => {
-      if (s === "normal") return styles["status-normal"];
       if (s === "warning") return styles["status-warning"];
       if (s === "danger") return styles["status-danger"];
-      return styles["status-normal"];
+      return styles["status-warning"];
     };
 
     const statusLabel = (s: string): string => {
-      if (s === "normal") return "ปกติ";
       if (s === "warning") return "ผิดปกติ";
       if (s === "danger") return "ฉุกเฉิน";
-      return s;
+      return "ผิดปกติ";
     };
 
     const statusTextColor = (s: string): string => {
-      if (s === "normal") return "#4caf50";
       if (s === "warning") return "#ff9800";
       if (s === "danger") return "#b71c1c";
-      return "#4caf50";
+      return "#ff9800";
     };
 
     // Collect all unique status types from all projects across all reports
     const allStatuses = new Set<string>();
     sectorReports.forEach((r) => {
       (r.projects || []).forEach((p) => {
-        allStatuses.add(p.status || "normal");
+        allStatuses.add(p.status === "normal" ? "warning" : p.status || "warning");
       });
     });
     const statusTypes =
       allStatuses.size > 0
         ? Array.from(allStatuses)
-        : ["normal", "warning", "danger"];
+        : ["warning", "danger"];
 
     // For each division_name, count projects by status
     const perLocCounts: Record<string, number>[] = cols.map((c) => {
@@ -486,7 +516,7 @@ export default function MoSummariesForm(props: Props) {
       statusTypes.forEach((s) => (counts[s] = 0));
       if (report) {
         (report.projects || []).forEach((p) => {
-          const s = p.status || "normal";
+          const s = p.status === "normal" ? "warning" : p.status || "warning";
           counts[s] = (counts[s] || 0) + 1;
         });
       }
@@ -536,20 +566,7 @@ export default function MoSummariesForm(props: Props) {
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  <strong>
-                    {(() => {
-                      const name = String(c.division_name ?? "");
-                      const m = name.match(/เขต\s+[\d.]+/);
-                      if (m) return m[0];
-                      const words = name.trim().split(/\s+/);
-                      return words.length >= 2
-                        ? words
-                            .slice(0, 2)
-                            .map((w) => w.charAt(0))
-                            .join("")
-                        : name;
-                    })()}
-                  </strong>
+                  <strong>{shortDivisionName(c.division_name)}</strong>
                 </td>
               ))}
               <td className={styles["third-column-header2-cell"]}>รวม</td>

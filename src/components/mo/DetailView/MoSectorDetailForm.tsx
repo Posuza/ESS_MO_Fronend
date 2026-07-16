@@ -43,6 +43,11 @@ export default function MoSectorDetailForm(props: Props) {
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
         {
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่ :",
+          unit: "คน",
+        },
+        {
           key: "dept_guard_post_count",
           label: "จุดรักษาการณ์ :",
           unit: "หน่วยงาน",
@@ -68,11 +73,6 @@ export default function MoSectorDetailForm(props: Props) {
           unit: "คน",
         },
         {
-          key: "dept_recruitment_count",
-          label: "สรรหาผู้สมัครงานใหม่ :",
-          unit: "คน",
-        },
-        {
           key: "dept_reserve_units_count",
           label: "จำนวนหน่วยงานสำรองเวร :",
           unit: "หน่วย",
@@ -93,7 +93,7 @@ export default function MoSectorDetailForm(props: Props) {
         { key: "leave_absent_count", label: "ขาดงาน :", unit: "คน" },
         { key: "leave_deserted_count", label: "หนีหาย :", unit: "คน" },
         { key: "leave_resigned_count", label: "ลาออก :", unit: "คน" },
-        { key: "leave_terminated_count", label: "ไล่ออก :", unit: "คน" },
+        { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :", unit: "คน" },
       ],
     },
     {
@@ -107,7 +107,7 @@ export default function MoSectorDetailForm(props: Props) {
     },
     {
       key: "4",
-      title: "อบรมและควบคุมหน้าที่งาน",
+      title: "อบรมและควบคุมหน้างาน",
       items: [
         {
           key: "training_shift_change_count",
@@ -120,8 +120,13 @@ export default function MoSectorDetailForm(props: Props) {
           unit: "หน่วยงาน",
         },
         {
-          key: "training_duty_control_count",
-          label: "ควบคุมหน้าที่งาน :",
+          key: "training_supervise_onsite_count",
+          label: "ควบคุมหน้างาน :",
+          unit: "หน่วยงาน",
+        },
+        {
+          key: "training_supervise_virtual_simulation_count",
+          label: "จำลองสถานการณ์เสมือนจริง :",
           unit: "หน่วยงาน",
         },
       ],
@@ -135,35 +140,71 @@ export default function MoSectorDetailForm(props: Props) {
     const items: GroupItem[] =
       disciplines.length > 0
         ? disciplines.map((d: any) => ({
-            key: `disc_${d.key}`,
+            key: d.key,
             label: d.label + " :",
             unit: "คน",
           }))
         : [
             {
-              key: "disc_discipline_phone_count",
-              label: "เล่นโทรศัพท์มือถือ :",
+              key: "discipline_sleeping_on_duty_count",
+              label: "หลับเวร :",
               unit: "คน",
             },
             {
-              key: "disc_discipline_belt_count",
-              label: "ไม่มีเข็มขัด :",
+              key: "discipline_abandoning_post_count",
+              label: "ทิ้งจุด :",
               unit: "คน",
             },
             {
-              key: "disc_discipline_badge_count",
-              label: "ไม่แขวนบัตร :",
+              key: "discipline_absent_work_count",
+              label: "ขาดงาน :",
               unit: "คน",
             },
             {
-              key: "disc_discipline_uniform_count",
-              label: "ชุดชำรุดเก่า :",
+              key: "discipline_early_leaved_duty_count",
+              label: "ออกเวรก่อนเวลา :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_using_phone_on_duty_count",
+              label: "เล่นโทรศัพท์ :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_client_complained_count",
+              label: "ผู้ว่าจ้างตำหนิ :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_improper_attire_count",
+              label: "แต่งการไม่เรียบร้อย :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_failed_write_report_count",
+              label: "ไม่เขียนรายงาน :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_early_write_report_count",
+              label: "เขียนรายงานล่วงหน้า :",
+              unit: "คน",
+            },
+            {
+              key: "discipline_using_drugs_on_duty_count",
+              label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
               unit: "คน",
             },
           ];
     return [{ key: "5", title: "วินัยและการลงโทษ", items }];
   }, [reportData]);
 
+  // ── Check if any discipline value is non-zero ──────────────────────────
+  const hasDisciplineValues = useMemo(() => {
+    const disciplines = (reportData as any)?.disciplines || [];
+    if (disciplines.length === 0) return false;
+    return disciplines.some((d: any) => Number(d.value) > 0);
+  }, [reportData]);
   // ── Dynamic group3: projects ─────────────────────────────────────────────
   const group3: Group[] = useMemo(() => {
     if (!reportData) return [];
@@ -179,10 +220,9 @@ export default function MoSectorDetailForm(props: Props) {
   // ── Value resolver ───────────────────────────────────────────────────────
   const getVal = (fieldKey: string): string => {
     if (!rd) return "0";
-    if (fieldKey.startsWith("disc_")) {
-      const discKey = fieldKey.replace("disc_", "");
+    if (fieldKey.startsWith("discipline_")) {
       const disc = ((rd.disciplines as any[]) || []).find(
-        (d) => d.key === discKey,
+        (d) => d.key === fieldKey,
       );
       return String(disc ? Number(disc.value) || 0 : 0);
     }
@@ -253,10 +293,9 @@ export default function MoSectorDetailForm(props: Props) {
     const projects = (rd.projects as any[]) || [];
 
     const statusLabel = (s: string) => {
-      if (s === "normal") return "ปกติ";
       if (s === "warning") return "ผิดปกติ";
       if (s === "danger") return "ฉุกเฉิน";
-      return s;
+      return "ผิดปกติ";
     };
 
     return (
@@ -307,9 +346,9 @@ export default function MoSectorDetailForm(props: Props) {
                     {p.project_name ?? p.name ?? "-"}
                   </td>
                   <td
-                    className={`${styles["group3-third-column-cell"]} ${styles[`status-${p.status || "normal"}`]}`}
+                    className={`${styles["group3-third-column-cell"]} ${styles[`status-${p.status === "normal" ? "warning" : p.status || "warning"}`]}`}
                   >
-                    {statusLabel(p.status || "normal")}
+                    {statusLabel(p.status === "normal" ? "warning" : p.status || "warning")}
                   </td>
                   <td
                     className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-success"]}`}
@@ -335,11 +374,7 @@ export default function MoSectorDetailForm(props: Props) {
   }
 
   // ── Meta info row (division + date + status) ─────────────────────────────
-  const sub = (() => {
-    const val = String(rd?.division_name ?? "");
-    const m = val.match(/เขต\s+[\d.]+/);
-    return m ? m[0] : val || "-";
-  })();
+  const sub = String(rd?.division_name ?? "") || "-";
   const reportDate =
     (rd?.report_date as string) ||
     ((rd?.created_at as string)?.slice(0, 10) ?? "-");
@@ -365,14 +400,56 @@ export default function MoSectorDetailForm(props: Props) {
         {/* ── Data groups ── */}
         {group1.map((g, idx) => renderGroupTable(g, idx, "", ""))}
 
-        {group2.map((g, idx) =>
-          renderGroupTable(
-            g,
-            group1.length + idx,
-            styles["mo-table-header-red"],
-            styles["fourth-column-cell-danger"],
-          ),
-        )}
+        {hasDisciplineValues
+          ? group2.map((g, idx) =>
+              renderGroupTable(
+                g,
+                group1.length + idx,
+                styles["mo-table-header-red"],
+                styles["fourth-column-cell-danger"],
+              ),
+            )
+          : (
+              <div className={styles["mo-table-wrapper"]} key="no-discipline">
+                <table className={styles["mo-table"]}>
+                  <thead>
+                    <tr>
+                      <th
+                        colSpan={1}
+                        className={`${styles["first-column-cell"]} ${styles["no-border"]} ${styles["mo-table-header-red"]}`}
+                      >
+                        5.
+                      </th>
+                      <th
+                        colSpan={3}
+                        className={`${styles["mo-table-header"]} ${styles["mo-table-header-red"]} ${styles["no-border"]}`}
+                      >
+                        <div className={styles["mo-header"]}>
+                          <p>วินัยและการลงโทษ</p>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td
+                        colSpan={4}
+                        style={{
+                          textAlign: "center",
+                          color: "#9ca3af",
+                          fontStyle: "italic",
+                          padding: "6px",
+                          fontSize: "12px",
+                          border: "0.8px solid #ccc",
+                        }}
+                      >
+                        ไม่มีข้อมูลวินัยและการลงโทษ
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
 
         {group3.map((g, idx) =>
           renderProjectTable(

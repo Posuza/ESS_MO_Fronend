@@ -19,9 +19,10 @@ export function getWrapperClass(
   colCount: number,
   styles: Record<string, string> = SUMMARY_STYLES,
 ): string {
-  if (colCount >= 5)
+  // 8+ columns → 1 per row, 6-7 → 2 per row, 1-5 → 3 per row
+  if (colCount >= 8)
     return `${styles["mo-table-wrapper"]} ${styles["span-full"]}`;
-  if (colCount >= 3)
+  if (colCount >= 6)
     return `${styles["mo-table-wrapper"]} ${styles["span-half"]}`;
   return `${styles["mo-table-wrapper"]} ${styles["span-third"]}`;
 }
@@ -36,6 +37,7 @@ export function renderSingleGroup(
   formStyles: Record<string, string> = SUMMARY_STYLES,
   projectStatusCountFn: (report: any, status: string) => number,
   itemValue: (report: any, groupKey: string, key: string) => number,
+  guardMovementStatusCountFn?: (report: any, status: string) => number,
   itemOffset: number = 0,
   wrapperClassOverride?: string,
 ): JSX.Element {
@@ -50,6 +52,15 @@ export function renderSingleGroup(
       style={{ width: "100%" }}
     >
       <table className={formStyles["mo-table"]}>
+        <colgroup>
+          <col style={{ width: 26 }} />
+          <col />
+          {cols.map((c) => (
+            <col key={String(c.id)} style={{ width: 22 }} />
+          ))}
+          <col style={{ width: 22 }} />
+          <col style={{ width: 26 }} />
+        </colgroup>
         <thead>
           <tr>
             <th
@@ -87,7 +98,7 @@ export function renderSingleGroup(
               >
                 <strong>
                   {(() => {
-                    const name = String(c.sub_location ?? "");
+                    const name = String(c.division ?? "");
                     const m = name.match(/เขต\s+[\d.]+/);
                     if (m) return m[0];
                     const words = name.trim().split(/\s+/);
@@ -107,12 +118,28 @@ export function renderSingleGroup(
             <td className={formStyles["fourth-column-header-cell"]} />
           </tr>
 
-          {g.items.map((r, i) => {
-            const perLocVals = cols.map((c) =>
-              isGroup3
-                ? String(projectStatusCountFn(c.report, r.status || r.key))
-                : String(itemValue(c.report, g.key, r.key)),
-            );
+          {g.items.length === 0 ? (
+            <tr>
+              <td
+                colSpan={cols.length + 4}
+                className={formStyles["second-column-cell"]}
+                style={{ textAlign: "center" }}
+              >
+                ไม่มีข้อมูล
+              </td>
+            </tr>
+          ) : g.items.map((r, i) => {
+            const perLocVals = cols.map((c) => {
+              if (isGroup3)
+                return String(
+                  projectStatusCountFn(c.report, r.status || r.key),
+                );
+              if (g.key === "guard_movements" && guardMovementStatusCountFn)
+                return String(
+                  guardMovementStatusCountFn(c.report, r.status || r.key),
+                );
+              return String(itemValue(c.report, g.key, r.key));
+            });
             const total = perLocVals.reduce(
               (acc, v) => acc + (Number(v) || 0),
               0,
@@ -127,7 +154,7 @@ export function renderSingleGroup(
                 <td
                   className={
                     isGroup3
-                      ? `${formStyles["group3-second-column-cell"]} ${formStyles[`status-${r.status || "normal"}`]} ${zebraClass}`
+                      ? `${formStyles["group3-second-column-cell"]} ${formStyles[`status-${r.status || "warning"}`]} ${zebraClass}`
                       : `${formStyles["second-column-cell"]} ${zebraClass}`
                   }
                 >
@@ -151,7 +178,7 @@ export function renderSingleGroup(
                 <td
                   className={`${formStyles["fourth-column-cell"]} ${isRed ? formStyles["fourth-column-cell-danger"] : ""} ${zebraClass}`}
                 >
-                  {isGroup3 ? "หน่วยงาน" : r.unit}
+                  {r.unit || ""}
                 </td>
               </tr>
             );

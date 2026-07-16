@@ -106,7 +106,7 @@ export default function MoUpdateForm(props: Props) {
 
   // status options for group3 rows (cycle on click)
   const statusOptions = [
-    { label: "ปกติ", key: "normal" },
+    // { label: "ปกติ", key: "normal" }, // temporarily disabled
     { label: "ผิดปกติ", key: "warning" },
     { label: "ฉุกเฉิน", key: "danger" },
   ];
@@ -215,6 +215,12 @@ export default function MoUpdateForm(props: Props) {
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
         {
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่ :",
+          unit: "คน",
+          value: "0",
+        },
+        {
           key: "dept_guard_post_count",
           label: "จุดรักษาการณ์ :",
           unit: "หน่วยงาน",
@@ -241,12 +247,6 @@ export default function MoUpdateForm(props: Props) {
         {
           key: "dept_supplement_count",
           label: "จัดกำลังพลเสริมพิเศษ :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_recruitment_count",
-          label: "สรรหาผู้สมัครงานใหม่ :",
           unit: "คน",
           value: "0",
         },
@@ -295,7 +295,7 @@ export default function MoUpdateForm(props: Props) {
         },
         {
           key: "leave_terminated_count",
-          label: "ไล่ออก :",
+          label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :",
           unit: "คน",
           value: "0",
         },
@@ -327,7 +327,7 @@ export default function MoUpdateForm(props: Props) {
     },
     {
       key: "training",
-      title: "อบรมและควบคุมหน้าที่งาน",
+      title: "อบรมและควบคุมหน้างาน",
       items: [
         {
           key: "training_shift_change_count",
@@ -342,8 +342,14 @@ export default function MoUpdateForm(props: Props) {
           value: "0",
         },
         {
-          key: "training_duty_control_count",
-          label: "ควบคุมหน้าที่งาน :",
+          key: "training_supervise_onsite_count",
+          label: "ควบคุมหน้างาน :",
+          unit: "หน่วยงาน",
+          value: "0",
+        },
+        {
+          key: "training_supervise_virtual_simulation_count",
+          label: "จำลองสถานการณ์เสมือนจริง :",
           unit: "หน่วยงาน",
           value: "0",
         },
@@ -357,29 +363,71 @@ export default function MoUpdateForm(props: Props) {
       title: "วินัยและการลงโทษ",
       items: [
         {
-          key: "discipline_phone_count",
-          label: "เล่นโทรศัพท์มือถือ",
+          key: "discipline_sleeping_on_duty_count",
+          label: "หลับเวร",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
-          key: "discipline_belt_count",
-          label: "ไม่มีเข็มขัด",
+          key: "discipline_abandoning_post_count",
+          label: "ทิ้งจุด",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
-          key: "discipline_badge_count",
-          label: "ไม่แขวนบัตร",
+          key: "discipline_absent_work_count",
+          label: "ขาดงาน",
           unit: "คน",
           value: "0",
           isActive: false,
         },
         {
-          key: "discipline_uniform_count",
-          label: "ชุดชำรุดเก่า",
+          key: "discipline_early_leaved_duty_count",
+          label: "ออกเวรก่อนเวลา",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_using_phone_on_duty_count",
+          label: "เล่นโทรศัพท์",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_client_complained_count",
+          label: "ผู้ว่าจ้างตำหนิ",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_improper_attire_count",
+          label: "แต่งการไม่เรียบร้อย",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_failed_write_report_count",
+          label: "ไม่เขียนรายงาน",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_early_write_report_count",
+          label: "เขียนรายงานล่วงหน้า",
+          unit: "คน",
+          value: "0",
+          isActive: false,
+        },
+        {
+          key: "discipline_using_drugs_on_duty_count",
+          label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน",
           unit: "คน",
           value: "0",
           isActive: false,
@@ -560,7 +608,7 @@ export default function MoUpdateForm(props: Props) {
   const [showAddGroup3, setShowAddGroup3] = useState(false);
   const [newGroup3Label, setNewGroup3Label] = useState("");
   const [newGroup3Detail, setNewGroup3Detail] = useState("");
-  const [newGroup3Status, setNewGroup3Status] = useState("normal");
+  const [newGroup3Status, setNewGroup3Status] = useState("warning");
   const [newGroup3Note, setNewGroup3Note] = useState("");
   const [editingGroup3Index, setEditingGroup3Index] = useState<number | null>(
     null,
@@ -571,7 +619,7 @@ export default function MoUpdateForm(props: Props) {
     setEditingGroup3Index(null);
     setNewGroup3Label("");
     setNewGroup3Detail("");
-    setNewGroup3Status("normal");
+    setNewGroup3Status("warning");
     setNewGroup3Note("");
   };
 
@@ -579,7 +627,7 @@ export default function MoUpdateForm(props: Props) {
     setEditingGroup3Index(null);
     setNewGroup3Label("");
     setNewGroup3Detail("");
-    setNewGroup3Status("normal");
+    setNewGroup3Status("warning");
     setNewGroup3Note("");
     setShowAddGroup3(true);
   };
@@ -593,7 +641,7 @@ export default function MoUpdateForm(props: Props) {
     setEditingGroup3Index(idx);
     setNewGroup3Label(item.label ?? "");
     setNewGroup3Detail(item.detail ?? "");
-    setNewGroup3Status(item.status ?? "normal");
+    setNewGroup3Status(item.status ?? "warning");
     setNewGroup3Note(item.note ?? "");
     setShowAddGroup3(true);
   };
@@ -738,7 +786,7 @@ export default function MoUpdateForm(props: Props) {
       ? (props.reportData!.projects as any[]).map((p) => ({
           label: p.project_name ?? p.name ?? "",
           detail: p.detail ?? "",
-          status: p.status ?? "normal",
+          status: p.status ?? "warning",
           note: p.note ?? "",
         }))
       : [];
@@ -885,7 +933,7 @@ export default function MoUpdateForm(props: Props) {
           items: originalProjects.map((p) => ({
             label: p.project_name ?? p.name ?? "",
             detail: p.detail ?? "",
-            status: p.status ?? "normal",
+            status: p.status ?? "warning",
             note: p.note ?? "",
           })),
         },
@@ -1171,7 +1219,7 @@ export default function MoUpdateForm(props: Props) {
           key: String(i + 1),
           name: it.label,
           detail: it.detail ?? "",
-          status: it.status ?? "normal",
+          status: it.status ?? "warning",
           note: it.note ?? "",
         });
       });
@@ -1950,7 +1998,7 @@ export default function MoUpdateForm(props: Props) {
                         <td className={styles["first-column-cell"]}>สถานะ</td>
                         <td className={`${styles["second-column-cell"]} `}>
                           <div className={styles["radio-group"]}>
-                            {["normal", "warning", "danger"].map((val, i) => (
+                            {["warning", "danger"].map((val, i) => (
                               <label key={val} className={styles["radio-item"]}>
                                 <input
                                   type="radio"
@@ -1961,7 +2009,7 @@ export default function MoUpdateForm(props: Props) {
                                   className={styles["radio-input"]}
                                   disabled={!props.isEditing}
                                 />
-                                <span>{["ปกติ", "ผิดปกติ", "ฉุกเฉิน"][i]}</span>
+                                <span>{["ผิดปกติ", "ฉุกเฉิน"][i]}</span>
                               </label>
                             ))}
                           </div>
