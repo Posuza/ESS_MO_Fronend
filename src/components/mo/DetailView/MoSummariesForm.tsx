@@ -141,7 +141,7 @@ export default function MoSummariesForm(props: Props) {
         {
           key: "dept_reserve_personnel_count",
           label: "จำนวนกำลังพลสำรองเวร :",
-          unit: "นาย",
+          unit: "คน",
         },
       ],
     },

@@ -20,7 +20,7 @@ export const LABELS: Record<string, LabelEntry> = {
   dept_missing_personnel_count: { label: "ขาดกำลังพล", unit: "คน" },
   dept_supplement_count: { label: "จัดกำลังพลเสริมพิเศษ", unit: "คน" },
   dept_reserve_units_count: { label: "จำนวนหน่วยงานสำรองเวร", unit: "หน่วย" },
-  dept_reserve_personnel_count: { label: "จำนวนกำลังพลสำรองเวร", unit: "นาย" },
+  dept_reserve_personnel_count: { label: "จำนวนกำลังพลสำรองเวร", unit: "คน" },
 
   // ── Leave ──
   leave_personal_count: { label: "ลากิจ", unit: "คน" },

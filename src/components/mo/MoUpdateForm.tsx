@@ -259,7 +259,7 @@ export default function MoUpdateForm(props: Props) {
         {
           key: "dept_reserve_personnel_count",
           label: "จำนวนกำลังพลสำรองเวร :",
-          unit: "นาย",
+          unit: "คน",
           value: "0",
         },
       ],

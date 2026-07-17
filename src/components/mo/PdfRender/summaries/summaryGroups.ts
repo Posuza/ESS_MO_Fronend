@@ -67,7 +67,7 @@ export const group1: PdfGroup[] = [
       {
         key: "dept_reserve_personnel_count",
         label: "จำนวนกำลังพลสำรองเวร",
-        unit: "นาย",
+        unit: "คน",
       },
     ],
   },
