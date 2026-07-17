@@ -33,19 +33,41 @@ const monthNames = [
   "ธ.ค.",
 ];
 
-function formatRoundDate(date: Date) {
+function formatThaiDate(date: Date) {
   const dayName = dayNames[date.getDay()];
   const day = date.getDate();
   const month = monthNames[date.getMonth()];
   const year = date.getFullYear() + 543;
+
+  return { dayName, day, month, year };
+}
+
+function formatRoundDate(date: Date) {
+  const roundDate = new Date(date);
+  roundDate.setDate(roundDate.getDate() - 1);
+  const { dayName, day, month, year } = formatThaiDate(roundDate);
+
+  return `รอบวัน${dayName} ที่ ${day} ${month} ${year}`;
+}
+
+function formatTransactionDate(date: Date) {
+  const { dayName, day, month, year } = formatThaiDate(date);
   const hour = String(date.getHours()).padStart(2, "0");
   const minute = String(date.getMinutes()).padStart(2, "0");
-  return `รอบ วัน ${dayName} ที่ ${day} ${month} ${year} เวลาขณะนี้ ${hour}:${minute} น.`;
+
+  return `วันที่ทำรายการ วัน${dayName} ที่ ${day} ${month} ${year} เวลา ${hour}:${minute} น.`;
+}
+
+function formatDateMeta(date: Date) {
+  return {
+    roundDate: formatRoundDate(date),
+    transactionDate: formatTransactionDate(date),
+  };
 }
 
 export default function Mo({ onBackHome }: Props) {
   const authEmployee = useStore((state) => state.authEmployee);
-  const [roundDate, setRoundDate] = useState(formatRoundDate(new Date()));
+  const [dateMeta, setDateMeta] = useState(formatDateMeta(new Date()));
 
   // Clear persisted subview when leaving Mo so the next entry starts at main view
   const handleBackHome = useCallback(() => {
@@ -55,8 +77,8 @@ export default function Mo({ onBackHome }: Props) {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setRoundDate(formatRoundDate(new Date()));
-    }, 30_000);
+      setDateMeta(formatDateMeta(new Date()));
+    }, 2_000);
     return () => clearInterval(timer);
   }, []);
 
@@ -83,7 +105,10 @@ export default function Mo({ onBackHome }: Props) {
 
         {/* Live round date */}
         <div className={styles["guts-card-meta"]}>
-          <div className={styles["guts-meta-date"]}>{roundDate}</div>
+          <div className={styles["guts-meta-date"]}>{dateMeta.roundDate}</div>
+          <div className={styles["guts-meta-date"]}>
+            {dateMeta.transactionDate}
+          </div>
         </div>
 
         <MoHome onBackHome={handleBackHome} />
