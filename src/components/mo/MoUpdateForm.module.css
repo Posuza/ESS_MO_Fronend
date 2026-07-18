@@ -36,11 +36,10 @@
 .sector-cell-bodytext {
     padding: 4px 8px !important;
     text-align: left !important;
-    background-color: #f5f5f5 !important;
-    border: 1px solid #ccc !important;
+    background-color: transparent;
+    border: 1px solid #5c7a9e;
     vertical-align: middle;
     font-size: 14px;
-    font-weight: bold;
 }
 
 .sector-cell-bodytext-inner {
@@ -520,7 +519,7 @@
     min-height: 80px;
     max-width: 100%;
     box-sizing: border-box;
-    padding: 3px 3px !important;
+    padding: 3px 8px !important;
     margin: 0 !important;
     font-weight: 400;
     font-size: 11px;
@@ -546,7 +545,7 @@
     min-height: 40px;
     max-width: 100%;
     box-sizing: border-box;
-    padding: 3px 3px !important;
+    padding: 3px 8px !important;
     margin: 0 !important;
     font-weight: 400;
     font-size: 11px;
@@ -1112,14 +1111,15 @@ textarea.approval-textarea:focus,
 
 /* radio group for select-like options (flex wrapping, each item grows) */
 .radio-group {
+    padding: 1.5px 0;
     display: flex;
-    gap: 4px;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
 .radio-item {
     display: inline-flex;
-    gap: 1px; /* each radio item can grow and will wrap when space is tight */
+    gap: 2.5px; /* each radio item can grow and will wrap when space is tight */
     box-sizing: border-box;
 }
 
@@ -1129,6 +1129,25 @@ textarea.approval-textarea:focus,
     height: 20px;
     margin: 0;
     accent-color: var(--brandDark, #0b4bd6);
+}
+
+/* ── status option text colors ── */
+.option-normal {
+    color: #4caf50;
+    font-weight: 400;
+    font-size: 12px;
+}
+
+.option-warning {
+    color: #ff9800;
+    font-weight: 400;
+    font-size: 12px;
+}
+
+.option-danger {
+    color: #b71c1c;
+    font-weight: 400;
+    font-size: 12px;
 }
 
 /* end modal styles */
@@ -1455,4 +1474,87 @@ textarea.approval-textarea:focus,
     background: #b71c1c !important;
     border-color: #7f0f0f !important;
     color: #fff !important;
+}
+
+/* Group 4 — guard post movement styles */
+.mo-table td.group4-third-column-cell {
+    position: relative;
+    text-align: center !important;
+    padding: 1px 1px !important;
+    width: 13%;
+    min-height: 100%;
+    background-color: transparent;
+    display: table-cell;
+    vertical-align: middle;
+    box-sizing: border-box;
+    cursor: pointer;
+    line-height: 1;
+    border-left: 1px solid #e5e7eb;
+    border-right: 1px solid #e5e7eb;
+    color: #333;
+    border-radius: 0;
+}
+
+/* Group 4 modal cell & textarea (copies of group3 with group4- prefix) */
+.mo-table td.group4-second-column-cell {
+    text-align: left !important;
+    background-color: transparent;
+    width: 35%;
+    word-break: break-word;
+    vertical-align: middle;
+    font-size: 13px;
+    padding: 6px 8px;
+}
+
+.group4-popup-third-column-textarea1 {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 80px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 3px 8px !important;
+    margin: 0 !important;
+    font-weight: 400;
+    font-size: 11px;
+    color: #333;
+    background: transparent;
+    border: none !important;
+    outline: none !important;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: #8cb4d4;
+}
+.group4-popup-third-column-textarea1:not(:disabled) {
+    font-style: italic;
+}
+.group4-popup-third-column-textarea2 {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 3px 8px !important;
+    margin: 0 !important;
+    font-weight: 400;
+    font-size: 11px;
+    color: #333;
+    background: transparent;
+    border: none !important;
+    outline: none !important;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: #8cb4d4;
+}
+.group4-popup-third-column-textarea2:not(:disabled) {
+    font-style: italic;
 }

@@ -20,7 +20,7 @@ import autoTable from "jspdf-autotable";
 import type { PdfGroup } from "./types";
 import type { SummaryColumn } from "../PdfRender/summaries/summaryHelpers";
 import {
-  // guardMovementStatusCount, // DISABLED — will use later
+  guardMovementStatusCount,
   projectStatusCount,
   itemValueFn,
 } from "../PdfRender/summaries/summaryHelpers";
@@ -31,7 +31,6 @@ import {
   FONT_NAME,
   FONT_SIZE_TABLE_HEADER,
   FONT_SIZE_TABLE_CELL,
-  FONT_SIZE_EMPTY,
   COLOR_PRIMARY_LIGHT,
   COLOR_TEXT,
   COLOR_GRID_LINE,
@@ -177,28 +176,15 @@ export async function renderSummaryTable(
   });
 
   // Body rows
-  const bodyRows: Record<string, unknown>[][] = group.items.length === 0
-    ? [[
-        {
-          content: "ไม่มีข้อมูล",
-          colSpan: cols.length + 4,
-          styles: {
-            fontSize: FONT_SIZE_EMPTY,
-            halign: "center",
-            textColor: COLOR_TEXT,
-          },
-        },
-      ]]
-    : group.items.map((r, i) => {
+  const bodyRows: Record<string, unknown>[][] = group.items.map((r, i) => {
     const itemNum = itemOffset + i + 1;
     const perLocVals = cols.map((c) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const report = (c as any).report;
       if (!report) return "0";
-      // DISABLED — guard_movements will use later
-      // if (group.key === "guard_movements") {
-      //   return String(guardMovementStatusCount(report, r.status || r.key));
-      // }
+      if (group.key === "guard_movements") {
+        return String(guardMovementStatusCount(report, r.status || r.key));
+      }
       if (isGroup3) {
         return String(projectStatusCount(report, r.status || r.key));
       }
@@ -238,7 +224,7 @@ export async function renderSummaryTable(
     });
 
     return row;
-    });
+  });
 
   const startPages = doc.getNumberOfPages();
 

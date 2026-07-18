@@ -137,7 +137,7 @@ export default function MoHome(props: Props) {
   );
 
   // Wrap the raw setState so every subview change is automatically
-  // persisted to localStorage — this is what survives a hard refresh.
+  // persisted for the current browser session.
   function setSubView(v: SubView) {
     setSubViewState(v);
     persistSubView(v);
@@ -271,10 +271,7 @@ export default function MoHome(props: Props) {
     if (!isReadOnly(currentEmployee?.position_id, positionActive)) {
       fetchDivisionCounts();
     }
-  }, [
-    currentEmployee?.department_id,
-    fetchAvailableReportDivisions,
-  ]);
+  }, [currentEmployee?.department_id, fetchAvailableReportDivisions]);
 
   // Refresh all main-view data (reports + division counts)
   function refreshMainView() {

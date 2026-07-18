@@ -35,7 +35,7 @@ export interface SectorReportSlice {
 
   /**
    * Fetch today's existing report for a department + employee.
-   * Returns subLocation, disciplines array, and extra discipline-like
+   * Returns division info (via division_name), disciplines array, and extra discipline-like
    * flat fields (e.g. discipline_other_count, other1_count, …) as
    * key/label/value items.
    */
@@ -50,9 +50,13 @@ export interface SectorReportSlice {
    */
   fetchDistinctDisciplineTypes: () => Promise<DistinctDiscipline[]>;
 
+  fetchDistinctGuardPostMovementStatuses: () => Promise<string[]>;
+
   fetchAvailableReportDivisions: (
     departmentId: number,
-  ) => Promise<{ division_id: number; division_name: string; department_id: number }[]>;
+  ) => Promise<
+    { division_id: number; division_name: string; department_id: number }[]
+  >;
 
   /**
    * Fresh DB check of the current employee's position active status.
@@ -70,10 +74,7 @@ export const createSectorReportSlice: StateCreator<
   [],
   [],
   SectorReportSlice
-> = (
-  set,
-  get,
-) => ({
+> = (set, get) => ({
   reports: [],
   currentReport: null,
   isLoading: false,
@@ -241,47 +242,68 @@ export const createSectorReportSlice: StateCreator<
     }
   },
 
+  fetchDistinctGuardPostMovementStatuses: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const result =
+        await sectorReportService.getDistinctGuardPostMovementStatuses();
+      set({ isLoading: false });
+      return result;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
   checkPositionActive: async () => {
     set({ positionActiveLoading: true });
     try {
       const result = await sectorReportService.checkPositionActive();
-      set((state) => {
-        let nextEmployee = state.authEmployee;
+        set((state) => {
+          let nextEmployee = state.authEmployee;
 
-        if (state.authEmployee) {
-          const mergedEmployee = {
-            ...state.authEmployee,
-            position_id: result.position_id,
-            position_name: result.position_name ?? state.authEmployee.position_name,
-            department_id: result.department_id,
-            department_name:
-              result.department_name ?? state.authEmployee.department_name,
-            division_id: result.division_id,
-            division_name: result.division_name ?? state.authEmployee.division_name,
+          if (state.authEmployee) {
+            const mergedEmployee = {
+              ...state.authEmployee,
+              position_id: result.position_id,
+              position_name:
+                result.position_name ?? state.authEmployee.position_name,
+              department_id: result.department_id,
+              department_name:
+                result.department_name ?? state.authEmployee.department_name,
+              division_id: result.division_id,
+              division_name:
+                result.division_name ?? state.authEmployee.division_name,
+            };
+            const hasEmployeeChanged =
+              mergedEmployee.position_id !== state.authEmployee.position_id ||
+              mergedEmployee.position_name !==
+                state.authEmployee.position_name ||
+              mergedEmployee.department_id !==
+                state.authEmployee.department_id ||
+              mergedEmployee.department_name !==
+                state.authEmployee.department_name ||
+              mergedEmployee.division_id !== state.authEmployee.division_id ||
+              mergedEmployee.division_name !== state.authEmployee.division_name;
+
+            nextEmployee = hasEmployeeChanged
+              ? mergedEmployee
+              : state.authEmployee;
+          }
+
+          if (nextEmployee) {
+            sessionStorage.setItem(
+              "auth_employee",
+              JSON.stringify(nextEmployee),
+            );
+          }
+
+          return {
+            authEmployee: nextEmployee,
+            positionActive: result.position_is_active,
+            positionActiveLoading: false,
           };
-          const hasEmployeeChanged =
-            mergedEmployee.position_id !== state.authEmployee.position_id ||
-            mergedEmployee.position_name !== state.authEmployee.position_name ||
-            mergedEmployee.department_id !== state.authEmployee.department_id ||
-            mergedEmployee.department_name !== state.authEmployee.department_name ||
-            mergedEmployee.division_id !== state.authEmployee.division_id ||
-            mergedEmployee.division_name !== state.authEmployee.division_name;
-
-          nextEmployee = hasEmployeeChanged
-            ? mergedEmployee
-            : state.authEmployee;
-        }
-
-        if (nextEmployee) {
-          sessionStorage.setItem("auth_employee", JSON.stringify(nextEmployee));
-        }
-
-        return {
-          authEmployee: nextEmployee,
-          positionActive: result.position_is_active,
-          positionActiveLoading: false,
-        };
-      });
+        });
       return result.position_is_active;
     } catch {
       set({ positionActive: false, positionActiveLoading: false });

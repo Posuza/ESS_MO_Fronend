@@ -323,7 +323,7 @@ export default function MoDetailPage(props: Props) {
       {!showPageLoading && (
         <MoUpdateForm
           reportData={reportData}
-          selectedLocation={(props.item as any)?.division_name}
+          selectedDivision={(props.item as any)?.division_name}
           onCancel={() => {
             setIsEditing(false);
             setIsDirty(false);

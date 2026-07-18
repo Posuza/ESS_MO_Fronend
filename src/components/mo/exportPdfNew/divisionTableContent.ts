@@ -76,34 +76,33 @@ export function preCalcGroupTableHeight(
   }
 
   // Guard movements: aggregate by status first
-  // DISABLED — will use later
-  // if (group.key === "guard_movements") {
-  //   const statusMap = new Map<string, number>();
-  //   for (const item of group.items) {
-  //     const s = item.status || "-";
-  //     statusMap.set(s, (statusMap.get(s) || 0) + 1);
-  //   }
-  //   const aggItems: PdfGroupItem[] = Array.from(statusMap.entries()).map(
-  //     ([status, count]) => ({
-  //       key: status,
-  //       label: status,
-  //       value: count,
-  //       unit: "\u0E2B\u0E19\u0E48\u0E27\u0E22\u0E07\u0E32\u0E19",
-  //     }),
-  //   );
-  //   return preCalcTableHeight(
-  //     doc, aggItems,
-  //     [
-  //       { width: INDEX_W, getText: () => "" },
-  //       { width: width - INDEX_W - VALUE_W - UNIT_W, getText: (it) => it.label },
-  //       { width: VALUE_W, getText: (it) => String(it.value ?? 0) },
-  //       { width: UNIT_W, getText: (it) => it.unit ?? "" },
-  //     ],
-  //     FONT_SIZE_TABLE_CELL,
-  //     { top: 1.5, right: 1.5, bottom: 1.5, left: 1.5 },
-  //     true,
-  //   );
-  // }
+  if (group.key === "guard_movements") {
+    const statusMap = new Map<string, number>();
+    for (const item of group.items) {
+      const s = item.status || "-";
+      statusMap.set(s, (statusMap.get(s) || 0) + 1);
+    }
+    const aggItems: PdfGroupItem[] = Array.from(statusMap.entries()).map(
+      ([status, count]) => ({
+        key: status,
+        label: status,
+        value: count,
+        unit: "\u0E2B\u0E19\u0E48\u0E27\u0E22\u0E07\u0E32\u0E19",
+      }),
+    );
+    return preCalcTableHeight(
+      doc, aggItems,
+      [
+        { width: INDEX_W, getText: () => "" },
+        { width: width - INDEX_W - VALUE_W - UNIT_W, getText: (it) => it.label },
+        { width: VALUE_W, getText: (it) => String(it.value ?? 0) },
+        { width: UNIT_W, getText: (it) => it.unit ?? "" },
+      ],
+      FONT_SIZE_TABLE_CELL,
+      { top: 1.5, right: 1.5, bottom: 1.5, left: 1.5 },
+      true,
+    );
+  }
 
   // Group 3 — projects: [No., Project Name (colspan=2), Status]
   if (isGroup3) {
@@ -225,7 +224,7 @@ export async function renderGroupTable(
         [
           {
             content:
-              isDiscipline || isGroup3 || group.key === "guard_movements" ? "ไม่มีข้อมูล" : "-",
+              isGroup3 || group.key === "guard_movements" ? "ไม่มีข้อมูล" : "-",
             colSpan: 4,
             styles: {
               halign: "center",
@@ -247,71 +246,70 @@ export async function renderGroupTable(
   }
 
   // ── Guard movements: aggregate by status ──
-  // DISABLED — will use later
-  // if (group.key === "guard_movements") {
-  //   const statusMap = new Map<string, number>();
-  //   for (const item of group.items) {
-  //     const s = item.status || "-";
-  //     statusMap.set(s, (statusMap.get(s) || 0) + 1);
-  //   }
-  //   const aggregatedItems = Array.from(statusMap.entries());
-  //
-  //   const bodyRows = aggregatedItems.map(([status, count], i) => {
-  //     const itemNum = itemOffset + i + 1;
-  //     return [
-  //       {
-  //         content: `${groupIndex}.${itemNum}`,
-  //         styles: { fontSize: FONT_SIZE_TABLE_CELL, halign: "center" },
-  //       },
-  //       {
-  //         content: status,
-  //         styles: { halign: "left", fontSize: FONT_SIZE_TABLE_CELL },
-  //       },
-  //       {
-  //         content: String(count),
-  //         styles: { fontSize: FONT_SIZE_TABLE_CELL, halign: "center" },
-  //       },
-  //       {
-  //         content: "\u0E2B\u0E19\u0E48\u0E27\u0E22\u0E07\u0E32\u0E19",
-  //         styles: { fontSize: FONT_SIZE_TABLE_CELL, halign: "center" },
-  //       },
-  //     ];
-  //   });
-  //
-  //   const startPages2 = doc.getNumberOfPages();
-  //   autoTable(doc, {
-  //     startY,
-  //     margin: { left: marginLeft, right: marginRight, top: HEADER_HEIGHT_MM },
-  //     tableWidth: width,
-  //     theme: "grid",
-  //     head: [
-  //       [
-  //         {
-  //           content: String(groupIndex),
-  //           styles: { ...headStyles, cellWidth: INDEX_W },
-  //         },
-  //         {
-  //           content: group.title,
-  //           colSpan: 3,
-  //           styles: { ...headStyles },
-  //         },
-  //       ],
-  //     ],
-  //     body: bodyRows as never[],
-  //     styles: tableStyles as Record<string, unknown>,
-  //     bodyStyles: { fillColor: [255, 255, 255] },
-  //     alternateRowStyles: { fillColor: [255, 255, 255] },
-  //     columnStyles: {
-  //       0: { cellWidth: INDEX_W, halign: "center" },
-  //       1: { halign: "left" },
-  //       2: { halign: "center", cellWidth: VALUE_W },
-  //       3: { halign: "center", cellWidth: UNIT_W },
-  //     },
-  //   });
-  //   if (headerInfo) {
-  //     await drawHeadersIfNewPages(doc, headerInfo.sectorName, headerInfo.title, startPages2, headerInfo.division);
-  //   }
-  if (isGroup3) {
+  if (group.key === "guard_movements") {
+    const statusMap = new Map<string, number>();
+    for (const item of group.items) {
+      const s = item.status || "-";
+      statusMap.set(s, (statusMap.get(s) || 0) + 1);
+    }
+    const aggregatedItems = Array.from(statusMap.entries());
+
+    const bodyRows = aggregatedItems.map(([status, count], i) => {
+      const itemNum = itemOffset + i + 1;
+      return [
+        {
+          content: `${groupIndex}.${itemNum}`,
+          styles: { fontSize: FONT_SIZE_TABLE_CELL, halign: "center" },
+        },
+        {
+          content: status,
+          styles: { halign: "left", fontSize: FONT_SIZE_TABLE_CELL },
+        },
+        {
+          content: String(count),
+          styles: { fontSize: FONT_SIZE_TABLE_CELL, halign: "center" },
+        },
+        {
+          content: "หน่วยงาน",
+          styles: { fontSize: FONT_SIZE_TABLE_CELL, halign: "center" },
+        },
+      ];
+    });
+
+    const startPages2 = doc.getNumberOfPages();
+    autoTable(doc, {
+      startY,
+      margin: { left: marginLeft, right: marginRight, top: HEADER_HEIGHT_MM },
+      tableWidth: width,
+      theme: "grid",
+      head: [
+        [
+          {
+            content: String(groupIndex),
+            styles: { ...headStyles, cellWidth: INDEX_W },
+          },
+          {
+            content: group.title,
+            colSpan: 3,
+            styles: { ...headStyles },
+          },
+        ],
+      ],
+      body: bodyRows as never[],
+      styles: tableStyles as Record<string, unknown>,
+      bodyStyles: { fillColor: [255, 255, 255] },
+      alternateRowStyles: { fillColor: [255, 255, 255] },
+      columnStyles: {
+        0: { cellWidth: INDEX_W, halign: "center" },
+        1: { halign: "left" },
+        2: { halign: "center", cellWidth: VALUE_W },
+        3: { halign: "center", cellWidth: UNIT_W },
+      },
+    });
+    if (headerInfo) {
+      await drawHeadersIfNewPages(doc, headerInfo.sectorName, headerInfo.title, startPages2, headerInfo.division);
+    }
+  } else if (isGroup3) {
     // ── Group 3 — projects: [No., Project Name (colspan=2), Status] ──
     const bodyRows = group.items.map((it: PdfGroupItem, i: number) => {
       const itemNum = itemOffset + i + 1;

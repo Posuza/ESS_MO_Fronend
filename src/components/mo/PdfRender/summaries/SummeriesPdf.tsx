@@ -32,9 +32,10 @@ import {
   group1,
   buildGroup2ForSummary,
   group3Static,
-  // buildGroup4ForSummary, // DISABLED — will use later
-  // buildGroup4GuardMovements, // DISABLED — will use later
+  buildGroup4ForSummary,
+  buildGroup4GuardMovements,
 } from "./summaryGroups";
+import { buildGroup2Disciplines } from "../division/DivisionGroups";
 import {
   projectStatusCount,
   guardMovementStatusCount,
@@ -51,7 +52,6 @@ import {
 } from "../shared/PdfPageLayout";
 import SectorTableContent from "../division/DivisionTableContent";
 import DivisionDetailContent from "../division/DivisionDetailContent";
-import { buildGroup2Disciplines } from "../division/DivisionGroups";
 import "./SummeriesPdf.module.css";
 
 type Props = {
@@ -100,8 +100,8 @@ export default function SummeriesPdf({
       isGroup3: boolean;
     };
 
-    // const dynamicGroup4 = buildGroup4ForSummary(summaryReports); // DISABLED — will use later
     const dynamicGroup2 = buildGroup2ForSummary(summaryReports);
+    const dynamicGroup4 = buildGroup4ForSummary(summaryReports);
     const allGroups: GroupInfo[] = [
       ...group1.map((g, i) => ({
         g,
@@ -121,12 +121,12 @@ export default function SummeriesPdf({
         isRed: false,
         isGroup3: true,
       })),
-      // {
-      //   g: dynamicGroup4,
-      //   index: 7,
-      //   isRed: false,
-      //   isGroup3: false,
-      // }, // DISABLED — will use later
+      {
+        g: dynamicGroup4,
+        index: 7,
+        isRed: false,
+        isGroup3: false,
+      },
     ];
 
     for (const cols of colChunks) {
@@ -274,13 +274,13 @@ export default function SummeriesPdf({
         title: "เข้าพบผู้ว่าจ้าง",
         items: projectItems,
       };
+      const dynamicGroup4 = buildGroup4GuardMovements(col.report);
       const dynamicGroup2 = buildGroup2Disciplines(col.report);
-      // const dynamicGroup4 = buildGroup4GuardMovements(col.report); // DISABLED — will use later
       const colDetailPdfGroups: PdfGroup[] = [
         ...group1,
         ...dynamicGroup2,
         dynamicGroup3,
-        // dynamicGroup4, // DISABLED — will use later
+        dynamicGroup4,
       ];
 
       // Page type 1: tables (grid-row-aware: SectorTableContent uses 3 per row)
@@ -372,7 +372,7 @@ export default function SummeriesPdf({
 
       flushDetailPage();
 
-      // Detail pages: Projects (group 6). Guard movements (group 7) disabled.
+      // Detail pages: Projects (group 6) + Guard movements (group 7)
       // Paginate using section-aware logic (mirrors _renderCombinedSections)
       const projects: PdfGroupItem[] = (col.report.projects || []).map(
         (p: any) => ({
@@ -383,7 +383,7 @@ export default function SummeriesPdf({
           note: p.note ?? "",
         }),
       );
-      // const guardMovementItems = buildGroup4GuardMovements(col.report).items; // DISABLED — will use later
+      const guardMovementItems = buildGroup4GuardMovements(col.report).items;
 
       const sections: DetailSection[] = [
         {
@@ -392,12 +392,12 @@ export default function SummeriesPdf({
           emptyText: "ยังไม่มีข้อมูลโครงการ",
           items: projects,
         },
-        // {
-        //   groupIndex: 7,
-        //   title: "การเปลี่ยนแปลงจุดรักษาการณ์",
-        //   emptyText: "ยังไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์",
-        //   items: guardMovementItems,
-        // }, // DISABLED — will use later
+        {
+          groupIndex: 7,
+          title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+          emptyText: "ยังไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์",
+          items: guardMovementItems,
+        },
       ];
 
       const detailChunks = paginateDetailSections(
@@ -416,13 +416,7 @@ export default function SummeriesPdf({
               data={data}
               division={col.division}
             />
-            <DivisionDetailContent
-              item={col.report}
-              projects={[]}
-              movements={[]}
-              renderProjects
-              renderMovements={false}
-            />
+            <DivisionDetailContent item={col.report} projects={[]} movements={[]} />
             <PdfPageFooter pageNo={pageNum} />
           </div>,
         );
@@ -443,9 +437,9 @@ export default function SummeriesPdf({
                 projects={chunk.projects}
                 movements={chunk.movements}
                 projectOffset={chunk.projectOffset}
-                movementOffset={0}
+                movementOffset={chunk.movementOffset}
                 renderProjects={chunk.renderProjects}
-                renderMovements={false}
+                renderMovements={chunk.renderMovements}
               />
               <PdfPageFooter pageNo={pageNum} />
             </div>,

@@ -23,9 +23,7 @@ export type SummaryColumn = {
 
 /** Read a discipline value from either the disciplines array or direct key on report */
 export function disciplineValue(report: any, key: string): number {
-  const fromArray = report.disciplines?.find((it: any) =>
-    String(it.key ?? it.label ?? it.name) === String(key),
-  );
+  const fromArray = report.disciplines?.find((it: any) => it.key === key);
   if (fromArray) return Number(fromArray.value) || 0;
   return Number((report as any)[key]) || 0;
 }

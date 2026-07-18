@@ -70,6 +70,9 @@ export interface SectorReport {
 
   // Group 6 — เข้าพบผู้ว่าจ้าง (dynamic array)
   projects: SectorReportProject[];
+
+  // Group 7 — การเปลี่ยนแปลงจุดรักษาการณ์ (dynamic array)
+  guard_post_movements: SectorReportProject[];
 }
 
 export interface SectorReportFilters {
@@ -216,43 +219,43 @@ export const sectorReportService = {
     const standardMap = new Map<string, DistinctDiscipline>([
       [
         "discipline_sleeping_on_duty_count",
-        { key: "discipline_sleeping_on_duty_count", label: "หลับเวร :" },
+        { key: "discipline_sleeping_on_duty_count", label: "หลับเวร" },
       ],
       [
         "discipline_abandoning_post_count",
-        { key: "discipline_abandoning_post_count", label: "ทิ้งจุด :" },
+        { key: "discipline_abandoning_post_count", label: "ทิ้งจุด" },
       ],
       [
         "discipline_absent_work_count",
-        { key: "discipline_absent_work_count", label: "ขาดงาน :" },
+        { key: "discipline_absent_work_count", label: "ขาดงาน" },
       ],
       [
         "discipline_early_leaved_duty_count",
-        { key: "discipline_early_leaved_duty_count", label: "ออกเวรก่อนเวลา :" },
+        { key: "discipline_early_leaved_duty_count", label: "ออกเวรก่อนเวลา" },
       ],
       [
         "discipline_using_phone_on_duty_count",
-        { key: "discipline_using_phone_on_duty_count", label: "เล่นโทรศัพท์ :" },
+        { key: "discipline_using_phone_on_duty_count", label: "เล่นโทรศัพท์" },
       ],
       [
         "discipline_client_complained_count",
-        { key: "discipline_client_complained_count", label: "ผู้ว่าจ้างตำหนิ :" },
+        { key: "discipline_client_complained_count", label: "ผู้ว่าจ้างตำหนิ" },
       ],
       [
         "discipline_improper_attire_count",
-        { key: "discipline_improper_attire_count", label: "แต่งการไม่เรียบร้อย :" },
+        { key: "discipline_improper_attire_count", label: "แต่งการไม่เรียบร้อย" },
       ],
       [
         "discipline_failed_write_report_count",
-        { key: "discipline_failed_write_report_count", label: "ไม่เขียนรายงาน :" },
+        { key: "discipline_failed_write_report_count", label: "ไม่เขียนรายงาน" },
       ],
       [
         "discipline_early_write_report_count",
-        { key: "discipline_early_write_report_count", label: "เขียนรายงานล่วงหน้า :" },
+        { key: "discipline_early_write_report_count", label: "เขียนรายงานล่วงหน้า" },
       ],
       [
         "discipline_using_drugs_on_duty_count",
-        { key: "discipline_using_drugs_on_duty_count", label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :" },
+        { key: "discipline_using_drugs_on_duty_count", label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน" },
       ],
     ]);
 
@@ -295,6 +298,16 @@ export const sectorReportService = {
   },
 
   /**
+   * Fetch ALL distinct guard post movement statuses from the backend API.
+   */
+  async getDistinctGuardPostMovementStatuses(): Promise<string[]> {
+    const result = await request<{ statuses: string[] }>(
+      "/distinct-guard-post-movement-statuses",
+    );
+    return result.statuses;
+  },
+
+  /**
    * Fresh DB check — does the current employee's position allow MO access?
    * Returns fresh employee scope and position active state.
    */
@@ -307,7 +320,9 @@ export const sectorReportService = {
    */
   async getAvailableReportDivisions(
     departmentId: number,
-  ): Promise<{ division_id: number; division_name: string; department_id: number }[]> {
+  ): Promise<
+    { division_id: number; division_name: string; department_id: number }[]
+  > {
     return request<
       { division_id: number; division_name: string; department_id: number }[]
     >(`/available-report-divisions?department_id=${departmentId}`);

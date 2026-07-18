@@ -35,7 +35,7 @@ import {
   groupDefs,
   buildGroup2Disciplines,
   buildGroup3Projects,
-  // buildGroup4GuardMovements, // DISABLED — will use later
+  buildGroup4GuardMovements,
 } from "./DivisionGroups";
 import "./DivisionPdf.module.css";
 
@@ -57,10 +57,10 @@ export default function DivisionPdf({
   // ─── Build groups from data ──────────────────────────────
   const group2Disciplines = useMemo(() => buildGroup2Disciplines(data), [data]);
   const group3Projects = useMemo(() => buildGroup3Projects(data), [data]);
-  // const group4GuardMovements = useMemo(
-  //   () => buildGroup4GuardMovements(data),
-  //   [data],
-  // ); // DISABLED — will use later
+  const group4GuardMovements = useMemo(
+    () => buildGroup4GuardMovements(data),
+    [data],
+  );
 
   // ─── Page type 1: Table grids ───────────────────────────
   const renderPaginatedTables = (startPageNum: number) => {
@@ -71,7 +71,7 @@ export default function DivisionPdf({
       ...groupDefs,
       ...group2Disciplines,
       ...(group3Projects.length > 0 ? [group3Projects[0]] : []),
-      // ...group4GuardMovements, // DISABLED — will use later
+      ...group4GuardMovements,
     ];
 
     // SectorTableContent always uses grid-column: span 2 → 3 tables per row
@@ -162,7 +162,7 @@ export default function DivisionPdf({
     return { pages, nextPageNum: pageNum };
   };
 
-  // ─── Detail pages: Projects (group 6). Guard movements (group 7) disabled. ──
+  // ─── Detail pages: Projects (group 6) + Guard movements (group 7) ──
   // Mirrors exportPdfNew's _renderCombinedSections:
   //   - Sections flow sequentially on same page
   //   - Section headers drawn on page transitions
@@ -173,10 +173,10 @@ export default function DivisionPdf({
 
     const projects: PdfGroupItem[] =
       group3Projects.length > 0 ? group3Projects[0].items : [];
-    // const movements: PdfGroupItem[] =
-    //   group4GuardMovements.length > 0 ? group4GuardMovements[0].items : [];
+    const movements: PdfGroupItem[] =
+      group4GuardMovements.length > 0 ? group4GuardMovements[0].items : [];
 
-    // Build sections in order: project (6). Guard movements (7) disabled for now.
+    // Build sections in order: project (6) first, then guard movements (7)
     const sections: DetailSection[] = [
       {
         groupIndex: 6,
@@ -184,12 +184,12 @@ export default function DivisionPdf({
         emptyText: "ยังไม่มีข้อมูลโครงการ",
         items: projects,
       },
-      // {
-      //   groupIndex: 7,
-      //   title: "การเปลี่ยนแปลงจุดรักษาการณ์",
-      //   emptyText: "ยังไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์",
-      //   items: movements,
-      // }, // DISABLED — will use later
+      {
+        groupIndex: 7,
+        title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+        emptyText: "ยังไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์",
+        items: movements,
+      },
     ];
 
     // Paginate — section headers are accounted for in the paginator
@@ -209,13 +209,7 @@ export default function DivisionPdf({
             title="รายงานประจำวันฝ่ายปฏิบัติการ (รายละเอียดภาค)"
             data={data}
           />
-          <DivisionDetailContent
-            item={data}
-            projects={[]}
-            movements={[]}
-            renderProjects
-            renderMovements={false}
-          />
+          <DivisionDetailContent item={data} projects={[]} movements={[]} renderProjects renderMovements />
           <PdfPageFooter pageNo={pageNum} />
         </div>,
       );
@@ -233,11 +227,11 @@ export default function DivisionPdf({
             <DivisionDetailContent
               item={data}
               projects={chunk.projects}
-              movements={[]}
+              movements={chunk.movements}
               projectOffset={chunk.projectOffset}
-              movementOffset={0}
+              movementOffset={chunk.movementOffset}
               renderProjects={chunk.renderProjects}
-              renderMovements={false}
+              renderMovements={chunk.renderMovements}
             />
             <PdfPageFooter pageNo={pageNum} />
           </div>,

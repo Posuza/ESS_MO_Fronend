@@ -29,6 +29,7 @@ const statusBg = (s: string) =>
   s === "danger" ? "#b71c1c" : "#ff9800";
 const statusLabel = (s: string) =>
   ({ warning: "ผิดปกติ", danger: "ฉุกเฉิน" })[s] ?? "ผิดปกติ";
+const fieldLabel = (label: string) => `${label} :`;
 
 // ─── Component ──────────────────────────────────────────────
 export default function SectorTableContent({ item, groups }: Props) {
@@ -188,7 +189,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                         fontWeight: 500,
                       }}
                     >
-                      {isDiscipline || isGroup3 || isGroup4 ? "ไม่มีข้อมูล" : "-"}
+                      {isGroup3 || isGroup4 ? "ไม่มีข้อมูล" : "-"}
                     </td>
                   </tr>
                 ) : isGroup4 ? (
@@ -330,7 +331,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                             color: "#000000",
                           }}
                         >
-                          {r.label}
+                          {isGroup3 ? r.label : fieldLabel(r.label)}
                         </td>
                         <td
                           style={{

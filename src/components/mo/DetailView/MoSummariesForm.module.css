@@ -704,6 +704,11 @@
     cursor: pointer;
 }
 
+.status-normal {
+    background: #4caf50 !important;
+    color: white !important; /* green */
+    border-color: #3a8a3a !important;
+}
 .status-warning {
     background: #ff9800 !important; /* orange */
     color: white !important;

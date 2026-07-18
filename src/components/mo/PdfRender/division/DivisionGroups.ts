@@ -20,19 +20,6 @@ export type LocalPdfGroup = {
   _itemOffset?: number;
 };
 
-const defaultDisciplineItems = [
-  { key: "discipline_sleeping_on_duty_count", label: "หลับเวร" },
-  { key: "discipline_abandoning_post_count", label: "ทิ้งจุด" },
-  { key: "discipline_absent_work_count", label: "ขาดงาน" },
-  { key: "discipline_early_leaved_duty_count", label: "ออกเวรก่อนเวลา" },
-  { key: "discipline_using_phone_on_duty_count", label: "เล่นโทรศัพท์" },
-  { key: "discipline_client_complained_count", label: "ผู้ว่าจ้างตำหนิ" },
-  { key: "discipline_improper_attire_count", label: "แต่งการไม่เรียบร้อย" },
-  { key: "discipline_failed_write_report_count", label: "ไม่เขียนรายงาน" },
-  { key: "discipline_early_write_report_count", label: "เขียนรายงานล่วงหน้า" },
-  { key: "discipline_using_drugs_on_duty_count", label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน" },
-];
-
 // ─── Group 1 — Department / Leave / Shift / Training ─────────
 // Static: same structure for every report, values are read from
 // the report object by key at render time.
@@ -41,11 +28,6 @@ export const groupDefs: LocalPdfGroup[] = [
     key: "dept",
     title: "หน่วยงานที่รับผิดชอบ",
     items: [
-      {
-        key: "dept_recruitment_count",
-        label: "รับ รปภ. ใหม่",
-        unit: "คน",
-      },
       {
         key: "dept_guard_post_count",
         label: "จุดรักษาการณ์",
@@ -65,6 +47,11 @@ export const groupDefs: LocalPdfGroup[] = [
       {
         key: "dept_supplement_count",
         label: "จัดกำลังพลเสริมพิเศษ",
+        unit: "คน",
+      },
+      {
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
         unit: "คน",
       },
       {
@@ -88,11 +75,7 @@ export const groupDefs: LocalPdfGroup[] = [
       { key: "leave_absent_count", label: "ขาดงาน", unit: "คน" },
       { key: "leave_deserted_count", label: "หนีหาย", unit: "คน" },
       { key: "leave_resigned_count", label: "ลาออก", unit: "คน" },
-      {
-        key: "leave_terminated_count",
-        label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล",
-        unit: "คน",
-      },
+      { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล", unit: "คน" },
     ],
   },
   {
@@ -135,7 +118,7 @@ export const groupDefs: LocalPdfGroup[] = [
 // ─── Group 2 — Discipline (dynamic from report.disciplines) ──
 export function buildGroup2Disciplines(data: any): LocalPdfGroup[] {
   const raw = (data as any).disciplines ?? [];
-  const items = Array.isArray(raw) && raw.length > 0 ? raw : defaultDisciplineItems;
+  const items = Array.isArray(raw) ? raw : [];
   return [
     {
       key: "discipline",

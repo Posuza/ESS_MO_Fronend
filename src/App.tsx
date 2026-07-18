@@ -51,8 +51,10 @@ export default function App() {
     if (loginTime && Date.now() - Number(loginTime) > SESSION_TIMEOUT_MS) {
       sessionStorage.clear();
       window.location.reload();
+      return false;
     }
-  }, []);
+    return true;
+  }, [SESSION_TIMEOUT_MS]);
 
   // Check session on mount and on every route change
   useEffect(() => {
@@ -63,6 +65,7 @@ export default function App() {
   // — resets the 2-hour timer so active users don't get kicked out
   useEffect(() => {
     const handleActivity = () => {
+      if (!checkSession()) return;
       sessionStorage.setItem("login_time", String(Date.now()));
     };
     window.addEventListener("click", handleActivity);
@@ -73,7 +76,7 @@ export default function App() {
       window.removeEventListener("keydown", handleActivity);
       window.removeEventListener("scroll", handleActivity);
     };
-  }, []);
+  }, [checkSession]);
 
   const [lastInAt, setLastInAt] = useState<string | null>(null);
   const [lastOutAt, setLastOutAt] = useState<string | null>(null);

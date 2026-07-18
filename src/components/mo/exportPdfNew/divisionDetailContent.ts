@@ -465,15 +465,14 @@ export async function renderProjectAndMovementDetails(
       getStatusText: (p) => STATUS_LABELS[p.status || "warning"] || p.status || "-",
       getStatusColor: (p) => STATUS_COLORS[p.status || "warning"] || COLOR_TEXT,
     },
-    // ── Movement section (group 7) — disabled for now, will use later ──
-    // {
-    //   groupIndex: 7,
-    //   title: "\u0E01\u0E32\u0E23\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E41\u0E1B\u0E25\u0E07\u0E08\u0E38\u0E14\u0E23\u0E31\u0E01\u0E29\u0E32\u0E01\u0E32\u0E23\u0E13\u0E4C (\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14)",
-    //   emptyText: "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E32\u0E23\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E41\u0E1B\u0E25\u0E07\u0E08\u0E38\u0E14\u0E23\u0E31\u0E01\u0E29\u0E32\u0E01\u0E32\u0E23\u0E13\u0E4C",
-    //   items: movements,
-    //   getStatusText: (m) => m.status || "-",
-    //   getStatusColor: () => COLOR_TEXT,
-    // },
+    {
+      groupIndex: 7,
+      title: "\u0E01\u0E32\u0E23\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E41\u0E1B\u0E25\u0E07\u0E08\u0E38\u0E14\u0E23\u0E31\u0E01\u0E29\u0E32\u0E01\u0E32\u0E23\u0E13\u0E4C (\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14)",
+      emptyText: "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E32\u0E23\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E41\u0E1B\u0E25\u0E07\u0E08\u0E38\u0E14\u0E23\u0E31\u0E01\u0E29\u0E32\u0E01\u0E32\u0E23\u0E13\u0E4C",
+      items: movements,
+      getStatusText: (m) => m.status || "-",
+      getStatusColor: () => COLOR_TEXT,
+    },
   ], startY, headerInfo);
 }
 

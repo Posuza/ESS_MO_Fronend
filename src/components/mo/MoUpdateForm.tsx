@@ -9,18 +9,21 @@ import {
   InfoModel,
   MoLoadingPopup,
 } from "./popup";
-import AutoResizeTextarea from "../AutoResizeTextarea";
 
-export type EmployeeLocation = {
+// ============================================================
+// TYPES & INTERFACES
+// ============================================================
+
+export type EmployeeDepartment = {
   id: number;
-  location: string;
-  sub_locations?: string[];
+  department: string;
+  divisions?: string[];
 };
 
 type Props = {
   onCancel?: () => void;
-  selectedLocation?: string;
-  locations?: EmployeeLocation[];
+  selectedDivision?: string;
+  departments?: EmployeeDepartment[];
   reportData?: Record<string, unknown>;
   // submitRef signature extended to accept opts (approve / sendBack flags)
   submitRef?: React.MutableRefObject<
@@ -40,402 +43,369 @@ type Props = {
   ) => void;
 };
 
+// ============================================================
+// STATIC CONFIGURATION
+// ============================================================
+
+/** Status display labels & keys for meeting records (Group 3) */
+const statusOptions = [
+  // { label: "ปกติ", key: "normal" }, // temporarily disabled
+  { label: "ผิดปกติ", key: "warning" },
+  { label: "ฉุกเฉิน", key: "danger" },
+];
+
+/** Report approval status label definitions */
+const approvalStatusLabels = [
+  {
+    keys: ["approved", "ดำเนินการแล้ว"],
+    label: "อนุมัติเรียบร้อยแล้ว",
+    cssClass: styles["status-approved"],
+  },
+  {
+    keys: ["PENDING", "pending", "waited", "รอการดำเนินการ", "รอ"],
+    label: "รอผู้อำนวยการอนุมัติ",
+    cssClass: styles["status-pending"],
+  },
+  {
+    keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
+    label: "รอการดำเนินการแก้ไข",
+    cssClass: styles["status-rejected"],
+  },
+];
+
+const getApprovalStatusClass = (status: string) => {
+  const cleaned = String(status ?? "")
+    .trim()
+    .toLowerCase();
+  const found = approvalStatusLabels.find((item) =>
+    item.keys.some((k) => k.toLowerCase() === cleaned),
+  );
+  return found ? found.cssClass : styles["status-pending"];
+};
+
+const getApprovalStatusLabel = (status: string) => {
+  const cleaned = String(status ?? "")
+    .trim()
+    .toLowerCase();
+  const found = approvalStatusLabels.find((item) =>
+    item.keys.some((k) => k.toLowerCase() === cleaned),
+  );
+  return found ? found.label : status;
+};
+
+/** Minimum time (ms) the submission loading popup must display */
+const MIN_UPDATE_MS = 1500;
+
+/** Sections 1-4: numeric count groups (personnel, leave, shift, training) */
+const group1: Array<{
+  key: string;
+  title: string;
+  items: { key: string; label: string; unit: string; value: string }[];
+}> = [
+  {
+    key: "dept",
+    title: "หน่วยงานที่รับผิดชอบ",
+    items: [
+      {
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_guard_post_count",
+        label: "จุดรักษาการณ์",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "dept_current_personnel_count",
+        label: "กำลังพลปัจจุบัน",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_missing_regular_count",
+        label: "ขาดตัวประจำ",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "dept_missing_personnel_count",
+        label: "ขาดกำลังพล",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_supplement_count",
+        label: "จัดกำลังพลเสริมพิเศษ",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_reserve_units_count",
+        label: "จำนวนหน่วยงานสำรองเวร",
+        unit: "หน่วย",
+        value: "0",
+      },
+      {
+        key: "dept_reserve_personnel_count",
+        label: "จำนวนกำลังพลสำรองเวร",
+        unit: "คน",
+        value: "0",
+      },
+    ],
+  },
+  {
+    key: "leave",
+    title: "การลา",
+    items: [
+      {
+        key: "leave_personal_count",
+        label: "ลากิจ",
+        unit: "คน",
+        value: "0",
+      },
+      { key: "leave_sick_count", label: "ลาป่วย", unit: "คน", value: "0" },
+      {
+        key: "leave_absent_count",
+        label: "ขาดงาน",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "leave_deserted_count",
+        label: "หนีหาย",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "leave_resigned_count",
+        label: "ลาออก",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "leave_terminated_count",
+        label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล",
+        unit: "คน",
+        value: "0",
+      },
+    ],
+  },
+  {
+    key: "shift",
+    title: "การบริหารการควงเวร",
+    items: [
+      {
+        key: "shift_18_count",
+        label: "18 ชั่วโมง",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "shift_24_count",
+        label: "24 ชั่วโมง",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "shift_36_count",
+        label: "36 ชั่วโมง",
+        unit: "คน",
+        value: "0",
+      },
+    ],
+  },
+  {
+    key: "training",
+    title: "อบรมและควบคุมหน้างาน",
+    items: [
+      {
+        key: "training_shift_change_count",
+        label: "อบรมเปลี่ยนผลัด",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "training_planned_count",
+        label: "อบรมตามแผนงานที่กำหนด",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "training_supervise_onsite_count",
+        label: "ควบคุมหน้างาน",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "training_supervise_virtual_simulation_count",
+        label: "จำลองสถานการณ์เสมือนจริง",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+    ],
+  },
+];
+
+/** Default discipline items for Group 2 (วินัยและการลงโทษ) */
+const group2 = [
+  {
+    key: "discipline",
+    title: "วินัยและการลงโทษ",
+    items: [
+      {
+        key: "discipline_sleeping_on_duty_count",
+        label: "หลับเวร",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_abandoning_post_count",
+        label: "ทิ้งจุด",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_absent_work_count",
+        label: "ขาดงาน",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_early_leaved_duty_count",
+        label: "ออกเวรก่อนเวลา",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_using_phone_on_duty_count",
+        label: "เล่นโทรศัพท์",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_client_complained_count",
+        label: "ผู้ว่าจ้างตำหนิ",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_improper_attire_count",
+        label: "แต่งการไม่เรียบร้อย",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_failed_write_report_count",
+        label: "ไม่เขียนรายงาน",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_early_write_report_count",
+        label: "เขียนรายงานล่วงหน้า",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "discipline_using_drugs_on_duty_count",
+        label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน",
+        unit: "คน",
+        value: "0",
+        isActive: false,
+      },
+    ],
+  },
+];
+
+const fieldLabel = (label: string) => `${label} :`;
+
+/** Template for Group 3 (meeting records) */
+const group3 = [
+  {
+    key: "meeting",
+    title: "เข้าพบผู้ว่าจ้าง",
+    items: [] as {
+      label: string;
+      detail: string;
+      status: string;
+      note: string;
+    }[],
+  },
+];
+
+/** Template for Group 4 (guard post movement) */
+const group4 = [
+  {
+    key: "guard_post_movement",
+    title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+    items: [] as {
+      label: string;
+      detail: string;
+      status: string;
+      note: string;
+    }[],
+  },
+];
+
+/** Status options for Group 4 (guard post movement) — simple string array */
+const group4StatusOptions = [
+  "ลงจุดใหม่",
+  "ถอนจุด",
+  "ยกเลิกสัญญา",
+  "ลดกำลัง",
+  "เพิ่มกำลัง",
+];
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
 export default function MoUpdateForm(props: Props) {
+  // ---- 1. Store & Props ----
   console.log("[MoUpdateForm] RENDERED", { reportData: props.reportData });
   const {
     createReport,
     updateReport,
     authEmployee,
     fetchDistinctDisciplineTypes,
+    fetchDistinctGuardPostMovementStatuses,
   } = useStore();
-  const reportItem = props.reportData as Record<string, any> | undefined;
 
+  // ---- 2. Data Fetching ----
   const [distinctDisciplineTypes, setDistinctDisciplineTypes] = useState<
     { key: string; label: string }[]
   >([]);
-  useEffect(() => {
-    fetchDistinctDisciplineTypes().then((types) =>
-      setDistinctDisciplineTypes(types),
-    );
-  }, [fetchDistinctDisciplineTypes]);
 
-  // sector / department selection from auth store
-  const locations: EmployeeLocation[] = authEmployee?.department_name
+  // ---- 3. Derived Values (from auth & props) ----
+  const departments: EmployeeDepartment[] = authEmployee?.department_name
     ? [
         {
           id: authEmployee.department_id ?? 1,
-          location: authEmployee.department_name,
-          sub_locations: [],
+          department: authEmployee.department_name,
+          divisions: [],
         },
       ]
     : [];
   const [selectedSector, setSelectedSector] = useState<number>(
-    authEmployee?.department_id ?? locations[0]?.id ?? 1,
+    authEmployee?.department_id ?? departments[0]?.id ?? 1,
   );
   const selectedSectorName =
-    locations.find((loc) => loc.id === selectedSector)?.location ?? "";
-  const selectedLocation = locations.find((loc) => loc.id === selectedSector);
-  const [selectedSubLocation, setSelectedSubLocation] = useState<string>("");
+    departments.find((loc) => loc.id === selectedSector)?.department ?? "";
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
 
-  // reset sub-location when sector changes
-  useEffect(() => {
-    const nextSubLocation =
-      props.selectedLocation ||
-      String(props.reportData?.division_name ?? "") ||
-      `เขต ${selectedSector}.1`;
-    setSelectedSubLocation(nextSubLocation);
-  }, [props.reportData, props.selectedLocation, selectedSector]);
-
-  // confirmation dialog state
-  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
-  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showFail, setShowFail] = useState(false);
-  const [failMessage, setFailMessage] = useState("");
-
-  // Update loading popup with minimum 1.5-second display time
-  const [isUpdating, setIsUpdating] = useState(false);
-  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const MIN_UPDATE_MS = 1500;
-
-  useEffect(() => {
-    return () => {
-      if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-    };
-  }, []);
-
-  // status options for group3 rows (cycle on click)
-  const statusOptions = [
-    // { label: "ปกติ", key: "normal" }, // temporarily disabled
-    { label: "ผิดปกติ", key: "warning" },
-    { label: "ฉุกเฉิน", key: "danger" },
-  ];
-
-  // Report approval status labels
-  const approvalStatusLabels = [
-    {
-      keys: ["approved", "ดำเนินการแล้ว"],
-      label: "อนุมัติเรียบร้อยแล้ว",
-      cssClass: styles["status-approved"],
-    },
-    {
-      keys: ["PENDING", "pending", "waited", "รอการดำเนินการ", "รอ"],
-      label: "รอผู้อำนวยการอนุมัติ",
-      cssClass: styles["status-pending"],
-    },
-    {
-      keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
-      label: "รอการดำเนินการแก้ไข",
-      cssClass: styles["status-rejected"],
-    },
-  ];
-
-  const getApprovalStatusClass = (status: string) => {
-    const cleaned = String(status ?? "")
-      .trim()
-      .toLowerCase();
-    const found = approvalStatusLabels.find((item) =>
-      item.keys.some((k) => k.toLowerCase() === cleaned),
-    );
-    return found ? found.cssClass : styles["status-pending"];
-  };
-
-  const getApprovalStatusLabel = (status: string) => {
-    const cleaned = String(status ?? "")
-      .trim()
-      .toLowerCase();
-    const found = approvalStatusLabels.find((item) =>
-      item.keys.some((k) => k.toLowerCase() === cleaned),
-    );
-    return found ? found.label : status;
-  };
-
-  // status state per-row (initialized after groups mount)
-  const [rowStatus, setRowStatus] = useState<Record<string, number>>({});
-  const [dynamicGroup3, setDynamicGroup3] = useState(() => [] as any[]);
-  useEffect(() => {
-    const init: Record<string, number> = {};
-    dynamicGroup3.forEach((g) => {
-      g.items.forEach((it: any, i: number) => {
-        const idx = statusOptions.findIndex((s) => s.key === it.status);
-        init[String(i)] = idx >= 0 ? idx : 0;
-      });
-    });
-    setRowStatus(init);
-  }, [dynamicGroup3]);
-
-  const cycleStatus = (idx: number) => {
-    setRowStatus((prev) => ({
-      ...prev,
-      [String(idx)]: ((prev[String(idx)] ?? 0) + 1) % statusOptions.length,
-    }));
-  };
-
-  // ── Approval state: use external (from parent) if provided, else own it locally ──
-  // This allows MoDetailPage to own approval for its approve/send-back buttons,
-  // while standalone uses of MoUpdateForm still work without a parent.
-  const [localApprovalStatus, setLocalApprovalStatus] = useState<
-    "PENDING" | "APPROVED" | "REJECTED"
-  >(
-    (props.reportData?.approved_status as
-      | "PENDING"
-      | "APPROVED"
-      | "REJECTED") || "PENDING",
-  );
-
-  const approvalStatus = props.externalApprovalStatus ?? localApprovalStatus;
-  const setApprovalStatus = (s: "PENDING" | "APPROVED" | "REJECTED") => {
-    setLocalApprovalStatus(s);
-    props.onApprovalStatusChange?.(s);
-  };
-
-  const [approvalRemark, setApprovalRemark] = useState<string>(
-    (props.reportData?.approved_remark as string) || "",
-  );
-
-  // Sync approval data from reportData when it changes
-  useEffect(() => {
-    const incoming =
-      (props.reportData?.approved_status as
-        | "PENDING"
-        | "APPROVED"
-        | "REJECTED") || "PENDING";
-    setLocalApprovalStatus(incoming);
-    // only notify parent if it hasn't already driven this value
-    if (!props.externalApprovalStatus) {
-      props.onApprovalStatusChange?.(incoming);
-    }
-    setApprovalRemark((props.reportData?.approved_remark as string) || "");
-  }, [props.reportData]);
-
-  // grouped rows config
-  const group1 = [
-    {
-      key: "dept",
-      title: "หน่วยงานที่รับผิดชอบ",
-      items: [
-        {
-          key: "dept_recruitment_count",
-          label: "รับ รปภ. ใหม่ :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_guard_post_count",
-          label: "จุดรักษาการณ์ :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "dept_current_personnel_count",
-          label: "กำลังพลปัจจุบัน :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_missing_regular_count",
-          label: "ขาดตัวประจำ :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "dept_missing_personnel_count",
-          label: "ขาดกำลังพล :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_supplement_count",
-          label: "จัดกำลังพลเสริมพิเศษ :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_reserve_units_count",
-          label: "จำนวนหน่วยงานสำรองเวร :",
-          unit: "หน่วย",
-          value: "0",
-        },
-        {
-          key: "dept_reserve_personnel_count",
-          label: "จำนวนกำลังพลสำรองเวร :",
-          unit: "คน",
-          value: "0",
-        },
-      ],
-    },
-    {
-      key: "leave",
-      title: "การลา",
-      items: [
-        {
-          key: "leave_personal_count",
-          label: "ลากิจ :",
-          unit: "คน",
-          value: "0",
-        },
-        { key: "leave_sick_count", label: "ลาป่วย :", unit: "คน", value: "0" },
-        {
-          key: "leave_absent_count",
-          label: "ขาดงาน :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "leave_deserted_count",
-          label: "หนีหาย :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "leave_resigned_count",
-          label: "ลาออก :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "leave_terminated_count",
-          label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :",
-          unit: "คน",
-          value: "0",
-        },
-      ],
-    },
-    {
-      key: "shift",
-      title: "การบริหารการควงเวร",
-      items: [
-        {
-          key: "shift_18_count",
-          label: "18 ชั่วโมง :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "shift_24_count",
-          label: "24 ชั่วโมง :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "shift_36_count",
-          label: "36 ชั่วโมง :",
-          unit: "คน",
-          value: "0",
-        },
-      ],
-    },
-    {
-      key: "training",
-      title: "อบรมและควบคุมหน้างาน",
-      items: [
-        {
-          key: "training_shift_change_count",
-          label: "อบรมเปลี่ยนผลัด :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "training_planned_count",
-          label: "อบรมตามแผนงานที่กำหนด :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "training_supervise_onsite_count",
-          label: "ควบคุมหน้างาน :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "training_supervise_virtual_simulation_count",
-          label: "จำลองสถานการณ์เสมือนจริง :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-      ],
-    },
-  ];
-
-  const group2 = [
-    {
-      key: "discipline",
-      title: "วินัยและการลงโทษ",
-      items: [
-        {
-          key: "discipline_sleeping_on_duty_count",
-          label: "หลับเวร",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_abandoning_post_count",
-          label: "ทิ้งจุด",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_absent_work_count",
-          label: "ขาดงาน",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_early_leaved_duty_count",
-          label: "ออกเวรก่อนเวลา",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_using_phone_on_duty_count",
-          label: "เล่นโทรศัพท์",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_client_complained_count",
-          label: "ผู้ว่าจ้างตำหนิ",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_improper_attire_count",
-          label: "แต่งการไม่เรียบร้อย",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_failed_write_report_count",
-          label: "ไม่เขียนรายงาน",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_early_write_report_count",
-          label: "เขียนรายงานล่วงหน้า",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_using_drugs_on_duty_count",
-          label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-      ],
-    },
-  ];
-
+  // ---- 4. Form State ----
   const [dynamicGroup2, setDynamicGroup2] = useState(() => {
     const discMap = new Map<string, number>();
     if (props.reportData) {
@@ -457,154 +427,92 @@ export default function MoUpdateForm(props: Props) {
     }));
   });
 
+  const [dynamicGroup3, setDynamicGroup3] = useState(() => [] as any[]);
+  const [dynamicGroup4, setDynamicGroup4] = useState(() => [] as any[]);
+
+  const [counts, setCounts] = useState<Record<string, string>>(() => {
+    const acc: Record<string, string> = {};
+    group1.forEach((g) =>
+      g.items.forEach((it) => {
+        const rdVal = props.reportData?.[it.key];
+        acc[it.key] = rdVal !== undefined ? String(rdVal) : (it.value ?? "0");
+      }),
+    );
+    group2.forEach((g) =>
+      g.items.forEach((it) => {
+        const rdVal = props.reportData?.[it.key];
+        acc[it.key] = rdVal !== undefined ? String(rdVal) : (it.value ?? "0");
+      }),
+    );
+    return acc;
+  });
+
+  const initialSnapshotRef = useRef<{
+    counts: Record<string, string>;
+    projectsJson: string;
+    guardPostMovementsJson: string;
+  } | null>(null);
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    [...group1, ...group2, ...group3, ...group4].reduce(
+      (acc, g, i) => {
+        acc[g.key] = i === 0;
+        return acc;
+      },
+      {} as Record<string, boolean>,
+    ),
+  );
+
+  const [rowStatus, setRowStatus] = useState<Record<string, number>>({});
+
+  // ---- 5. Editing State & Refs ----
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingRaw, setEditingRaw] = useState<string>("0");
+
+  const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+  const labelInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [warnings, setWarnings] = useState<Record<string, boolean>>({});
+  const warningTimersRef = useRef<Record<string, number | null>>({});
+  const isFirstRender = useRef(true);
+
+  // ---- 6. Approval State ----
+  // Use external (from parent) if provided, else own it locally.
+  // This allows MoDetailPage to own approval for its approve/send-back buttons,
+  // while standalone uses of MoUpdateForm still work without a parent.
+  const [localApprovalStatus, setLocalApprovalStatus] = useState<
+    "PENDING" | "APPROVED" | "REJECTED"
+  >(
+    (props.reportData?.approved_status as
+      | "PENDING"
+      | "APPROVED"
+      | "REJECTED") || "PENDING",
+  );
+
+  const approvalStatus = props.externalApprovalStatus ?? localApprovalStatus;
+
+  const [approvalRemark, setApprovalRemark] = useState<string>(
+    (props.reportData?.approved_remark as string) || "",
+  );
+
+  // ---- 7. Dialog / Submission State ----
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showFail, setShowFail] = useState(false);
+  const [failMessage, setFailMessage] = useState("");
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ---- 8. Group 2 Modal State (Discipline) ----
   const [showAddGroup2, setShowAddGroup2] = useState(false);
   const [newGroup2Label, setNewGroup2Label] = useState("");
   const [newGroup2Unit, setNewGroup2Unit] = useState("คน");
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [isOtherMode, setIsOtherMode] = useState(false);
 
-  const openAddGroup2 = () => {
-    setNewGroup2Label("");
-    setNewGroup2Unit("คน");
-    setCheckedItems(new Set());
-    setIsOtherMode(false);
-    setEditingKey(null);
-    setEditingRaw("");
-    setShowAddGroup2(true);
-  };
-
-  const addItemToGroup2 = (initialValue?: string) => {
-    const g = dynamicGroup2.find((x) => x.key === "discipline");
-    const autoGenCount = g
-      ? g.items.filter((it) => String(it.key).startsWith("auto_gen")).length
-      : 0;
-    const newKey = `auto_gen_${autoGenCount + 1}`;
-    const newItem = {
-      key: newKey,
-      label: newGroup2Label || "รายการใหม่",
-      unit: newGroup2Unit || "คน",
-      value: initialValue || "0",
-      isActive: true,
-    };
-    setDynamicGroup2((prev) =>
-      prev.map((pg) =>
-        pg.key === "discipline" ? { ...pg, items: [...pg.items, newItem] } : pg,
-      ),
-    );
-    setCounts((prev) => ({
-      ...prev,
-      [newKey]: initialValue || editingRaw || "0",
-    }));
-    setShowAddGroup2(false);
-  };
-
-  const handleRemoveGroup3Item = (groupKey: string, itemIdx: number) => {
-    setDynamicGroup3((prev) =>
-      prev.map((pg) =>
-        pg.key === groupKey
-          ? {
-              ...pg,
-              items: pg.items.filter((_: any, i: number) => i !== itemIdx),
-            }
-          : pg,
-      ),
-    );
-  };
-
-  const handleDeactivate = (key: string) => {
-    setDynamicGroup2((prev) =>
-      prev.map((pg) => ({
-        ...pg,
-        items: pg.items.map((item) =>
-          item.key === key ? { ...item, isActive: false } : item,
-        ),
-      })),
-    );
-    setCounts((prev) => ({ ...prev, [key]: "0" }));
-  };
-
-  const handleSaveModal = () => {
-    if (checkedItems.size === 0) {
-      // Capture the value BEFORE any state updates (React 18 batching)
-      const capturedRaw = editingRaw;
-      setEditingKey(null);
-      if (newGroup2Label.trim() !== "") {
-        const otherCount = capturedRaw || counts["__other__"] || "0";
-        addItemToGroup2(otherCount);
-      } else {
-        setShowAddGroup2(false);
-      }
-      // Always reset modal form fields
-      setNewGroup2Label("");
-      setCheckedItems(new Set());
-      setIsOtherMode(false);
-      setEditingRaw("");
-      setCounts((prev) => {
-        const next = { ...prev };
-        delete next["__other__"];
-        return next;
-      });
-      return;
-    }
-
-    const selectedKey = Array.from(checkedItems)[0];
-
-    // Capture the value NOW (before React batches state updates)
-    const rawValue =
-      editingKey === selectedKey ? editingRaw : (counts[selectedKey] ?? "0");
-    const finalValue = toDigitString(rawValue);
-
-    // Persist to counts immediately so UI reflects it
-    setCounts((prev) => ({ ...prev, [selectedKey]: finalValue }));
-
-    setDynamicGroup2((prev) => {
-      const discGroup = prev.find((g) => g.key === "discipline");
-      if (!discGroup) return prev;
-      const exists = discGroup.items.some((it) => it.key === selectedKey);
-      return prev.map((pg) => {
-        if (pg.key !== "discipline") return pg;
-        let items = pg.items;
-        if (!exists) {
-          const disc = distinctDisciplineTypes.find(
-            (d) => d.key === selectedKey,
-          );
-          items = [
-            ...items,
-            {
-              key: selectedKey,
-              label: disc?.label ?? "รายการใหม่",
-              unit: "คน",
-              value: "0",
-              isActive: false,
-            },
-          ];
-        }
-        items = items.map((item) => {
-          if (item.key !== selectedKey) return item;
-          return Number(finalValue) > 0 ? { ...item, isActive: true } : item;
-        });
-        return { ...pg, items };
-      });
-    });
-
-    // Reset all modal form fields
-    setEditingKey(null);
-    setEditingRaw("");
-    setNewGroup2Label("");
-    setCheckedItems(new Set());
-    setIsOtherMode(false);
-    setShowAddGroup2(false);
-  };
-
-  const toggleChecked = (key: string) => {
-    setCheckedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-
+  // ---- 9. Group 3 Modal State (Meeting) ----
   const [showAddGroup3, setShowAddGroup3] = useState(false);
   const [newGroup3Label, setNewGroup3Label] = useState("");
   const [newGroup3Detail, setNewGroup3Detail] = useState("");
@@ -614,83 +522,85 @@ export default function MoUpdateForm(props: Props) {
     null,
   );
 
-  const closeGroup3Modal = () => {
-    setShowAddGroup3(false);
-    setEditingGroup3Index(null);
-    setNewGroup3Label("");
-    setNewGroup3Detail("");
-    setNewGroup3Status("warning");
-    setNewGroup3Note("");
-  };
+  // ---- 10. Group 4 Modal State (guard_post_movement) ----
+  const [showAddGroup4, setShowAddGroup4] = useState(false);
+  const [newGroup4Label, setNewGroup4Label] = useState("");
+  const [newGroup4Detail, setNewGroup4Detail] = useState("");
+  const [newGroup4Status, setNewGroup4Status] = useState("");
+  const [newGroup4Note, setNewGroup4Note] = useState("");
+  const [editingGroup4Index, setEditingGroup4Index] = useState<number | null>(
+    null,
+  );
+  const [isGroup4OtherMode, setIsGroup4OtherMode] = useState(false);
+  // ============================================================
+  // EFFECTS
+  // ============================================================
 
-  const openAddGroup3 = () => {
-    setEditingGroup3Index(null);
-    setNewGroup3Label("");
-    setNewGroup3Detail("");
-    setNewGroup3Status("warning");
-    setNewGroup3Note("");
-    setShowAddGroup3(true);
-  };
-
-  const handleOpenRow = (idx: number) => {
-    const meetingGroup = dynamicGroup3.find(
-      (group: any) => group.key === "meeting",
-    );
-    const item = meetingGroup?.items[idx];
-    if (!item) return;
-    setEditingGroup3Index(idx);
-    setNewGroup3Label(item.label ?? "");
-    setNewGroup3Detail(item.detail ?? "");
-    setNewGroup3Status(item.status ?? "warning");
-    setNewGroup3Note(item.note ?? "");
-    setShowAddGroup3(true);
-  };
-
-  const saveGroup3Modal = () => {
-    const nextItem = {
-      label: newGroup3Label || "รายการใหม่",
-      detail: newGroup3Detail,
-      status: newGroup3Status,
-      note: newGroup3Note,
+  // -- Cleanup update timer on unmount --
+  useEffect(() => {
+    return () => {
+      if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
     };
-    setDynamicGroup3((prev: any[]) =>
-      prev.map((pg) =>
-        pg.key === "meeting"
-          ? {
-              ...pg,
-              items:
-                editingGroup3Index === null
-                  ? [...pg.items, nextItem]
-                  : pg.items.map((item: any, index: number) =>
-                      index === editingGroup3Index ? nextItem : item,
-                    ),
-            }
-          : pg,
-      ),
+  }, []);
+
+  // -- Fetch distinct discipline types --
+  useEffect(() => {
+    fetchDistinctDisciplineTypes().then((types) =>
+      setDistinctDisciplineTypes(types),
     );
-    closeGroup3Modal();
-  };
+  }, [fetchDistinctDisciplineTypes]);
 
-  const handleGroup3DetailChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    const el = e.target;
-    setNewGroup3Detail(el.value);
-    adjustTextareaHeight(el);
-  };
+  // -- Fetch distinct guard post movement statuses --
+  const [guardPostStatusesOptions, setGuardPostStatusesOptions] =
+    useState<string[]>(group4StatusOptions);
+  useEffect(() => {
+    fetchDistinctGuardPostMovementStatuses().then((statuses) => {
+      if (statuses.length > 0) {
+        const merged = Array.from(
+          new Set([...group4StatusOptions, ...statuses]),
+        );
+        setGuardPostStatusesOptions(merged);
+      }
+    });
+  }, [fetchDistinctGuardPostMovementStatuses]);
 
-  const handleGroup3NoteChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    const el = e.target;
-    setNewGroup3Note(el.value);
-    adjustTextareaHeight(el);
-  };
+  // -- Reset division when sector / reportData changes --
+  useEffect(() => {
+    const nextDivision =
+      props.selectedDivision ||
+      String(props.reportData?.division_name ?? "") ||
+      `เขต ${selectedSector}.1`;
+    setSelectedDivision(nextDivision);
+  }, [props.reportData, props.selectedDivision, selectedSector]);
 
-  const handleGroup3StatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewGroup3Status(e.target.value);
-  };
+  // -- Init rowStatus from dynamicGroup3 --
+  useEffect(() => {
+    const init: Record<string, number> = {};
+    dynamicGroup3.forEach((g) => {
+      g.items.forEach((it: any, i: number) => {
+        const idx = statusOptions.findIndex((s) => s.key === it.status);
+        init[String(i)] = idx >= 0 ? idx : 0;
+      });
+    });
+    setRowStatus(init);
+  }, [dynamicGroup3]);
 
+  // -- Sync approval data from reportData --
+  useEffect(() => {
+    const incoming =
+      (props.reportData?.approved_status as
+        | "PENDING"
+        | "APPROVED"
+        | "REJECTED") || "PENDING";
+    setLocalApprovalStatus(incoming);
+    // only notify parent if it hasn't already driven this value
+    if (!props.externalApprovalStatus) {
+      props.onApprovalStatusChange?.(incoming);
+    }
+    setApprovalRemark((props.reportData?.approved_remark as string) || "");
+  }, [props.reportData]);
+
+  // -- Ensure counts contains entries for all dynamicGroup2/3 keys --
   useEffect(() => {
     setCounts((prev) => {
       const next = { ...prev };
@@ -703,6 +613,7 @@ export default function MoUpdateForm(props: Props) {
     });
   }, [dynamicGroup2, dynamicGroup3]);
 
+  // -- Sync dynamicGroup2 and counts from reportData --
   useEffect(() => {
     if (!props.reportData) {
       console.log("[MoUpdateForm] no reportData");
@@ -768,19 +679,7 @@ export default function MoUpdateForm(props: Props) {
     });
   }, [props.reportData]);
 
-  const group3 = [
-    {
-      key: "meeting",
-      title: "เข้าพบผู้ว่าจ้าง",
-      items: [] as {
-        label: string;
-        detail: string;
-        status: string;
-        note: string;
-      }[],
-    },
-  ];
-
+  // -- Init dynamicGroup3 from reportData projects --
   useEffect(() => {
     const projects = Array.isArray(props.reportData?.projects)
       ? (props.reportData!.projects as any[]).map((p) => ({
@@ -795,28 +694,28 @@ export default function MoUpdateForm(props: Props) {
     ]);
   }, [props.reportData]);
 
-  const [counts, setCounts] = useState<Record<string, string>>(() => {
-    const acc: Record<string, string> = {};
-    group1.forEach((g) =>
-      g.items.forEach((it) => {
-        const rdVal = props.reportData?.[it.key];
-        acc[it.key] = rdVal !== undefined ? String(rdVal) : (it.value ?? "0");
-      }),
-    );
-    group2.forEach((g) =>
-      g.items.forEach((it) => {
-        const rdVal = props.reportData?.[it.key];
-        acc[it.key] = rdVal !== undefined ? String(rdVal) : (it.value ?? "0");
-      }),
-    );
-    return acc;
-  });
+  // -- Init dynamicGroup4 from reportData guard_post_movements --
+  useEffect(() => {
+    const movements = Array.isArray(
+      (props.reportData as any)?.guard_post_movements,
+    )
+      ? (props.reportData as any).guard_post_movements.map((m: any) => ({
+          label: m.name ?? "",
+          detail: m.detail ?? "",
+          status: m.status ?? "",
+          note: m.note ?? "",
+        }))
+      : [];
+    setDynamicGroup4([
+      {
+        key: "guard_post_movement",
+        title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+        items: movements,
+      },
+    ]);
+  }, [props.reportData]);
 
-  const initialSnapshotRef = useRef<{
-    counts: Record<string, string>;
-    projectsJson: string;
-  } | null>(null);
-
+  // -- Init initialSnapshotRef for dirty detection --
   useEffect(() => {
     if (!props.reportData) return;
     const snapCounts: Record<string, string> = {};
@@ -844,6 +743,11 @@ export default function MoUpdateForm(props: Props) {
         snapCounts[d.key] = toDigitString(String(d.value));
       });
     }
+    const guardPostMovements = Array.isArray(
+      (props.reportData as any)?.guard_post_movements,
+    )
+      ? (props.reportData as any).guard_post_movements
+      : [];
     initialSnapshotRef.current = {
       counts: snapCounts,
       projectsJson: JSON.stringify(
@@ -856,18 +760,33 @@ export default function MoUpdateForm(props: Props) {
             }))
           : [],
       ),
+      guardPostMovementsJson: JSON.stringify(
+        guardPostMovements.map((m: any) => ({
+          name: m.name,
+          detail: m.detail,
+          status: m.status,
+          note: m.note,
+        })),
+      ),
     };
   }, [props.reportData]);
 
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [editingRaw, setEditingRaw] = useState<string>("0");
+  // -- Sanitize pre-existing counts on mount --
+  useEffect(() => {
+    setCounts((prev) => {
+      const next: Record<string, string> = {};
+      Object.keys(prev).forEach((k) => {
+        next[k] = toDigitString(prev[k]);
+      });
+      return next;
+    });
+  }, []);
 
-  const toDigitString = (v: string) => {
-    const digits = String(v || "").replace(/\D/g, "");
-    if (digits === "") return "0";
-    const n = digits.replace(/^0+/, "");
-    // Limit to 15 digits to stay within JavaScript safe integer range
-    return n === "" ? "0" : n.slice(0, 15);
+  const hasAnyData = () => {
+    const hasCounts = Object.values(counts).some((v) => Number(v) > 0);
+    const hasGroup3Items = dynamicGroup3.some((g: any) => g.items.length > 0);
+    const hasGroup4Items = dynamicGroup4.some((g: any) => g.items.length > 0);
+    return hasCounts || hasGroup3Items || hasGroup4Items;
   };
 
   const isDirty = (() => {
@@ -894,81 +813,112 @@ export default function MoUpdateForm(props: Props) {
       })),
     );
     if (currentJson !== snap.projectsJson) return true;
+
+    // Check guard_post_movements changes
+    const currentMovements =
+      dynamicGroup4.find((g: any) => g.key === "guard_post_movement")?.items ??
+      [];
+    const currentMovementsJson = JSON.stringify(
+      currentMovements.map((m: any) => ({
+        name: m.label,
+        detail: m.detail,
+        status: m.status,
+        note: m.note,
+      })),
+    );
+    if (currentMovementsJson !== snap.guardPostMovementsJson) return true;
+
     return false;
   })();
 
+  // -- Notify parent of dirty changes --
   useEffect(() => {
     if (props.onDirtyChange) props.onDirtyChange(isDirty);
   }, [isDirty]);
 
-  const handleReset = () => {
-    const snap = initialSnapshotRef.current;
-    if (!snap) {
-      if (props.onCancel) props.onCancel();
-      else window.history.back();
+  // -- Adjust textarea heights after render --
+  useEffect(() => {
+    const selector = `.${styles["mo-table-wrapper"]} textarea`;
+    const nodes = Array.from(
+      document.querySelectorAll(selector),
+    ) as HTMLTextAreaElement[];
+    if (nodes.length === 0) return;
+    let rafId = 0;
+    rafId = requestAnimationFrame(() =>
+      nodes.forEach((ta) => adjustTextareaHeight(ta)),
+    );
+    return () => cancelAnimationFrame(rafId);
+  }, [counts, editingKey, openGroups]);
+
+  // -- Adjust modal textarea on modal open --
+  useEffect(() => {
+    if (!showAddGroup2 && !showAddGroup3 && !showAddGroup4) return;
+    const id = requestAnimationFrame(() => {
+      try {
+        adjustTextareaHeight(labelInputRef.current);
+      } catch {}
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showAddGroup2, showAddGroup3, showAddGroup4]);
+
+  // -- isFirstRender dirty notification --
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
       return;
     }
-    setCounts({ ...snap.counts });
-    setDynamicGroup2((prev) =>
-      prev.map((g) => ({
-        ...g,
-        items: g.items.map((item: any) => {
-          const val = snap.counts[item.key];
-          return { ...item, isActive: val != null && val !== "0" };
-        }),
-      })),
-    );
-    try {
-      const originalProjects = JSON.parse(snap.projectsJson) as Array<{
-        name: string;
-        project_name?: string;
-        detail: string;
-        status: string;
-        note: string;
-      }>;
-      setDynamicGroup3([
-        {
-          key: "meeting",
-          title: "เข้าพบผู้ว่าจ้าง",
-          items: originalProjects.map((p) => ({
-            label: p.project_name ?? p.name ?? "",
-            detail: p.detail ?? "",
-            status: p.status ?? "warning",
-            note: p.note ?? "",
-          })),
-        },
-      ]);
-      setRowStatus({});
-    } catch {
-      setDynamicGroup3([
-        { key: "meeting", title: "เข้าพบผู้ว่าจ้าง", items: [] },
-      ]);
-      setRowStatus({});
-    }
-    if (props.reportData) {
-      const origSub = String(props.reportData.division_name ?? "");
-      if (origSub) setSelectedSubLocation(origSub);
-    }
-    setEditingKey(null);
-    setEditingRaw("0");
-    if (props.onCancel) props.onCancel();
+    props.onDirtyChange?.(true);
+  }, [counts, dynamicGroup2, dynamicGroup3, dynamicGroup4]);
+
+  // -- Expose save to parent via ref --
+  useEffect(() => {
+    if (!props.submitRef) return;
+    props.submitRef.current = async (opts?: {
+      approve?: boolean;
+      sendBack?: boolean;
+    }) => {
+      await doSave(opts);
+    };
+    return () => {
+      if (props.submitRef) props.submitRef.current = null;
+    };
+  }, [
+    counts,
+    dynamicGroup2,
+    dynamicGroup3,
+    dynamicGroup4,
+    selectedSector,
+    selectedDivision,
+    approvalStatus,
+    approvalRemark,
+  ]);
+
+  // ============================================================
+  // UTILITY FUNCTIONS
+  // ============================================================
+
+  const cycleStatus = (idx: number) => {
+    setRowStatus((prev) => ({
+      ...prev,
+      [String(idx)]: ((prev[String(idx)] ?? 0) + 1) % statusOptions.length,
+    }));
   };
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    [...group1, ...group2, ...group3].reduce(
-      (acc, g, i) => {
-        acc[g.key] = i === 0;
-        return acc;
-      },
-      {} as Record<string, boolean>,
-    ),
-  );
+  function toDigitString(v: string) {
+    const digits = String(v || "").replace(/\D/g, "");
+    if (digits === "") return "0";
+    const n = digits.replace(/^0+/, "");
+    // Limit to 15 digits to stay within JavaScript safe integer range
+    return n === "" ? "0" : n.slice(0, 15);
+  }
 
-  const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
-  const labelInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const [warnings, setWarnings] = useState<Record<string, boolean>>({});
-  const warningTimersRef = useRef<Record<string, number | null>>({});
+  const getDisplayValue = (key: string) => toDigitString(counts[key] ?? "0");
+
+  const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + 2}px`;
+  };
 
   const triggerWarning = (key: string) => {
     const existing = warningTimersRef.current[key];
@@ -981,41 +931,9 @@ export default function MoUpdateForm(props: Props) {
     warningTimersRef.current[key] = t as unknown as number;
   };
 
-  const handleLabelChangeGroup3 = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    const el = e.target;
-    setNewGroup3Label(el.value);
-    adjustTextareaHeight(el);
-  };
-
-  const handleLabelFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-    adjustTextareaHeight(e.target as HTMLTextAreaElement);
-    labelInputRef.current = e.target as HTMLTextAreaElement;
-  };
-
-  const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      (e.target as HTMLTextAreaElement).blur();
-    }
-  };
-
-  const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight + 2}px`;
-  };
-
-  useEffect(() => {
-    setCounts((prev) => {
-      const next: Record<string, string> = {};
-      Object.keys(prev).forEach((k) => {
-        next[k] = toDigitString(prev[k]);
-      });
-      return next;
-    });
-  }, []);
+  // ============================================================
+  // TEXTAREA EDITING HANDLERS
+  // ============================================================
 
   const handleTextareaChange = (
     key: string,
@@ -1115,73 +1033,462 @@ export default function MoUpdateForm(props: Props) {
     setEditingKey(null);
   };
 
-  const getDisplayValue = (key: string) => toDigitString(counts[key] ?? "0");
+  // ============================================================
+  // GROUP 2 (DISCIPLINE) HANDLERS
+  // ============================================================
 
-  useEffect(() => {
-    const selector = `.${styles["mo-table-wrapper"]} textarea`;
-    const nodes = Array.from(
-      document.querySelectorAll(selector),
-    ) as HTMLTextAreaElement[];
-    if (nodes.length === 0) return;
-    let rafId = 0;
-    rafId = requestAnimationFrame(() =>
-      nodes.forEach((ta) => adjustTextareaHeight(ta)),
+  const openAddGroup2 = () => {
+    setNewGroup2Label("");
+    setNewGroup2Unit("คน");
+    setCheckedItems(new Set());
+    setIsOtherMode(false);
+    setEditingKey(null);
+    setEditingRaw("");
+    setShowAddGroup2(true);
+  };
+
+  const addItemToGroup2 = (initialValue?: string) => {
+    const g = dynamicGroup2.find((x) => x.key === "discipline");
+    const autoGenCount = g
+      ? g.items.filter((it) => String(it.key).startsWith("auto_gen")).length
+      : 0;
+    const newKey = `auto_gen_${autoGenCount + 1}`;
+    const newItem = {
+      key: newKey,
+      label: newGroup2Label || "รายการใหม่",
+      unit: newGroup2Unit || "คน",
+      value: initialValue || "0",
+      isActive: true,
+    };
+    setDynamicGroup2((prev) =>
+      prev.map((pg) =>
+        pg.key === "discipline" ? { ...pg, items: [...pg.items, newItem] } : pg,
+      ),
     );
-    return () => cancelAnimationFrame(rafId);
-  }, [counts, editingKey, openGroups]);
+    setCounts((prev) => ({
+      ...prev,
+      [newKey]: initialValue || editingRaw || "0",
+    }));
+    setShowAddGroup2(false);
+  };
 
-  useEffect(() => {
-    if (!showAddGroup2 && !showAddGroup3) return;
-    const id = requestAnimationFrame(() => {
-      try {
-        adjustTextareaHeight(labelInputRef.current);
-      } catch {}
-    });
-    return () => cancelAnimationFrame(id);
-  }, [showAddGroup2, showAddGroup3]);
+  const handleDeactivate = (key: string) => {
+    setDynamicGroup2((prev) =>
+      prev.map((pg) => ({
+        ...pg,
+        items: pg.items.map((item) =>
+          item.key === key ? { ...item, isActive: false } : item,
+        ),
+      })),
+    );
+    setCounts((prev) => ({ ...prev, [key]: "0" }));
+  };
 
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+  const handleSaveModal = () => {
+    if (checkedItems.size === 0) {
+      // Capture the value BEFORE any state updates (React 18 batching)
+      const capturedRaw = editingRaw;
+      setEditingKey(null);
+      if (newGroup2Label.trim() !== "") {
+        const otherCount = capturedRaw || counts["__other__"] || "0";
+        addItemToGroup2(otherCount);
+      } else {
+        setShowAddGroup2(false);
+      }
+      // Always reset modal form fields
+      setNewGroup2Label("");
+      setCheckedItems(new Set());
+      setIsOtherMode(false);
+      setEditingRaw("");
+      setCounts((prev) => {
+        const next = { ...prev };
+        delete next["__other__"];
+        return next;
+      });
       return;
     }
-    props.onDirtyChange?.(true);
-  }, [counts, dynamicGroup2, dynamicGroup3]);
 
-  // ── Expose save to parent via ref ──
-  // The signature now accepts opts so MoDetailPage can call submitRef.current({ approve: true }) or ({ sendBack: true })
-  useEffect(() => {
-    if (!props.submitRef) return;
-    props.submitRef.current = async (opts?: {
-      approve?: boolean;
-      sendBack?: boolean;
-    }) => {
-      await doSave(opts);
-    };
-    return () => {
-      if (props.submitRef) props.submitRef.current = null;
-    };
-  }, [
-    counts,
-    dynamicGroup2,
-    dynamicGroup3,
-    selectedSector,
-    selectedSubLocation,
-    approvalStatus,
-    approvalRemark,
-  ]);
+    const selectedKey = Array.from(checkedItems)[0];
 
-  const hasAnyData = () => {
-    const hasCounts = Object.values(counts).some((v) => Number(v) > 0);
-    const hasGroup3Items = dynamicGroup3.some((g: any) => g.items.length > 0);
-    return hasCounts || hasGroup3Items;
+    // Capture the value NOW (before React batches state updates)
+    const rawValue =
+      editingKey === selectedKey ? editingRaw : (counts[selectedKey] ?? "0");
+    const finalValue = toDigitString(rawValue);
+
+    // Persist to counts immediately so UI reflects it
+    setCounts((prev) => ({ ...prev, [selectedKey]: finalValue }));
+
+    setDynamicGroup2((prev) => {
+      const discGroup = prev.find((g) => g.key === "discipline");
+      if (!discGroup) return prev;
+      const exists = discGroup.items.some((it) => it.key === selectedKey);
+      return prev.map((pg) => {
+        if (pg.key !== "discipline") return pg;
+        let items = pg.items;
+        if (!exists) {
+          const disc = distinctDisciplineTypes.find(
+            (d) => d.key === selectedKey,
+          );
+          items = [
+            ...items,
+            {
+              key: selectedKey,
+              label: disc?.label ?? "รายการใหม่",
+              unit: "คน",
+              value: "0",
+              isActive: false,
+            },
+          ];
+        }
+        items = items.map((item) => {
+          if (item.key !== selectedKey) return item;
+          return Number(finalValue) > 0 ? { ...item, isActive: true } : item;
+        });
+        return { ...pg, items };
+      });
+    });
+
+    // Reset all modal form fields
+    setEditingKey(null);
+    setEditingRaw("");
+    setNewGroup2Label("");
+    setCheckedItems(new Set());
+    setIsOtherMode(false);
+    setShowAddGroup2(false);
+  };
+
+  const toggleChecked = (key: string) => {
+    setCheckedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  // ============================================================
+  // GROUP 3 (MEETING) HANDLERS
+  // ============================================================
+
+  const closeGroup3Modal = () => {
+    setShowAddGroup3(false);
+    setEditingGroup3Index(null);
+    setNewGroup3Label("");
+    setNewGroup3Detail("");
+    setNewGroup3Status("warning");
+    setNewGroup3Note("");
+  };
+
+  const openAddGroup3 = () => {
+    setEditingGroup3Index(null);
+    setNewGroup3Label("");
+    setNewGroup3Detail("");
+    setNewGroup3Status("warning");
+    setNewGroup3Note("");
+    setShowAddGroup3(true);
+  };
+
+  const handleRemoveGroup3Item = (groupKey: string, itemIdx: number) => {
+    setDynamicGroup3((prev) =>
+      prev.map((pg) =>
+        pg.key === groupKey
+          ? {
+              ...pg,
+              items: pg.items.filter((_: any, i: number) => i !== itemIdx),
+            }
+          : pg,
+      ),
+    );
+  };
+
+  const handleOpenRow = (idx: number) => {
+    const meetingGroup = dynamicGroup3.find(
+      (group: any) => group.key === "meeting",
+    );
+    const item = meetingGroup?.items[idx];
+    if (!item) return;
+    setEditingGroup3Index(idx);
+    setNewGroup3Label(item.label ?? "");
+    setNewGroup3Detail(item.detail ?? "");
+    setNewGroup3Status(item.status ?? "warning");
+    setNewGroup3Note(item.note ?? "");
+    setShowAddGroup3(true);
+  };
+
+  const saveGroup3Modal = () => {
+    const nextItem = {
+      label: newGroup3Label || "รายการใหม่",
+      detail: newGroup3Detail,
+      status: newGroup3Status,
+      note: newGroup3Note,
+    };
+    setDynamicGroup3((prev: any[]) =>
+      prev.map((pg) =>
+        pg.key === "meeting"
+          ? {
+              ...pg,
+              items:
+                editingGroup3Index === null
+                  ? [...pg.items, nextItem]
+                  : pg.items.map((item: any, index: number) =>
+                      index === editingGroup3Index ? nextItem : item,
+                    ),
+            }
+          : pg,
+      ),
+    );
+    closeGroup3Modal();
+  };
+
+  const handleGroup3DetailChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup3Detail(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleGroup3NoteChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup3Note(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleGroup3StatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewGroup3Status(e.target.value);
+  };
+
+  const handleLabelChangeGroup3 = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup3Label(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleLabelFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    adjustTextareaHeight(e.target as HTMLTextAreaElement);
+    labelInputRef.current = e.target as HTMLTextAreaElement;
+  };
+
+  const handleLabelKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      (e.target as HTMLTextAreaElement).blur();
+    }
+  };
+
+  // ============================================================
+  // GROUP 4 (GUARD POST MOVEMENT) HANDLERS
+  // ============================================================
+
+  const closeGroup4Modal = () => {
+    setShowAddGroup4(false);
+    setEditingGroup4Index(null);
+    setNewGroup4Label("");
+    setNewGroup4Detail("");
+    setNewGroup4Status("");
+    setNewGroup4Note("");
+    setIsGroup4OtherMode(false);
+  };
+
+  const openAddGroup4 = () => {
+    setEditingGroup4Index(null);
+    setNewGroup4Label("");
+    setNewGroup4Detail("");
+    setNewGroup4Status("");
+    setNewGroup4Note("");
+    setIsGroup4OtherMode(false);
+    setShowAddGroup4(true);
+  };
+
+  const handleRemoveGroup4Item = (groupKey: string, itemIdx: number) => {
+    setDynamicGroup4((prev) =>
+      prev.map((pg) =>
+        pg.key === groupKey
+          ? { ...pg, items: pg.items.filter((_, i) => i !== itemIdx) }
+          : pg,
+      ),
+    );
+  };
+
+  const handleOpenRowGroup4 = (idx: number) => {
+    const movementGroup = dynamicGroup4.find(
+      (g) => g.key === "guard_post_movement",
+    );
+    const item = movementGroup?.items[idx];
+    if (!item) return;
+
+    const savedStatus = item.status ?? "ปกติ";
+    const isKnown = guardPostStatusesOptions.includes(savedStatus);
+
+    setEditingGroup4Index(idx);
+    setNewGroup4Label(item.label ?? "");
+    setNewGroup4Detail(item.detail ?? "");
+    setNewGroup4Status(savedStatus);
+    setNewGroup4Note(item.note ?? "");
+    setIsGroup4OtherMode(!isKnown);
+    setShowAddGroup4(true);
+  };
+
+  const saveGroup4Modal = () => {
+    const nextItem = {
+      label: newGroup4Label || "รายการใหม่",
+      detail: newGroup4Detail,
+      status: newGroup4Status,
+      note: newGroup4Note,
+    };
+
+    setDynamicGroup4((prev) =>
+      prev.map((pg) =>
+        pg.key === "guard_post_movement"
+          ? {
+              ...pg,
+              items:
+                editingGroup4Index === null
+                  ? [...pg.items, nextItem]
+                  : pg.items.map((item, index) =>
+                      index === editingGroup4Index ? nextItem : item,
+                    ),
+            }
+          : pg,
+      ),
+    );
+
+    closeGroup4Modal();
+  };
+
+  const handleGroup4DetailChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup4Detail(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleGroup4NoteChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup4Note(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  const handleGroup4StatusChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const val = e.target.value;
+    if (val === "__other__") {
+      setIsGroup4OtherMode(true);
+      setNewGroup4Status("");
+    } else {
+      setIsGroup4OtherMode(false);
+      setNewGroup4Status(val);
+    }
+  };
+
+  const handleLabelChangeGroup4 = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup4Label(el.value);
+    adjustTextareaHeight(el);
+  };
+
+  // ============================================================
+  // SUBMIT / SAVE / RESET HANDLERS
+  // ============================================================
+
+  const handleReset = () => {
+    const snap = initialSnapshotRef.current;
+    if (!snap) {
+      if (props.onCancel) props.onCancel();
+      else window.history.back();
+      return;
+    }
+    setCounts({ ...snap.counts });
+    setDynamicGroup2((prev) =>
+      prev.map((g) => ({
+        ...g,
+        items: g.items.map((item: any) => {
+          const val = snap.counts[item.key];
+          return { ...item, isActive: val != null && val !== "0" };
+        }),
+      })),
+    );
+    try {
+      const originalProjects = JSON.parse(snap.projectsJson) as Array<{
+        name: string;
+        project_name?: string;
+        detail: string;
+        status: string;
+        note: string;
+      }>;
+      setDynamicGroup3([
+        {
+          key: "meeting",
+          title: "เข้าพบผู้ว่าจ้าง",
+          items: originalProjects.map((p) => ({
+            label: p.project_name ?? p.name ?? "",
+            detail: p.detail ?? "",
+            status: p.status ?? "warning",
+            note: p.note ?? "",
+          })),
+        },
+      ]);
+      setRowStatus({});
+    } catch {
+      setDynamicGroup3([
+        { key: "meeting", title: "เข้าพบผู้ว่าจ้าง", items: [] },
+      ]);
+      setRowStatus({});
+    }
+    // Reset guard_post_movements from snapshot
+    try {
+      const originalMovements = JSON.parse(
+        snap.guardPostMovementsJson,
+      ) as Array<{
+        name: string;
+        detail: string;
+        status: string;
+        note: string;
+      }>;
+      setDynamicGroup4([
+        {
+          key: "guard_post_movement",
+          title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+          items: originalMovements.map((m) => ({
+            label: m.name ?? "",
+            detail: m.detail ?? "",
+            status: m.status ?? "",
+            note: m.note ?? "",
+          })),
+        },
+      ]);
+    } catch {
+      setDynamicGroup4([
+        {
+          key: "guard_post_movement",
+          title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+          items: [],
+        },
+      ]);
+    }
+    if (props.reportData) {
+      const origDivision = String(props.reportData.division_name ?? "");
+      if (origDivision) setSelectedDivision(origDivision);
+    }
+    setEditingKey(null);
+    setEditingRaw("0");
+    if (props.onCancel) props.onCancel();
   };
 
   const doSave = async (opts?: { approve?: boolean; sendBack?: boolean }) => {
     const payload: Record<string, any> = {
       department_id: Number(selectedSector),
-      division_name: selectedSubLocation,
+      division_name: selectedDivision,
     };
     for (const g of group1) {
       for (const item of g.items) {
@@ -1197,7 +1504,7 @@ export default function MoUpdateForm(props: Props) {
           if (val > 0) {
             disciplines.push({
               key: item.key,
-              label: item.label.replace(/:$/, "").trim(),
+              label: item.label,
               value: val,
             });
           }
@@ -1225,6 +1532,26 @@ export default function MoUpdateForm(props: Props) {
       });
     }
     payload.projects = projects;
+
+    // Guard post movements (group4)
+    const guardPostMovements: Array<{
+      name: string;
+      detail: string;
+      status: string;
+      note: string;
+    }> = [];
+    for (const g of dynamicGroup4) {
+      g.items.forEach((it: any) => {
+        guardPostMovements.push({
+          name: it.label,
+          detail: it.detail ?? "",
+          status: it.status ?? "",
+          note: it.note ?? "",
+        });
+      });
+    }
+    if (guardPostMovements.length > 0)
+      payload.guard_post_movements = guardPostMovements;
 
     if (opts?.approve) {
       payload.approved_status = "APPROVED";
@@ -1316,6 +1643,10 @@ export default function MoUpdateForm(props: Props) {
     }
   };
 
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
     <>
       <form
@@ -1349,7 +1680,7 @@ export default function MoUpdateForm(props: Props) {
                 >
                   <div className={styles["sector-cell-bodytext-inner"]}>
                     <span style={{ color: "var(--brandDark, #2d6a4f)" }}>
-                      {selectedSubLocation}
+                      {selectedDivision}
                     </span>
                     {props.reportData?.approved_status && (
                       <span
@@ -1414,7 +1745,7 @@ export default function MoUpdateForm(props: Props) {
                         {idx + 1}.{itemIdx + 1}
                       </td>
                       <td className={styles["group3-second-column-cell"]}>
-                        {r.label}
+                        {fieldLabel(r.label)}
                       </td>
                       <td
                         className={`${styles["third-column-cell"]} ${counts[r.key]?.toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
@@ -1812,7 +2143,7 @@ export default function MoUpdateForm(props: Props) {
                           5.{itemIdx + 1}
                         </td>
                         <td className={styles["group3-second-column-cell"]}>
-                          {r.label}:
+                          {fieldLabel(r.label)}
                         </td>
                         <td
                           className={`${styles["third-column-cell"]} ${counts[r.key]?.toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
@@ -2139,7 +2470,9 @@ export default function MoUpdateForm(props: Props) {
                         <td className={styles["group3-second-column-cell"]}>
                           <div
                             onClick={() =>
-                              props.isEditing ? handleOpenRow(itemIdx) : undefined
+                              props.isEditing
+                                ? handleOpenRow(itemIdx)
+                                : undefined
                             }
                             style={{
                               cursor: props.isEditing ? "pointer" : "default",
@@ -2173,14 +2506,17 @@ export default function MoUpdateForm(props: Props) {
                           {(() => {
                             const key =
                               r.status ??
-                              statusOptions[rowStatus[String(itemIdx)] ?? 0].key;
+                              statusOptions[rowStatus[String(itemIdx)] ?? 0]
+                                .key;
                             const opt =
                               statusOptions.find((s) => s.key === key) ??
                               statusOptions[0];
                             return opt.label;
                           })()}
                         </td>
-                        <td className={`${styles["group3-fourth-column-cell"]} `}>
+                        <td
+                          className={`${styles["group3-fourth-column-cell"]} `}
+                        >
                           <button
                             type="button"
                             className={styles["action-link"]}
@@ -2192,7 +2528,9 @@ export default function MoUpdateForm(props: Props) {
                         {props.isEditing && (
                           <td
                             className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
-                            onClick={() => handleRemoveGroup3Item(g.key, itemIdx)}
+                            onClick={() =>
+                              handleRemoveGroup3Item(g.key, itemIdx)
+                            }
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => {
@@ -2231,6 +2569,394 @@ export default function MoUpdateForm(props: Props) {
                         <div className={styles["add-row-centered"]}>
                           <PlusIcon className={styles["pin-icon"]} />
                           เพิ่มข้อมูลเข้าพบผู้ว่าจ้าง
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              )}
+            </table>
+          </div>
+        ))}
+
+        {/* ---- Group 4 Add/Edit Modal (guard post Movement) ---- */}
+        {showAddGroup4 && (
+          <div
+            className={styles["modal-overlay"]}
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) closeGroup4Modal();
+            }}
+          >
+            <div
+              className={styles["modal"]}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className={styles["modal-header"]}>
+                <h3>
+                  {editingGroup4Index === null
+                    ? "เพิ่มข้อมูลเปลี่ยนแปลงจุดรักษาการณ์"
+                    : "รายละเอียดการเปลี่ยนแปลงจุดรักษาการณ์"}
+                </h3>
+              </div>
+              <div className={styles["modal-body"]}>
+                <div className={styles["mo-table-wrapper"]}>
+                  <table className={styles["mo-table"]}>
+                    <thead>
+                      <tr>
+                        <th
+                          colSpan={1}
+                          className={`${styles["first-column-cell"]} ${styles["no-border"]} `}
+                        >
+                          7.
+                        </th>
+                        <th
+                          colSpan={4}
+                          className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                        >
+                          <div
+                            className={`${styles["mo-header"]}`}
+                            style={{
+                              padding: "6px 8px",
+                              justifyContent: "flex-start",
+                            }}
+                          >
+                            <p className={styles["mo-header-red-text"]}>
+                              การเปลี่ยนแปลงจุดรักษาการณ์
+                            </p>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>
+                          {(() => {
+                            if (editingGroup4Index !== null) {
+                              return `7.${editingGroup4Index + 1}`;
+                            }
+                            const grp = dynamicGroup4.find(
+                              (x) => x.key === "guard_post_movement",
+                            );
+                            return `7.${grp ? grp.items.length + 1 : 1}`;
+                          })()}
+                        </td>
+                        <td
+                          colSpan={3}
+                          className={`${styles["group4-second-column-cell"]} ${styles["second-column-cell-left"]}`}
+                        >
+                          <textarea
+                            ref={labelInputRef as any}
+                            className={`${styles["third-column-textarea"]} ${styles["textarea-left"]}`}
+                            value={newGroup4Label}
+                            rows={1}
+                            onChange={handleLabelChangeGroup4}
+                            onPaste={() => {
+                              /* allow any text paste */
+                            }}
+                            onFocus={handleLabelFocus}
+                            onKeyDown={handleLabelKeyDown}
+                            onBlur={(e) =>
+                              adjustTextareaHeight(
+                                e.target as HTMLTextAreaElement,
+                              )
+                            }
+                            placeholder="เช่น การเปลี่ยนแปลงจุดรักษาการณ์"
+                            readOnly={!props.isEditing}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>สถานะ</td>
+                        <td
+                          className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                          colSpan={2}
+                          style={{ position: "relative" }}
+                        >
+                          {isGroup4OtherMode ? (
+                            <div style={{ paddingLeft: 8 }}>
+                              <textarea
+                                className={`${styles["third-column-textarea"]} ${styles["third-column-textarea-danger"]}`}
+                                value={newGroup4Status}
+                                placeholder="ระบุสถานะอื่น..."
+                                rows={1}
+                                onChange={(e) => {
+                                  setNewGroup4Status(e.target.value);
+                                  adjustTextareaHeight(e.target);
+                                }}
+                                onFocus={handleLabelFocus}
+                                onKeyDown={handleLabelKeyDown}
+                                onBlur={(e) =>
+                                  adjustTextareaHeight(
+                                    e.target as HTMLTextAreaElement,
+                                  )
+                                }
+                                style={{
+                                  paddingRight: 28,
+                                  textAlign: "left",
+                                  fontSize: 12,
+                                  fontWeight: 400,
+                                }}
+                                readOnly={!props.isEditing}
+                              />
+                              <X
+                                size={18}
+                                style={{
+                                  position: "absolute",
+                                  top: 5,
+                                  right: 8,
+                                  cursor: "pointer",
+                                  background: "rgba(183, 28, 28, 0.7)",
+                                  borderRadius: "50%",
+                                  padding: 1,
+                                  color: "#fff",
+                                }}
+                                onClick={() => {
+                                  setIsGroup4OtherMode(false);
+                                  setNewGroup4Status("");
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <select
+                              className={styles["sector-cell-select"]}
+                              style={{
+                                width: "100%",
+                                maxWidth: "100%",
+                                background: "transparent",
+                                color: "inherit",
+                                border: "1px solid #ccc",
+                                padding: "4px 8px",
+                                fontSize: 12,
+                              }}
+                              value={newGroup4Status}
+                              onChange={handleGroup4StatusChange}
+                              disabled={!props.isEditing}
+                            >
+                              <option value="">-- เลือกสถานะ --</option>
+                              {guardPostStatusesOptions.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                              <option value="__other__">-- อื่นๆ --</option>
+                            </select>
+                          )}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>
+                          รายละเอียด
+                        </td>
+                        <td
+                          className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                          colSpan={2}
+                        >
+                          <textarea
+                            ref={labelInputRef as any}
+                            className={`${styles["group4-popup-third-column-textarea1"]} ${styles["textarea-left"]}`}
+                            value={newGroup4Detail}
+                            rows={1}
+                            onChange={handleGroup4DetailChange}
+                            onPaste={() => {
+                              /* allow any text paste */
+                            }}
+                            onFocus={handleLabelFocus}
+                            onKeyDown={handleLabelKeyDown}
+                            onBlur={(e) =>
+                              adjustTextareaHeight(
+                                e.target as HTMLTextAreaElement,
+                              )
+                            }
+                            placeholder="เช่น รายละเอียดการเปลี่ยนแปลง"
+                            readOnly={!props.isEditing}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className={styles["first-column-cell"]}>
+                          หมายเหตุ
+                        </td>
+                        <td
+                          className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                          colSpan={2}
+                        >
+                          <textarea
+                            ref={labelInputRef as any}
+                            className={`${styles["group4-popup-third-column-textarea2"]} ${styles["textarea-left"]}`}
+                            value={newGroup4Note}
+                            rows={1}
+                            onChange={handleGroup4NoteChange}
+                            onPaste={() => {
+                              /* allow any text paste */
+                            }}
+                            onFocus={handleLabelFocus}
+                            onKeyDown={handleLabelKeyDown}
+                            onBlur={(e) =>
+                              adjustTextareaHeight(
+                                e.target as HTMLTextAreaElement,
+                              )
+                            }
+                            placeholder="เช่น หมายเหตุเพิ่มเติม"
+                            readOnly={!props.isEditing}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className={styles["modal-footer"]}>
+                <button
+                  type="button"
+                  className={styles["btn-secondary"]}
+                  onClick={closeGroup4Modal}
+                >
+                  {props.isEditing ? "ปิดหน้าจอ" : "ปิด"}
+                </button>
+                {props.isEditing && (
+                  <button
+                    type="button"
+                    className={styles["btn-primary"]}
+                    onClick={saveGroup4Modal}
+                    disabled={
+                      newGroup4Label.trim() === "" ||
+                      newGroup4Status.trim() === ""
+                    }
+                  >
+                    บันทึก
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ---- Section 7: การเปลี่ยนแปลงจุดรักษาการณ์ (Dynamic Group 4) ---- */}
+        {dynamicGroup4.map((g) => (
+          <div
+            key={g.key}
+            ref={wrapperRef}
+            className={styles["mo-table-wrapper"]}
+          >
+            <table className={styles["mo-table"]}>
+              <thead>
+                <tr>
+                  <th
+                    colSpan={1}
+                    className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
+                  >
+                    7.
+                  </th>
+                  <th
+                    colSpan={props.isEditing ? 5 : 4}
+                    className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                  >
+                    <div
+                      className={`${styles["mo-header"]}`}
+                      onClick={() =>
+                        setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      <p className={styles["mo-header-red-text"]}>{g.title}</p>
+                      <div>
+                        {openGroups[g.key] ? (
+                          <ChevronDown size={18} />
+                        ) : (
+                          <ChevronRight size={18} />
+                        )}
+                      </div>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              {openGroups[g.key] && (
+                <tbody>
+                  {g.items.length === 0 && !props.isEditing ? (
+                    <tr>
+                      <td
+                        colSpan={props.isEditing ? 5 : 4}
+                        style={{
+                          textAlign: "center",
+                          verticalAlign: "middle",
+                          color: "#9ca3af",
+                          fontStyle: "italic",
+                          padding: "10px",
+                          border: "0.8px solid #ccc",
+                        }}
+                      >
+                        ไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์
+                      </td>
+                    </tr>
+                  ) : (
+                    g.items.map((r: any, itemIdx: number) => (
+                      <tr key={itemIdx}>
+                        <td className={styles["first-column-cell"]}>
+                          7.{itemIdx + 1}
+                        </td>
+                        <td className={styles["group3-second-column-cell"]}>
+                          {r.label}
+                        </td>
+                        <td className={`${styles["group4-third-column-cell"]}`}>
+                          {r.status}
+                        </td>
+                        <td
+                          className={`${styles["group3-fourth-column-cell"]} `}
+                        >
+                          <button
+                            type="button"
+                            className={styles["action-link"]}
+                            onClick={() => handleOpenRowGroup4(itemIdx)}
+                          >
+                            คลิกดู
+                          </button>
+                        </td>
+                        {props.isEditing && (
+                          <td
+                            className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
+                            onClick={() =>
+                              handleRemoveGroup4Item(g.key, itemIdx)
+                            }
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleRemoveGroup4Item(g.key, itemIdx);
+                              }
+                            }}
+                          >
+                            ลบ
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
+                  {props.isEditing && (
+                    <tr
+                      style={{ cursor: "pointer" }}
+                      onClick={openAddGroup4}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openAddGroup4();
+                        }
+                      }}
+                    >
+                      <td className={styles["first-column-cell"]}>
+                        7.{g.items.length + 1}
+                      </td>
+                      <td
+                        colSpan={props.isEditing ? 4 : 3}
+                        className={styles["add-row-cell"]}
+                      >
+                        <div className={styles["add-row-centered"]}>
+                          <PlusIcon className={styles["pin-icon"]} />
+                          เพิ่มข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์
                         </div>
                       </td>
                     </tr>

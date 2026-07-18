@@ -39,20 +39,14 @@ const thaiShortDatePartsFormatter = new Intl.DateTimeFormat(THAI_DATE_LOCALE, {
   year: "numeric",
 });
 
-const thaiMonthYearPartsFormatter = new Intl.DateTimeFormat(
-  THAI_DATE_LOCALE,
-  {
-    month: "long",
-    year: "numeric",
-  },
-);
+const thaiMonthYearPartsFormatter = new Intl.DateTimeFormat(THAI_DATE_LOCALE, {
+  month: "long",
+  year: "numeric",
+});
 
-const thaiWeekdayShortFormatter = new Intl.DateTimeFormat(
-  THAI_WEEKDAY_LOCALE,
-  {
-    weekday: "short",
-  },
-);
+const thaiWeekdayShortFormatter = new Intl.DateTimeFormat(THAI_WEEKDAY_LOCALE, {
+  weekday: "short",
+});
 
 function getIntlPart(
   formatter: Intl.DateTimeFormat,
@@ -168,7 +162,7 @@ function getCalendarCells(monthDate: Date): CalendarCell[] {
 }
 
 type ReportListItem = SectorReport & {
-  location?: string;
+  department?: string;
   create_at?: string;
   user_id?: string | number;
   wear_pants_count?: number | string;
@@ -208,7 +202,7 @@ export default function MoListPage({
     setExpandedKey((prev) => (prev === key ? null : key));
   }, []);
 
-  const [selectedLocation, setSelectedLocation] = useState<string>(
+  const [selectedDepartment, setSelectedDepartment] = useState<string>(
     currentDept?.name ?? "",
   );
 
@@ -222,11 +216,11 @@ export default function MoListPage({
   const storeLoading = useStore((state) => state.isLoading);
 
   // Track last searched values — to highlight Search btn when values change
-  const [lastSearchedLocation, setLastSearchedLocation] =
-    useState(selectedLocation);
+  const [lastSearchedDepartment, setLastSearchedDepartment] =
+    useState(selectedDepartment);
   const [lastSearchedDate, setLastSearchedDate] = useState(selectedDate);
   const hasSearchChanged =
-    selectedLocation !== lastSearchedLocation ||
+    selectedDepartment !== lastSearchedDepartment ||
     selectedDate !== lastSearchedDate;
 
   // Position check: only position_id 1 or 5 can see the Department Group
@@ -302,17 +296,17 @@ export default function MoListPage({
   );
 
   async function submitSearch() {
-    if (!selectedLocation && !selectedDate) return;
+    if (!selectedDepartment && !selectedDate) return;
 
     let targetSectorId: number | undefined = undefined;
-    if (selectedLocation) {
+    if (selectedDepartment) {
       if (
         currentEmployee &&
-        selectedLocation === currentEmployee.department_name
+        selectedDepartment === currentEmployee.department_name
       ) {
         targetSectorId = currentEmployee.department_id as number;
       } else {
-        const deptPart = selectedLocation.split("|")[0].trim();
+        const deptPart = selectedDepartment.split("|")[0].trim();
         const match = deptPart.match(/(\d+)/);
         if (match) targetSectorId = Number(match[1]);
       }
@@ -338,7 +332,7 @@ export default function MoListPage({
     }
 
     await fetchReports(payload);
-    setLastSearchedLocation(selectedLocation);
+    setLastSearchedDepartment(selectedDepartment);
     setLastSearchedDate(selectedDate);
   }
 
@@ -365,13 +359,13 @@ export default function MoListPage({
     return DEPARTMENT_NAMES[deptId] ?? `ฝ่ายปฏิบัติการภาค ${deptId}`;
   }
 
-  const employeeLocations = useMemo(
+  const employeeDepartments = useMemo(
     () =>
       currentEmployee?.department_name ? [currentEmployee.department_name] : [],
     [currentEmployee?.department_name],
   );
 
-  const derivedLocations = useMemo(() => {
+  const derivedDepartments = useMemo(() => {
     try {
       const rows = reports;
       const map: Record<string, Set<string>> = {};
@@ -383,8 +377,8 @@ export default function MoListPage({
       });
       return Object.keys(map).map((k) => ({
         id: Number(k),
-        location: getDepartmentName(Number(k)),
-        sub_locations: Array.from(map[k]),
+        department: getDepartmentName(Number(k)),
+        divisions: Array.from(map[k]),
       }));
     } catch (_e) {
       return [] as any;
@@ -393,7 +387,7 @@ export default function MoListPage({
 
   const mappedReports: ReportListItem[] = reports.map((r: SectorReport) => ({
     ...r,
-    location:
+    department:
       r.department_id === currentEmployee?.department_id &&
       currentEmployee?.department_name
         ? currentEmployee.department_name
@@ -404,25 +398,27 @@ export default function MoListPage({
 
   const allSectorRecords = mappedReports;
 
-  const uniqueLocations = Array.from(
-    new Set(allSectorRecords.map((r) => r.location).filter(Boolean)),
+  const uniqueDepartments = Array.from(
+    new Set(allSectorRecords.map((r) => r.department).filter(Boolean)),
   ).sort() as string[];
 
   const locationOptions = useMemo(() => {
-    const deptOnly = derivedLocations.map((d: any) => d.location);
+    const deptOnly = derivedDepartments.map((d: any) => d.department);
     if (empCode) {
-      if (employeeLocations.length > 0) return employeeLocations;
-      return deptOnly.length > 0 ? deptOnly : uniqueLocations;
+      if (employeeDepartments.length > 0) return employeeDepartments;
+      return deptOnly.length > 0 ? deptOnly : uniqueDepartments;
     }
-    return deptOnly.length > 0 ? deptOnly : uniqueLocations;
-  }, [empCode, employeeLocations, derivedLocations, uniqueLocations]);
+    return deptOnly.length > 0 ? deptOnly : uniqueDepartments;
+  }, [empCode, employeeDepartments, derivedDepartments, uniqueDepartments]);
 
   const selectedSectorName =
-    selectedLocation || currentEmployee?.department_name || "";
+    selectedDepartment || currentEmployee?.department_name || "";
 
   const filteredData = useMemo(() => {
     if (selectedSectorName) {
-      return allSectorRecords.filter((r) => r.location === selectedSectorName);
+      return allSectorRecords.filter(
+        (r) => r.department === selectedSectorName,
+      );
     }
     return allSectorRecords;
   }, [allSectorRecords, selectedSectorName]);
@@ -440,7 +436,7 @@ export default function MoListPage({
         end_date: today,
       });
       fetchReports(filters);
-      setLastSearchedLocation(currentDept.name);
+      setLastSearchedDepartment(currentDept.name);
       setLastSearchedDate(today);
     }
   }, [currentDept]);
@@ -492,7 +488,7 @@ export default function MoListPage({
         onClose={() => {
           setShowNotFoundError(false);
           // Re-fetch search results since the data is stale
-          if (lastSearchedLocation || lastSearchedDate) {
+          if (lastSearchedDepartment || lastSearchedDate) {
             submitSearch();
           }
         }}
@@ -506,14 +502,14 @@ export default function MoListPage({
         <label className={styles["search-field-group"]}>
           <span className={styles["search-label"]}>ภาค</span>
           <select
-            value={selectedLocation}
-            onChange={(e) => setSelectedLocation(e.target.value)}
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
             className={styles["guts-mo-search-input"]}
           >
-            {(empCode ? employeeLocations : locationOptions).map(
-              (location: string) => (
-                <option key={location} value={location}>
-                  {location}
+            {(empCode ? employeeDepartments : locationOptions).map(
+              (option: string) => (
+                <option key={option} value={option}>
+                  {option}
                 </option>
               ),
             )}
@@ -585,7 +581,10 @@ export default function MoListPage({
 
                   <div className={styles["calendar-weekdays"]}>
                     {THAI_WEEKDAYS.map((weekday) => (
-                      <span key={weekday} className={styles["calendar-weekday"]}>
+                      <span
+                        key={weekday}
+                        className={styles["calendar-weekday"]}
+                      >
                         {weekday}
                       </span>
                     ))}
@@ -626,7 +625,7 @@ export default function MoListPage({
           aria-label="ค้นหา"
           onClick={submitSearch}
           type="button"
-          disabled={!selectedLocation && !selectedDate}
+          disabled={!selectedDepartment && !selectedDate}
         >
           <Search size={15} strokeWidth={2.6} />
         </button>
@@ -806,7 +805,7 @@ export default function MoListPage({
               ? renderNoData()
               : displayRecords.map((r: any, idx: number) => {
                   const key = r.id ?? r.user_id ?? idx;
-                  const subZone = r.subLocationLabel ?? r.division_name ?? "";
+                  const subZone = r.division_name ?? "";
                   const itemKey = String(key) + "-sub";
                   const isExpanded = expandedKey === itemKey;
 
@@ -819,6 +818,9 @@ export default function MoListPage({
                   const itemDeptTotal = sumByPrefix("dept_");
                   const itemTrainingTotal = sumByPrefix("training_");
                   const itemProjectCount = (r.projects || []).length;
+                  const itemGuardPostMovementCount = (
+                    r.guard_post_movements || []
+                  ).length;
                   const itemDisciplineCount = (r.disciplines || []).filter(
                     (d: any) => Number(d.value) > 0,
                   ).length;
@@ -912,6 +914,14 @@ export default function MoListPage({
                             </span>
                             <span className={styles["detail-value"]}>
                               {itemProjectCount} โครงการ
+                            </span>
+                          </div>
+                          <div className={styles["detail-row"]}>
+                            <span className={styles["detail-label"]}>
+                              เปลี่ยนแปลงจุด
+                            </span>
+                            <span className={styles["detail-value"]}>
+                              {itemGuardPostMovementCount} รายการ
                             </span>
                           </div>
                           <div className={styles["detail-row"]}>

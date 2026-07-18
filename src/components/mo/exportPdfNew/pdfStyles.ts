@@ -43,11 +43,13 @@ const COLOR_TEXT: [number, number, number] = [0, 0, 0];
 const COLOR_GRID_LINE: [number, number, number] = [208, 208, 208]; // #d0d0d0
 
 const STATUS_COLORS: Record<string, [number, number, number]> = {
+  // normal: [76, 175, 80],   // #4caf50 green temporarily disabled
   warning: [255, 152, 0],  // #ff9800 orange
   danger: [183, 28, 28],   // #b71c1c red
 };
 
 const STATUS_LABELS: Record<string, string> = {
+  // normal: "ปกติ", // temporarily disabled
   warning: "ผิดปกติ",
   danger: "ฉุกเฉิน",
 };

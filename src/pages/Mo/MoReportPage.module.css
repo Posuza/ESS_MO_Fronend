@@ -196,7 +196,7 @@ select.guts-mo-search-input option {
     padding: 6px 8px;
     box-sizing: border-box;
     border: 1px solid #ccc !important;
-    background-color: #ebebeb;
+    background-color: #f5f5f5 !important;
 }
 
 .pin-icon {
@@ -224,8 +224,7 @@ select.guts-mo-search-input option {
     background-color: #f5f5f5 !important;
     border: 1px solid #ccc !important;
     vertical-align: middle;
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 13px;
 }
 
 .sector-header-fullwidth {

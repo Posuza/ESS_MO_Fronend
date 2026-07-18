@@ -42,7 +42,7 @@ export default function DivisionDetailContent({
   projectOffset = 0,
   movementOffset = 0,
   renderProjects = true,
-  renderMovements = false,
+  renderMovements = true,
 }: Props) {
   const data = item;
 

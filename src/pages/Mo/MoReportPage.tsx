@@ -28,7 +28,7 @@ import {
 } from "./moPersistence";
 
 type ReportListItem = SectorReport & {
-  location?: string;
+  department?: string;
   create_at?: string;
   user_id?: string | number;
   wear_pants_count?: number | string;
@@ -135,8 +135,8 @@ export default function MoReportPage({
     return { id: 9, name: "ฝ่ายปฏิบัติการภาค 9" };
   });
 
-  // selectedLocation is a string (matches select option values). Initialize from currentDept if available.
-  const [selectedLocation, setSelectedLocation] = useState<string>(
+  // selectedDepartment is a string (matches select option values). Initialize from currentDept if available.
+  const [selectedDepartment, setSelectedDepartment] = useState<string>(
     currentDept?.name ?? "",
   );
 
@@ -177,27 +177,27 @@ export default function MoReportPage({
     }
   }
 
-  const employeeLocations = useMemo(
+  const employeeDepartments = useMemo(
     () =>
       currentEmployee?.department_name ? [currentEmployee.department_name] : [],
     [currentEmployee?.department_name],
   );
 
-  /* derive department -> location mapping from fixture (matches component logic) */
-  const derivedLocations = useMemo(() => {
+  /* derive department -> division mapping from fixture (matches component logic) */
+  const derivedDepartments = useMemo(() => {
     try {
       const rows = reports;
       const map: Record<string, Set<string>> = {};
       rows.forEach((r: any) => {
         const id = Number(r.department_id) || 0;
-        const sub = (r.sub_location ? String(r.sub_location) : "").trim();
+        const div = (r.division_name ? String(r.division_name) : "").trim();
         if (!map[id]) map[id] = new Set();
-        if (sub) map[id].add(sub);
+        if (div) map[id].add(div);
       });
       return Object.keys(map).map((k) => ({
         id: Number(k),
-        location: `Department ${k}`,
-        sub_locations: Array.from(map[k]),
+        department: `Department ${k}`,
+        divisions: Array.from(map[k]),
       }));
     } catch (e) {
       return [] as any;
@@ -206,7 +206,7 @@ export default function MoReportPage({
 
   const mappedReports: ReportListItem[] = reports.map((r: SectorReport) => ({
     ...r,
-    location:
+    department:
       r.department_id === currentEmployee?.department_id &&
       currentEmployee?.department_name
         ? currentEmployee.department_name
@@ -219,43 +219,43 @@ export default function MoReportPage({
 
   const allSectorRecords = mappedReports;
 
-  const uniqueLocations = Array.from(
-    new Set(allSectorRecords.map((r) => r.location).filter(Boolean)),
+  const uniqueDepartments = Array.from(
+    new Set(allSectorRecords.map((r) => r.department).filter(Boolean)),
   ).sort() as string[];
 
   /* Decide which location options to show in the top select:
-     - If empCode is true, prefer the employee's locations; if none, fall back to derivedLocations.
-     - Otherwise, use uniqueLocations from reports. */
+     - If empCode is true, prefer the employee's departments; if none, fall back to derivedDepartments.
+     - Otherwise, use uniqueDepartments from reports. */
   const locationOptions = useMemo(() => {
-    // Build combined options: department-only and department + sub_location entries
-    const derivedCombined = derivedLocations.flatMap(
+    // Build combined options: department-only and department + division entries
+    const derivedCombined = derivedDepartments.flatMap(
       (d) =>
         [
-          d.location,
-          ...d.sub_locations.map((s) => `${d.location} | ${s}`),
+          d.department,
+          ...d.divisions.map((s) => `${d.department} | ${s}`),
         ] as string[],
     );
 
     if (empCode) {
-      if (employeeLocations.length > 0) return employeeLocations;
-      return derivedCombined.length > 0 ? derivedCombined : uniqueLocations;
+      if (employeeDepartments.length > 0) return employeeDepartments;
+      return derivedCombined.length > 0 ? derivedCombined : uniqueDepartments;
     }
 
-    // Default: prefer derivedCombined if available, otherwise fall back to uniqueLocations
-    return derivedCombined.length > 0 ? derivedCombined : uniqueLocations;
-  }, [empCode, employeeLocations, derivedLocations, uniqueLocations]);
+    // Default: prefer derivedCombined if available, otherwise fall back to uniqueDepartments
+    return derivedCombined.length > 0 ? derivedCombined : uniqueDepartments;
+  }, [empCode, employeeDepartments, derivedDepartments, uniqueDepartments]);
 
   const selectedSectorName =
-    selectedLocation || currentEmployee?.department_name || "";
+    selectedDepartment || currentEmployee?.department_name || "";
 
   /* find selected department id (if any) so we can compute transactionIds */
   const selectedSectorId = useMemo(() => {
-    const found = derivedLocations.find(
-      (d) => d.location === selectedSectorName,
+    const found = derivedDepartments.find(
+      (d) => d.department === selectedSectorName,
     );
     if (found) return found.id;
     return currentDept?.id ?? currentEmployee?.department_id ?? null;
-  }, [derivedLocations, selectedSectorName, currentDept, currentEmployee]);
+  }, [derivedDepartments, selectedSectorName, currentDept, currentEmployee]);
 
   const selectedReportDate = selectedDate || initialDate || "";
 
@@ -412,8 +412,8 @@ export default function MoReportPage({
 
   const sectorNameForPdf = useMemo(() => {
     if (selectedTransactionRow) {
-      const divisionName = String(selectedTransactionRow.division_name ?? "");
-      return `ฝ่ายปฏิบัติการภาค ${selectedTransactionRow.department_id} ${divisionName}`;
+      const nm = String(selectedTransactionRow.division_name ?? "");
+      return `ฝ่ายปฏิบัติการภาค ${selectedTransactionRow.department_id} ${nm}`;
     }
     return selectedSectorName || "ฝ่ายปฏิบัติการภาค 9";
   }, [selectedTransactionRow, selectedSectorName]);
@@ -447,13 +447,13 @@ export default function MoReportPage({
                     <option value="">{currentDept?.name}</option>
 
                     {visibleReports.map((row: any) => {
-                      const divisionName = String(row.division_name ?? "");
+                      const nm = String(row.division_name ?? "");
                       return (
                         <option
                           key={row.id || row.mo_daily_transaction_id}
                           value={String(row.id || row.mo_daily_transaction_id)}
                         >
-                          {divisionName || row.division_name}
+                          {nm || row.division_name}
                         </option>
                       );
                     })}
@@ -469,7 +469,12 @@ export default function MoReportPage({
                   <MapPin className={styles["pin-icon"]} />
                 </td>
                 <td colSpan={3} className={styles["sector-cell-bodytext"]}>
-                  {String(selectedTransactionRow.division_name ?? "")}
+                  {(() => {
+                    const nm = String(
+                      selectedTransactionRow.division_name ?? "",
+                    );
+                    return nm;
+                  })()}
                 </td>
               </tr>
             </tbody>

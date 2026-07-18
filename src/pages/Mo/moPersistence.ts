@@ -24,7 +24,7 @@ const MO_REPORT_STATE_KEY = "mo_report_state";
 
 function readJson<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = sessionStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw) as T;
   } catch {
@@ -34,7 +34,7 @@ function readJson<T>(key: string): T | null {
 
 function writeJson(key: string, value: unknown) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    sessionStorage.setItem(key, JSON.stringify(value));
   } catch {
     // Ignore storage failures (private mode, quota issues, etc.)
   }
@@ -65,7 +65,7 @@ export function persistMoDetailState(itemId: number, source: MoDetailSource) {
 
 export function clearMoDetailState() {
   try {
-    localStorage.removeItem(MO_DETAIL_STATE_KEY);
+    sessionStorage.removeItem(MO_DETAIL_STATE_KEY);
   } catch {
     // Ignore storage failures.
   }
@@ -94,7 +94,7 @@ export function persistMoDetailEditState(itemId: number, isEditing: boolean) {
 
 export function clearMoDetailEditState() {
   try {
-    localStorage.removeItem(MO_DETAIL_EDIT_STATE_KEY);
+    sessionStorage.removeItem(MO_DETAIL_EDIT_STATE_KEY);
   } catch {
     // Ignore storage failures.
   }
@@ -123,7 +123,7 @@ export function persistMoReportState(state: SavedMoReportState) {
 
 export function clearMoReportState() {
   try {
-    localStorage.removeItem(MO_REPORT_STATE_KEY);
+    sessionStorage.removeItem(MO_REPORT_STATE_KEY);
   } catch {
     // Ignore storage failures.
   }

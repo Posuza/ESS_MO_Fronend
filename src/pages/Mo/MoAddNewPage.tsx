@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import MoNewForm from "../../components/mo/MoNewForm";
 import { useStore } from "../../store/store";
-import { MoLoadingPopup } from "../../components/mo/popup";
+import { ConfirmCancelDialog, MoLoadingPopup } from "../../components/mo/popup";
 import styles from "./MoAddNewPage.module.css";
 
 type Props = {
@@ -16,6 +16,8 @@ export default function MoAddNewPage({ onCancel }: Props) {
 
   // Loading popup with minimum 1.5-second display time
   const [showLoading, setShowLoading] = useState(true);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const loadingStartRef = useRef(0);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const MIN_LOADING_MS = 1500;
@@ -51,11 +53,11 @@ export default function MoAddNewPage({ onCancel }: Props) {
   >([]);
 
   // Combine departments and their divisions into one dictionary array
-  const locationOptions = useMemo(() => {
+  const departmentOptions = useMemo(() => {
     const dept = authEmployee?.department_name
       ? {
           id: authEmployee.department_id ?? 1,
-          location: authEmployee.department_name,
+          department: authEmployee.department_name,
         }
       : null;
 
@@ -88,22 +90,39 @@ export default function MoAddNewPage({ onCancel }: Props) {
       });
   }, [selectedDepartment, fetchAvailableReportDivisions]);
 
+  function handleBack() {
+    if (isDirty) {
+      setShowConfirmCancel(true);
+      return;
+    }
+    onCancel();
+  }
+
   return (
     <>
       <MoLoadingPopup open={showLoading} />
+      <ConfirmCancelDialog
+        open={showConfirmCancel}
+        onCancel={() => setShowConfirmCancel(false)}
+        onConfirm={() => {
+          setShowConfirmCancel(false);
+          onCancel();
+        }}
+      />
 
       {!showLoading && (
         <MoNewForm
-          selectedLocation={undefined}
+          selectedDivision={undefined}
           onCancel={onCancel}
-          locationOptions={locationOptions}
+          onDirtyChange={setIsDirty}
+          departmentOptions={departmentOptions}
         />
       )}
       <div className={styles["mo-back-outer"]}>
         <button
           type="button"
           className={styles["mo-back-btn"]}
-          onClick={onCancel}
+          onClick={handleBack}
         >
           ย้อนกลับ
         </button>

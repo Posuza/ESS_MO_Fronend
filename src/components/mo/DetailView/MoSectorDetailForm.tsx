@@ -19,6 +19,8 @@ interface Group {
   items: GroupItem[];
 }
 
+const fieldLabel = (label: string) => `${label} :`;
+
 export default function MoSectorDetailForm(props: Props) {
   const { fetchReportById, currentReport, reports } = useStore();
 
@@ -43,43 +45,43 @@ export default function MoSectorDetailForm(props: Props) {
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
         {
-          key: "dept_recruitment_count",
-          label: "รับ รปภ. ใหม่ :",
-          unit: "คน",
-        },
-        {
           key: "dept_guard_post_count",
-          label: "จุดรักษาการณ์ :",
+          label: "จุดรักษาการณ์",
           unit: "หน่วยงาน",
         },
         {
           key: "dept_current_personnel_count",
-          label: "กำลังพลปัจจุบัน :",
+          label: "กำลังพลปัจจุบัน",
           unit: "คน",
         },
         {
           key: "dept_missing_regular_count",
-          label: "ขาดตัวประจำ :",
+          label: "ขาดตัวประจำ",
           unit: "หน่วยงาน",
         },
         {
           key: "dept_missing_personnel_count",
-          label: "ขาดกำลังพล :",
+          label: "ขาดกำลังพล",
           unit: "คน",
         },
         {
           key: "dept_supplement_count",
-          label: "จัดกำลังพลเสริมพิเศษ :",
+          label: "จัดกำลังพลเสริมพิเศษ",
+          unit: "คน",
+        },
+        {
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่",
           unit: "คน",
         },
         {
           key: "dept_reserve_units_count",
-          label: "จำนวนหน่วยงานสำรองเวร :",
+          label: "จำนวนหน่วยงานสำรองเวร",
           unit: "หน่วย",
         },
         {
           key: "dept_reserve_personnel_count",
-          label: "จำนวนกำลังพลสำรองเวร :",
+          label: "จำนวนกำลังพลสำรองเวร",
           unit: "คน",
         },
       ],
@@ -88,21 +90,21 @@ export default function MoSectorDetailForm(props: Props) {
       key: "2",
       title: "การลา",
       items: [
-        { key: "leave_personal_count", label: "ลากิจ :", unit: "คน" },
-        { key: "leave_sick_count", label: "ลาป่วย :", unit: "คน" },
-        { key: "leave_absent_count", label: "ขาดงาน :", unit: "คน" },
-        { key: "leave_deserted_count", label: "หนีหาย :", unit: "คน" },
-        { key: "leave_resigned_count", label: "ลาออก :", unit: "คน" },
-        { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :", unit: "คน" },
+        { key: "leave_personal_count", label: "ลากิจ", unit: "คน" },
+        { key: "leave_sick_count", label: "ลาป่วย", unit: "คน" },
+        { key: "leave_absent_count", label: "ขาดงาน", unit: "คน" },
+        { key: "leave_deserted_count", label: "หนีหาย", unit: "คน" },
+        { key: "leave_resigned_count", label: "ลาออก", unit: "คน" },
+        { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล", unit: "คน" },
       ],
     },
     {
       key: "3",
       title: "การบริหารการควงเวร",
       items: [
-        { key: "shift_18_count", label: "18 ชั่วโมง :", unit: "คน" },
-        { key: "shift_24_count", label: "24 ชั่วโมง :", unit: "คน" },
-        { key: "shift_36_count", label: "36 ชั่วโมง :", unit: "คน" },
+        { key: "shift_18_count", label: "18 ชั่วโมง", unit: "คน" },
+        { key: "shift_24_count", label: "24 ชั่วโมง", unit: "คน" },
+        { key: "shift_36_count", label: "36 ชั่วโมง", unit: "คน" },
       ],
     },
     {
@@ -111,22 +113,22 @@ export default function MoSectorDetailForm(props: Props) {
       items: [
         {
           key: "training_shift_change_count",
-          label: "อบรมเปลี่ยนผลัด :",
+          label: "อบรมเปลี่ยนผลัด",
           unit: "หน่วยงาน",
         },
         {
           key: "training_planned_count",
-          label: "อบรมตามแผนงานที่กำหนด :",
+          label: "อบรมตามแผนงานที่กำหนด",
           unit: "หน่วยงาน",
         },
         {
           key: "training_supervise_onsite_count",
-          label: "ควบคุมหน้างาน :",
+          label: "ควบคุมหน้างาน",
           unit: "หน่วยงาน",
         },
         {
           key: "training_supervise_virtual_simulation_count",
-          label: "จำลองสถานการณ์เสมือนจริง :",
+          label: "จำลองสถานการณ์เสมือนจริง",
           unit: "หน่วยงาน",
         },
       ],
@@ -137,65 +139,11 @@ export default function MoSectorDetailForm(props: Props) {
   const group2: Group[] = useMemo(() => {
     if (!reportData) return [];
     const disciplines = (reportData as any).disciplines || [];
-    const items: GroupItem[] =
-      disciplines.length > 0
-        ? disciplines.map((d: any) => ({
-            key: d.key,
-            label: d.label + " :",
-            unit: "คน",
-          }))
-        : [
-            {
-              key: "discipline_sleeping_on_duty_count",
-              label: "หลับเวร :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_abandoning_post_count",
-              label: "ทิ้งจุด :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_absent_work_count",
-              label: "ขาดงาน :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_early_leaved_duty_count",
-              label: "ออกเวรก่อนเวลา :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_using_phone_on_duty_count",
-              label: "เล่นโทรศัพท์ :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_client_complained_count",
-              label: "ผู้ว่าจ้างตำหนิ :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_improper_attire_count",
-              label: "แต่งการไม่เรียบร้อย :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_failed_write_report_count",
-              label: "ไม่เขียนรายงาน :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_early_write_report_count",
-              label: "เขียนรายงานล่วงหน้า :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_using_drugs_on_duty_count",
-              label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
-              unit: "คน",
-            },
-          ];
+    const items: GroupItem[] = disciplines.map((d: any) => ({
+      key: d.key,
+      label: d.label,
+      unit: "คน",
+    }));
     return [{ key: "5", title: "วินัยและการลงโทษ", items }];
   }, [reportData]);
 
@@ -205,6 +153,7 @@ export default function MoSectorDetailForm(props: Props) {
     if (disciplines.length === 0) return false;
     return disciplines.some((d: any) => Number(d.value) > 0);
   }, [reportData]);
+
   // ── Dynamic group3: projects ─────────────────────────────────────────────
   const group3: Group[] = useMemo(() => {
     if (!reportData) return [];
@@ -215,6 +164,17 @@ export default function MoSectorDetailForm(props: Props) {
       unit: "หน่วยงาน",
     }));
     return [{ key: "6", title: "เข้าพบผู้ว่าจ้าง", items }];
+  }, [reportData]);
+
+  // ── Dynamic group4: guard post movements ──────────────────────────────────
+  const movementsList = useMemo(() => {
+    if (!reportData) return [];
+    return ((reportData as any).guard_post_movements || []).map((m: any) => ({
+      name: m.name ?? m.project_name ?? "-",
+      detail: m.detail ?? "",
+      status: m.status ?? "",
+      note: m.note ?? "",
+    }));
   }, [reportData]);
 
   // ── Value resolver ───────────────────────────────────────────────────────
@@ -267,7 +227,9 @@ export default function MoSectorDetailForm(props: Props) {
               <td className={styles["first-column-cell"]}>
                 {groupIdx + 1}.{itemIdx + 1}
               </td>
-              <td className={styles["second-column-cell"]}>{item.label}</td>
+              <td className={styles["second-column-cell"]}>
+                {fieldLabel(item.label)}
+              </td>
               <td className={styles["third-column-cell"]}>
                 <div className={styles["third-column-text"]}>
                   {getVal(item.key)}
@@ -364,6 +326,72 @@ export default function MoSectorDetailForm(props: Props) {
     );
   };
 
+  // ── Guard post movement table renderer ──────────────────────────────────
+  const renderGuardPostTable = (groupIdx: number, headerClass: string) => {
+    const movements = movementsList;
+
+    return (
+      <div className={styles["mo-table-wrapper"]} key="guard_post_movement">
+        <table className={styles["mo-table"]}>
+          <thead>
+            <tr>
+              <th
+                colSpan={1}
+                className={`${styles["first-column-cell"]} ${styles["no-border"]} ${headerClass}`}
+              >
+                {groupIdx + 1}.
+              </th>
+              <th
+                colSpan={3}
+                className={`${styles["mo-table-header"]} ${headerClass} ${styles["no-border"]}`}
+              >
+                <div className={styles["mo-header"]}>
+                  <p>การเปลี่ยนแปลงจุดรักษาการณ์</p>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {movements.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                    color: "#9ca3af",
+                    fontStyle: "italic",
+                    padding: "10px",
+                    border: "0.8px solid #ccc",
+                  }}
+                >
+                  ไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์
+                </td>
+              </tr>
+            ) : (
+              movements.map((m: any, idx: number) => (
+                <tr key={idx}>
+                  <td className={styles["first-column-cell"]}>
+                    {groupIdx + 1}.{idx + 1}
+                  </td>
+                  <td className={styles["second-column-cell"]}>{m.name}</td>
+                  <td className={styles["group3-third-column-cell"]}>
+                    {m.status || "-"}
+                  </td>
+                  <td
+                    className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-success"]}`}
+                  >
+                    หน่วยงาน
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   // ── Loading / no data ────────────────────────────────────────────────────
   if (!reportData) {
     return (
@@ -374,7 +402,11 @@ export default function MoSectorDetailForm(props: Props) {
   }
 
   // ── Meta info row (division + date + status) ─────────────────────────────
-  const sub = String(rd?.division_name ?? "") || "-";
+  const sub = (() => {
+    const val = String(rd?.division_name ?? "");
+    const m = val.match(/เขต\s+[\d.]+/);
+    return m ? m[0] : val || "-";
+  })();
   const reportDate =
     (rd?.report_date as string) ||
     ((rd?.created_at as string)?.slice(0, 10) ?? "-");
@@ -458,6 +490,13 @@ export default function MoSectorDetailForm(props: Props) {
             styles["mo-table-header-green"],
           ),
         )}
+
+        {/* Group 4 — การเปลี่ยนแปลงจุดรักษาการณ์ */}
+        {movementsList.length > 0 &&
+          renderGuardPostTable(
+            group1.length + group2.length + group3.length,
+            styles["mo-table-header-green"],
+          )}
       </div>
     </div>
   );

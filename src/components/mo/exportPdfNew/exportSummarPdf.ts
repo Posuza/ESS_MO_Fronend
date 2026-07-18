@@ -15,7 +15,7 @@
 //   Groups: group1 (1-4)                      For each column:
 //           dynamicGroup2 (5)                   • Division header
 //           group3Static (6)                    • Sector tables (3/row)
-//           group4Summary (7 disabled)          • Projects (4-row blocks)
+//           group4Summary (7)                   • Projects (4-row blocks)
 //                                              • Guard movements
 //        │                                                 │
 //        └──────────────────┬──────────────────────────────┘
@@ -38,7 +38,7 @@
 //   4: อบรมและควบคุมหน้างาน      (group1[3] — training)
 //   5: วินัยและการลงโทษ          (dynamicGroup2[0] — discipline)
 //   6: เข้าพบผู้ว่าจ้าง            (group3Static[0] — meeting, isGroup3)
-//   7: การเปลี่ยนแปลงจุดรักษาการณ์ (disabled — will use later)
+//   7: การเปลี่ยนแปลงจุดรักษาการณ์ (buildGroup4ForSummary — guard_movements)
 //
 
 import { jsPDF } from "jspdf";
@@ -51,8 +51,8 @@ import {
   group1,
   buildGroup2ForSummary,
   group3Static,
-  // buildGroup4ForSummary, // DISABLED — will use later
-  // buildGroup4GuardMovements as buildSummaryGroup4, // DISABLED — will use later
+  buildGroup4ForSummary,
+  buildGroup4GuardMovements as buildSummaryGroup4,
 } from "../PdfRender/summaries/summaryGroups";
 import {
   getCols,
@@ -144,8 +144,8 @@ export async function buildSummariesPdf(
     }
 
     // ── Summary Grid Tables ────────────────────────────────
-    // const group4Summary = buildGroup4ForSummary(summaryReports); // DISABLED — will use later
     const dynamicGroup2 = buildGroup2ForSummary(summaryReports);
+    const group4Summary = buildGroup4ForSummary(summaryReports);
     const allSummaryGroups: Array<{
       g: PdfGroup;
       index: number;
@@ -158,7 +158,7 @@ export async function buildSummariesPdf(
         isGroup3: false,
       })),
       ...group3Static.map((g) => ({ g, index: 6, isGroup3: true })),
-      // { g: group4Summary, index: 7, isGroup3: false }, // DISABLED — will use later
+      { g: group4Summary, index: 7, isGroup3: false },
     ];
 
     const tablesPerRow = getTablesPerRow(cols.length);
@@ -210,7 +210,7 @@ export async function buildSummariesPdf(
       const colReport = (col as any).report as Record<string, any>;
 
       const detailGroup2 = buildGroup2Disciplines(colReport);
-      // const detailGroup4 = buildSummaryGroup4(colReport); // DISABLED — will use later
+      const detailGroup4 = buildSummaryGroup4(colReport);
 
       const detailGroup3 = buildGroup3Projects(colReport);
 
@@ -222,7 +222,7 @@ export async function buildSummariesPdf(
         ...groupDefs,
         ...detailGroup2,
         ...detailGroup3,
-        // detailGroup4, // DISABLED — will use later
+        detailGroup4,
       ];
 
       const group2Keys = detailGroup2.map((g) => g.key);
@@ -292,7 +292,7 @@ export async function buildSummariesPdf(
           note: p.note ?? "",
         }),
       );
-      // const guardItems: PdfGroupItem[] = detailGroup4.items; // DISABLED — will use later
+      const guardItems: PdfGroupItem[] = detailGroup4.items;
 
       // Start a new page for detail sections (keep separate from division tables)
       y = await startNewPage(doc, sectorName, TITLE, col.division);
@@ -302,7 +302,7 @@ export async function buildSummariesPdf(
       const result = await renderProjectAndMovementDetails(
         doc,
         rawProjectItems,
-        [], // guardItems disabled — will use later
+        guardItems,
         y,
         { sectorName, title: TITLE, division: col.division },
       );

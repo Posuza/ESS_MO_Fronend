@@ -433,6 +433,10 @@
    STATUS BADGES (group3 rows)
    ═══════════════════════════════════════════════════════════ */
 
+.status-normal {
+    color: #4caf50 !important;
+}
+
 .status-warning {
     color: #ff9800 !important;
 }

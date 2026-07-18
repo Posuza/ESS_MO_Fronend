@@ -13,19 +13,6 @@
 
 import { type PdfGroup } from "../shared/PaginationSystem";
 
-const defaultDisciplineItems = [
-  { key: "discipline_sleeping_on_duty_count", label: "หลับเวร", unit: "คน" },
-  { key: "discipline_abandoning_post_count", label: "ทิ้งจุด", unit: "คน" },
-  { key: "discipline_absent_work_count", label: "ขาดงาน", unit: "คน" },
-  { key: "discipline_early_leaved_duty_count", label: "ออกเวรก่อนเวลา", unit: "คน" },
-  { key: "discipline_using_phone_on_duty_count", label: "เล่นโทรศัพท์", unit: "คน" },
-  { key: "discipline_client_complained_count", label: "ผู้ว่าจ้างตำหนิ", unit: "คน" },
-  { key: "discipline_improper_attire_count", label: "แต่งการไม่เรียบร้อย", unit: "คน" },
-  { key: "discipline_failed_write_report_count", label: "ไม่เขียนรายงาน", unit: "คน" },
-  { key: "discipline_early_write_report_count", label: "เขียนรายงานล่วงหน้า", unit: "คน" },
-  { key: "discipline_using_drugs_on_duty_count", label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน", unit: "คน" },
-];
-
 // ─── Group 1 — Department / Leave / Shift / Training ─────────
 // Cross-location summary: values per sub-location shown as columns.
 export const group1: PdfGroup[] = [
@@ -33,11 +20,6 @@ export const group1: PdfGroup[] = [
     key: "dept",
     title: "หน่วยงานที่รับผิดชอบ",
     items: [
-      {
-        key: "dept_recruitment_count",
-        label: "รับ รปภ. ใหม่",
-        unit: "คน",
-      },
       {
         key: "dept_guard_post_count",
         label: "จุดรักษาการณ์",
@@ -57,6 +39,11 @@ export const group1: PdfGroup[] = [
       {
         key: "dept_supplement_count",
         label: "จัดกำลังพลเสริมพิเศษ",
+        unit: "คน",
+      },
+      {
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
         unit: "คน",
       },
       {
@@ -80,11 +67,7 @@ export const group1: PdfGroup[] = [
       { key: "leave_absent_count", label: "ขาดงาน", unit: "คน" },
       { key: "leave_deserted_count", label: "หนีหาย", unit: "คน" },
       { key: "leave_resigned_count", label: "ลาออก", unit: "คน" },
-      {
-        key: "leave_terminated_count",
-        label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล",
-        unit: "คน",
-      },
+      { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล", unit: "คน" },
     ],
   },
   {
@@ -145,7 +128,7 @@ export function buildGroup2ForSummary(reports: any[]): PdfGroup[] {
     {
       key: "discipline",
       title: "วินัยและการลงโทษ",
-      items: itemsByKey.size > 0 ? Array.from(itemsByKey.values()) : defaultDisciplineItems,
+      items: Array.from(itemsByKey.values()),
     },
   ];
 }
@@ -158,6 +141,7 @@ export const group3Static: PdfGroup[] = [
     key: "meeting",
     title: "เข้าพบผู้ว่าจ้าง",
     items: [
+      // { key: "normal", label: "ปกติ", status: "normal", unit: "หน่วยงาน" }, // temporarily disabled
       { key: "warning", label: "ผิดปกติ", status: "warning", unit: "หน่วยงาน" },
       { key: "danger", label: "ฉุกเฉิน", status: "danger", unit: "หน่วยงาน" },
     ],

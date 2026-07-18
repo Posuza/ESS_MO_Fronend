@@ -14,6 +14,10 @@ import { type JSX } from "react";
 import { type PdfGroup } from "../shared/PaginationSystem";
 import { type SummaryColumn, SUMMARY_STYLES } from "./summaryHelpers";
 
+const fieldLabel = (label: string) => `${label} :`;
+const shouldFormatFieldLabel = (groupKey: string) =>
+  ["dept", "leave", "shift", "training", "discipline"].includes(groupKey);
+
 // ─── Dynamic grid-span helper ────────────────────────────────
 export function getWrapperClass(
   colCount: number,
@@ -118,17 +122,7 @@ export function renderSingleGroup(
             <td className={formStyles["fourth-column-header-cell"]} />
           </tr>
 
-          {g.items.length === 0 ? (
-            <tr>
-              <td
-                colSpan={cols.length + 4}
-                className={formStyles["second-column-cell"]}
-                style={{ textAlign: "center" }}
-              >
-                ไม่มีข้อมูล
-              </td>
-            </tr>
-          ) : g.items.map((r, i) => {
+          {g.items.map((r, i) => {
             const perLocVals = cols.map((c) => {
               if (isGroup3)
                 return String(
@@ -158,7 +152,7 @@ export function renderSingleGroup(
                       : `${formStyles["second-column-cell"]} ${zebraClass}`
                   }
                 >
-                  {r.label}
+                  {shouldFormatFieldLabel(g.key) ? fieldLabel(r.label) : r.label}
                 </td>
                 {perLocVals.map((val, j) => (
                   <td

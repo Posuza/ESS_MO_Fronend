@@ -4,9 +4,13 @@ import styles from "./MoNewForm.module.css";
 import { useStore } from "../../store/store";
 import { ConfirmCancelDialog, InfoModel, MoLoadingPopup } from "./popup";
 
-export type EmployeeLocation = {
+// ============================================================
+// TYPES & INTERFACES
+// ============================================================
+
+export type EmployeeDepartment = {
   id: number;
-  location: string;
+  department: string;
 };
 
 type DivisionOption = {
@@ -15,72 +19,284 @@ type DivisionOption = {
   shortName: string;
 };
 
-export type LocationOption = {
-  department: EmployeeLocation;
+export type DepartmentOption = {
+  department: EmployeeDepartment;
   divisions: DivisionOption[];
-};
-
-// Define the form data type for persistence
-type FormData = {
-  selectedDepartment: number;
-  selectedSubLocation: string;
-  // Group 1 - Personnel
-  dept_guard_post_count: string;
-  dept_current_personnel_count: string;
-  dept_missing_regular_count: string;
-  dept_missing_personnel_count: string;
-  dept_supplement_count: string;
-  dept_recruitment_count: string;
-  dept_reserve_units_count: string;
-  dept_reserve_personnel_count: string;
-  // Group 2 - Leave
-  leave_personal_count: string;
-  leave_sick_count: string;
-  leave_absent_count: string;
-  leave_deserted_count: string;
-  leave_resigned_count: string;
-  leave_terminated_count: string;
-  // Group 3 - Shift
-  shift_18_count: string;
-  shift_24_count: string;
-  shift_36_count: string;
-  // Group 4 - Training
-  training_shift_change_count: string;
-  training_planned_count: string;
-  training_supervise_onsite_count: string;
-  training_supervise_virtual_simulation_count: string;
-
-  // Dynamic group 2 items
-  dynamicGroup2: Array<{
-    key: string;
-    label: string;
-    value: string;
-    isActive: boolean;
-  }>;
-  // Dynamic group 3 items
-  dynamicGroup3: Array<{
-    label: string;
-    detail: string;
-    status: string;
-    note: string;
-  }>;
 };
 
 type Props = {
   onCancel?: () => void;
-  selectedLocation?: string;
-  locationOptions?: LocationOption[];
-  usedSubLocations?: string[];
+  onDirtyChange?: (dirty: boolean) => void;
+  selectedDivision?: string;
+  departmentOptions?: DepartmentOption[];
+  usedDivisions?: string[];
 };
 
+// ============================================================
+// STATIC CONFIGURATION
+// ============================================================
+
+/** Status display labels & keys for meeting records (Group 3) */
+const statusOptions = [
+  // { label: "ปกติ", key: "normal" }, // temporarily disabled
+  { label: "ผิดปกติ", key: "warning" },
+  { label: "ฉุกเฉิน", key: "danger" },
+];
+
+/** Minimum time (ms) the submission loading popup must display */
+const MIN_SUBMIT_MS = 2000;
+
+/** Sections 1-4: numeric count groups (personnel, leave, shift, training) */
+const group1: Array<{
+  key: string;
+  title: string;
+  items: { key: string; label: string; unit: string; value: string }[];
+}> = [
+  {
+    key: "dept",
+    title: "หน่วยงานที่รับผิดชอบ",
+    items: [
+      {
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_guard_post_count",
+        label: "จุดรักษาการณ์",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "dept_current_personnel_count",
+        label: "กำลังพลปัจจุบัน",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_missing_regular_count",
+        label: "ขาดตัวประจำ",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "dept_missing_personnel_count",
+        label: "ขาดกำลังพล",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_supplement_count",
+        label: "จัดกำลังพลเสริมพิเศษ",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_reserve_units_count",
+        label: "จำนวนหน่วยงานสำรองเวร",
+        unit: "หน่วย",
+        value: "0",
+      },
+      {
+        key: "dept_reserve_personnel_count",
+        label: "จำนวนกำลังพลสำรองเวร",
+        unit: "คน",
+        value: "0",
+      },
+    ],
+  },
+  {
+    key: "leave",
+    title: "การลา",
+    items: [
+      { key: "leave_personal_count", label: "ลากิจ", unit: "คน", value: "0" },
+      { key: "leave_sick_count", label: "ลาป่วย", unit: "คน", value: "0" },
+      { key: "leave_absent_count", label: "ขาดงาน", unit: "คน", value: "0" },
+      {
+        key: "leave_deserted_count",
+        label: "หนีหาย",
+        unit: "คน",
+        value: "0",
+      },
+      { key: "leave_resigned_count", label: "ลาออก", unit: "คน", value: "0" },
+      {
+        key: "leave_terminated_count",
+        label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล",
+        unit: "คน",
+        value: "0",
+      },
+    ],
+  },
+  {
+    key: "shift",
+    title: "การบริหารการควงเวร",
+    items: [
+      { key: "shift_18_count", label: "18 ชั่วโมง", unit: "คน", value: "0" },
+      { key: "shift_24_count", label: "24 ชั่วโมง", unit: "คน", value: "0" },
+      { key: "shift_36_count", label: "36 ชั่วโมง", unit: "คน", value: "0" },
+    ],
+  },
+  {
+    key: "training",
+    title: "อบรมและควบคุมหน้างาน",
+    items: [
+      {
+        key: "training_shift_change_count",
+        label: "อบรมเปลี่ยนผลัด",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "training_planned_count",
+        label: "อบรมตามแผนงานที่กำหนด",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "training_supervise_onsite_count",
+        label: "ควบคุมหน้างาน",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "training_supervise_virtual_simulation_count",
+        label: "จำลองสถานการณ์เสมือนจริง",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+    ],
+  },
+];
+
+/** Default discipline items for Group 2 (วินัยและการลงโทษ) */
+const group2DefaultItems = [
+  {
+    key: "discipline_sleeping_on_duty_count",
+    label: "หลับเวร",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_abandoning_post_count",
+    label: "ทิ้งจุด",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_absent_work_count",
+    label: "ขาดงาน",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_early_leaved_duty_count",
+    label: "ออกเวรก่อนเวลา",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_using_phone_on_duty_count",
+    label: "เล่นโทรศัพท์",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_client_complained_count",
+    label: "ผู้ว่าจ้างตำหนิ",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_improper_attire_count",
+    label: "แต่งการไม่เรียบร้อย",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_failed_write_report_count",
+    label: "ไม่เขียนรายงาน",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_early_write_report_count",
+    label: "เขียนรายงานล่วงหน้า",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+  {
+    key: "discipline_using_drugs_on_duty_count",
+    label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน",
+    unit: "คน",
+    value: "0",
+    isActive: false,
+  },
+];
+
+const fieldLabel = (label: string) => `${label} :`;
+
+/** Template for Group 3 (meeting records) */
+const group3 = [
+  {
+    key: "meeting",
+    title: "เข้าพบผู้ว่าจ้าง",
+    items: [] as {
+      label: string;
+      detail: string;
+      status: string;
+      note: string;
+    }[],
+  },
+];
+
+/** Template for Group 4 (guard post movement) */
+const group4 = [
+  {
+    key: "guard_post_movement",
+    title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+    items: [] as {
+      label: string;
+      detail: string;
+      status: string;
+      note: string;
+    }[],
+  },
+];
+
+/** Status options for Group 4 (guard post movement) — simple string array */
+const group4StatusOptions = [
+  "ลงจุดใหม่",
+  "ถอนจุด",
+  "ยกเลิกสัญญา",
+  "ลดกำลัง",
+  "เพิ่มกำลัง",
+];
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
 export default function MoNewForm(props: Props) {
-  const { createReport, authEmployee, fetchDistinctDisciplineTypes } =
-    useStore();
+  // ---- 1. Store & Props ----
+  const {
+    createReport,
+    authEmployee,
+    fetchDistinctDisciplineTypes,
+    fetchDistinctGuardPostMovementStatuses,
+  } = useStore();
+  const { departmentOptions = [], usedDivisions = [] } = props;
 
-  // Generate unique key for form data persistence based on employee code
-  const formPersistenceKey = `moNewForm_${authEmployee?.employee_code || "anonymous"}`;
-
-  // Fetch all distinct discipline types (key + label only) from the data
+  // ---- 2. Data Fetching ----
   const [distinctDisciplineTypes, setDistinctDisciplineTypes] = useState<
     { key: string; label: string }[]
   >([]);
@@ -94,423 +310,55 @@ export default function MoNewForm(props: Props) {
     });
   }, [fetchDistinctDisciplineTypes]);
 
-  // Props-injected data
-  const { locationOptions = [], usedSubLocations = [] } = props;
-
-  // Derive locations from the dictionary array
-  const locations = locationOptions.map((o) => o.department);
-
-  // Check if we have saved form data in localStorage
-  const [savedFormData, setSavedFormData] = useState<FormData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Load saved form data from localStorage
+  /** Guard post movement statuses: predefined + custom from other reports */
+  const [guardPostStatusesOptions, setGuardPostStatusesOptions] =
+    useState<string[]>(group4StatusOptions);
   useEffect(() => {
-    try {
-      const savedData = localStorage.getItem(formPersistenceKey);
-      if (savedData) {
-        const parsedData = JSON.parse(savedData) as FormData;
-        setSavedFormData(parsedData);
+    fetchDistinctGuardPostMovementStatuses().then((statuses) => {
+      if (statuses.length > 0) {
+        const merged = Array.from(
+          new Set([...group4StatusOptions, ...statuses]),
+        );
+        setGuardPostStatusesOptions(merged);
       }
-    } catch (error) {
-      console.error("Failed to load form data from localStorage", error);
-    }
-    setIsLoading(false);
-  }, [formPersistenceKey]);
+    });
+  }, [fetchDistinctGuardPostMovementStatuses]);
 
-  // Initialize selectedDepartment from saved data or defaults
+  // ---- 3. Derived Values (from props) ----
+  const departments = departmentOptions.map((o) => o.department);
+
+  // ---- 4. Form State ----
   const [selectedDepartment, setSelectedDepartment] = useState<number>(() => {
-    if (savedFormData?.selectedDepartment)
-      return savedFormData.selectedDepartment;
-    return authEmployee?.department_id ?? locations[0]?.id ?? 1;
+    return authEmployee?.department_id ?? departments[0]?.id ?? 1;
   });
 
-  // Derive divisionOptions for the currently selected department
-  const currentLocation = locationOptions.find(
+  const currentDepartmentOption = departmentOptions.find(
     (o) => o.department.id === selectedDepartment,
   );
-  const divisionOptions = currentLocation?.divisions ?? [];
-  const availableSubSectorOptions = divisionOptions.filter(
-    (d) => !usedSubLocations.includes(d.shortName),
+  const divisionOptions = currentDepartmentOption?.divisions ?? [];
+  const availableDivisionOptions = divisionOptions.filter(
+    (d) => !usedDivisions.includes(d.shortName),
   );
 
-  // Initialize selectedSubLocation from saved data or defaults
-  const [selectedSubLocation, setSelectedSubLocation] = useState<string>(() => {
-    if (savedFormData?.selectedSubLocation)
-      return savedFormData.selectedSubLocation;
-    return "";
-  });
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
 
-  useEffect(() => {
-    if (availableSubSectorOptions.length === 0) {
-      if (selectedSubLocation) setSelectedSubLocation("");
-      return;
-    }
-
-    const selectedStillAvailable = availableSubSectorOptions.some(
-      (option) => option.shortName === selectedSubLocation,
-    );
-    if (!selectedStillAvailable) {
-      setSelectedSubLocation(availableSubSectorOptions[0].shortName);
-    }
-  }, [availableSubSectorOptions, selectedSubLocation]);
-
-  // confirmation dialog state
-  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showFail, setShowFail] = useState(false);
-  const [failMessage, setFailMessage] = useState("");
-
-  // Submission loading popup with minimum 2-second display time
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const submitStartRef = useRef(0);
-  const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const MIN_SUBMIT_MS = 2000;
-
-  useEffect(() => {
-    return () => {
-      if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
-    };
-  }, []);
-
-  // status options for group3 rows (cycle on click)
-  const statusOptions = [
-    // { label: "ปกติ", key: "normal" }, // temporarily disabled
-    { label: "ผิดปกติ", key: "warning" },
-    { label: "ฉุกเฉิน", key: "danger" },
-  ];
-
-  // status state per-row (initialized after groups mount)
-  const [rowStatus, setRowStatus] = useState<Record<string, number>>({});
-  // dynamicGroup3 must exist before this effect runs, declare it here (hydrated later)
-  const [dynamicGroup3, setDynamicGroup3] = useState(() => {
-    if (savedFormData?.dynamicGroup3) {
-      return [
-        {
-          key: "meeting",
-          title: "เข้าพบผู้ว่าจ้าง",
-          items: savedFormData.dynamicGroup3,
-        },
-      ];
-    }
-    return [
-      {
-        key: "meeting",
-        title: "เข้าพบผู้ว่าจ้าง",
-        items: [],
-      },
-    ];
-  });
-
-  useEffect(() => {
-    const init: Record<string, number> = {};
-    // initialize only for group3 items (index-based)
-    dynamicGroup3.forEach((g) => {
-      g.items.forEach((it, i) => {
-        const idx = statusOptions.findIndex(
-          (s) => s.key === (it as any).status,
-        );
-        init[String(i)] = idx >= 0 ? idx : 0;
-      });
-    });
-    setRowStatus(init);
-  }, [dynamicGroup3]);
-
-  // Initialize dynamicGroup2 from saved data or defaults
   const [dynamicGroup2, setDynamicGroup2] = useState(() => {
-    if (savedFormData?.dynamicGroup2) {
-      return [
-        {
-          key: "discipline",
-          title: "วินัยและการลงโทษ",
-          items: savedFormData.dynamicGroup2,
-        },
-      ];
-    }
-
     return [
       {
         key: "discipline",
         title: "วินัยและการลงโทษ",
-        items: [
-          {
-            key: "discipline_sleeping_on_duty_count",
-            label: "หลับเวร :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_abandoning_post_count",
-            label: "ทิ้งจุด :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_absent_work_count",
-            label: "ขาดงาน :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_early_leaved_duty_count",
-            label: "ออกเวรก่อนเวลา :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_using_phone_on_duty_count",
-            label: "เล่นโทรศัพท์ :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_client_complained_count",
-            label: "ผู้ว่าจ้างตำหนิ :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_improper_attire_count",
-            label: "แต่งการไม่เรียบร้อย :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_failed_write_report_count",
-            label: "ไม่เขียนรายงาน :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_early_write_report_count",
-            label: "เขียนรายงานล่วงหน้า :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-          {
-            key: "discipline_using_drugs_on_duty_count",
-            label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
-            unit: "คน",
-            value: "0",
-            isActive: false,
-          },
-        ],
-
+        items: group2DefaultItems,
       },
     ];
   });
 
-  const cycleStatus = (idx: number) => {
-    setDynamicGroup3((prev) =>
-      prev.map((g) => ({
-        ...g,
-        items: g.items.map((item, i) => {
-          if (i !== idx) return item;
-          const currentIdx = statusOptions.findIndex(
-            (s) => s.key === item.status,
-          );
-          const nextIdx = (currentIdx + 1) % statusOptions.length;
-          return { ...item, status: statusOptions[nextIdx].key };
-        }),
-      })),
-    );
-  };
+  const [dynamicGroup3, setDynamicGroup3] = useState(() => {
+    return group3;
+  });
 
-  // grouped rows config under the main personnel header
-  const group1 = [
-    {
-      key: "dept",
-      title: "หน่วยงานที่รับผิดชอบ",
-      items: [
-        {
-          key: "dept_recruitment_count",
-          label: "รับ รปภ. ใหม่ :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_guard_post_count",
-          label: "จุดรักษาการณ์ :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "dept_current_personnel_count",
-          label: "กำลังพลปัจจุบัน :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_missing_regular_count",
-          label: "ขาดตัวประจำ :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "dept_missing_personnel_count",
-          label: "ขาดกำลังพล :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_supplement_count",
-          label: "จัดกำลังพลเสริมพิเศษ :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "dept_reserve_units_count",
-          label: "จำนวนหน่วยงานสำรองเวร :",
-          unit: "หน่วย",
-          value: "0",
-        },
-        {
-          key: "dept_reserve_personnel_count",
-          label: "จำนวนกำลังพลสำรองเวร :",
-          unit: "คน",
-          value: "0",
-        },
-      ],
-    },
-    {
-      key: "leave",
-      title: "การลา",
-      items: [
-        {
-          key: "leave_personal_count",
-          label: "ลากิจ :",
-          unit: "คน",
-          value: "0",
-        },
-        { key: "leave_sick_count", label: "ลาป่วย :", unit: "คน", value: "0" },
-        {
-          key: "leave_absent_count",
-          label: "ขาดงาน :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "leave_deserted_count",
-          label: "หนีหาย :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "leave_resigned_count",
-          label: "ลาออก :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "leave_terminate_count",
-          label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :",
-          unit: "คน",
-          value: "0",
-        },
-      ],
-    },
-    {
-      key: "shift",
-      title: "การบริหารการควงเวร",
-      items: [
-        {
-          key: "shift_18_count",
-          label: "18 ชั่วโมง :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "shift_24_count",
-          label: "24 ชั่วโมง :",
-          unit: "คน",
-          value: "0",
-        },
-        {
-          key: "shift_36_count",
-          label: "36 ชั่วโมง :",
-          unit: "คน",
-          value: "0",
-        },
-      ],
-    },
-    {
-      key: "training",
-      title: "อบรมและควบคุมหน้างาน",
-      items: [
-        {
-          key: "training_shift_change_count",
-          label: "อบรมเปลี่ยนผลัด :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "training_planned_count",
-          label: "อบรมตามแผนงานที่กำหนด :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "training_supervise_onsite_count",
-          label: "ควบคุมหน้างาน :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-        {
-          key: "training_supervise_virtual_simulation_count",
-          label: "จำลองสถานการณ์เสมือนจริง :",
-          unit: "หน่วยงาน",
-          value: "0",
-        },
-      ],
-    },
-  ];
+  const [rowStatus, setRowStatus] = useState<Record<string, number>>({});
 
-  // Initialize group1 counts from saved data or defaults
   const [counts, setCounts] = useState<Record<string, string>>(() => {
-    if (savedFormData) {
-      return {
-        dept_guard_post_count: savedFormData.dept_guard_post_count || "0",
-        dept_current_personnel_count:
-          savedFormData.dept_current_personnel_count || "0",
-        dept_missing_regular_count:
-          savedFormData.dept_missing_regular_count || "0",
-        dept_missing_personnel_count:
-          savedFormData.dept_missing_personnel_count || "0",
-        dept_supplement_count: savedFormData.dept_supplement_count || "0",
-        dept_recruitment_count: savedFormData.dept_recruitment_count || "0",
-        dept_reserve_units_count: savedFormData.dept_reserve_units_count || "0",
-        dept_reserve_personnel_count:
-          savedFormData.dept_reserve_personnel_count || "0",
-        leave_personal_count: savedFormData.leave_personal_count || "0",
-        leave_sick_count: savedFormData.leave_sick_count || "0",
-        leave_absent_count: savedFormData.leave_absent_count || "0",
-        leave_deserted_count: savedFormData.leave_deserted_count || "0",
-        leave_resigned_count: savedFormData.leave_resigned_count || "0",
-        leave_terminated_count: savedFormData.leave_terminated_count || "0",
-        shift_18_count: savedFormData.shift_18_count || "0",
-        shift_24_count: savedFormData.shift_24_count || "0",
-        shift_36_count: savedFormData.shift_36_count || "0",
-        training_shift_change_count:
-          savedFormData.training_shift_change_count || "0",
-        training_planned_count: savedFormData.training_planned_count || "0",
-        training_supervise_onsite_count:
-          savedFormData.training_supervise_onsite_count || "0",
-        training_supervise_virtual_simulation_count:
-          savedFormData.training_supervise_virtual_simulation_count || "0",
-
-      };
-    }
-
-    // Default initialization
     const initialCounts: Record<string, string> = {};
     [...group1, ...dynamicGroup2].forEach((g) =>
       g.items.forEach((it) => {
@@ -520,166 +368,307 @@ export default function MoNewForm(props: Props) {
     return initialCounts;
   });
 
-  const group2 = [
-    {
-      key: "discipline",
-      title: "วินัยและการลงโทษ",
-      items: [
-        {
-          key: "discipline_sleeping_on_duty_count",
-          label: "หลับเวร :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_abandoning_post_count",
-          label: "ทิ้งจุด :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_absent_work_count",
-          label: "ขาดงาน :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_early_leaved_duty_count",
-          label: "ออกเวรก่อนเวลา :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_using_phone_on_duty_count",
-          label: "เล่นโทรศัพท์ :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_client_complained_count",
-          label: "ผู้ว่าจ้างตำหนิ :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_improper_attire_count",
-          label: "แต่งการไม่เรียบร้อย :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_failed_write_report_count",
-          label: "ไม่เขียนรายงาน :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_early_write_report_count",
-          label: "เขียนรายงานล่วงหน้า :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-        {
-          key: "discipline_using_drugs_on_duty_count",
-          label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
-          unit: "คน",
-          value: "0",
-          isActive: false,
-        },
-      ],
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    [...group1, ...dynamicGroup2, ...group3, ...group4].reduce(
+      (acc, g, i) => {
+        acc[g.key] = i === 0;
+        return acc;
+      },
+      {} as Record<string, boolean>,
+    ),
+  );
 
-    },
-  ];
+  // ---- 6. Editing State & Refs ----
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingRaw, setEditingRaw] = useState<string>("");
 
-  // Save form data to localStorage whenever any form field changes
-  useEffect(() => {
-    if (isLoading) return;
+  const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+  const labelInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-    const formData: FormData = {
-      selectedDepartment,
-      selectedSubLocation,
-      dept_guard_post_count: counts.dept_guard_post_count || "0",
-      dept_current_personnel_count: counts.dept_current_personnel_count || "0",
-      dept_missing_regular_count: counts.dept_missing_regular_count || "0",
-      dept_missing_personnel_count: counts.dept_missing_personnel_count || "0",
-      dept_supplement_count: counts.dept_supplement_count || "0",
-      dept_recruitment_count: counts.dept_recruitment_count || "0",
-      dept_reserve_units_count: counts.dept_reserve_units_count || "0",
-      dept_reserve_personnel_count: counts.dept_reserve_personnel_count || "0",
-      leave_personal_count: counts.leave_personal_count || "0",
-      leave_sick_count: counts.leave_sick_count || "0",
-      leave_absent_count: counts.leave_absent_count || "0",
-      leave_deserted_count: counts.leave_deserted_count || "0",
-      leave_resigned_count: counts.leave_resigned_count || "0",
-      leave_terminated_count: counts.leave_terminated_count || "0",
-      shift_18_count: counts.shift_18_count || "0",
-      shift_24_count: counts.shift_24_count || "0",
-      shift_36_count: counts.shift_36_count || "0",
-      training_shift_change_count: counts.training_shift_change_count || "0",
-      training_planned_count: counts.training_planned_count || "0",
-      training_supervise_onsite_count: counts.training_supervise_onsite_count || "0",
-      training_supervise_virtual_simulation_count: counts.training_supervise_virtual_simulation_count || "0",
+  // ---- 7. Dialog / Submission State ----
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showFail, setShowFail] = useState(false);
+  const [failMessage, setFailMessage] = useState("");
 
-      dynamicGroup2: dynamicGroup2.flatMap((g) => g.items),
-      dynamicGroup3: dynamicGroup3.flatMap((g) => g.items),
-    };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitStartRef = useRef(0);
+  const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    try {
-      localStorage.setItem(formPersistenceKey, JSON.stringify(formData));
-    } catch (error) {
-      console.error("Failed to save form data to localStorage", error);
-    }
-  }, [
-    selectedDepartment,
-    selectedSubLocation,
-    counts.dept_guard_post_count,
-    counts.dept_current_personnel_count,
-    counts.dept_missing_regular_count,
-    counts.dept_missing_personnel_count,
-    counts.dept_supplement_count,
-    counts.dept_recruitment_count,
-    counts.dept_reserve_units_count,
-    counts.dept_reserve_personnel_count,
-    counts.leave_personal_count,
-    counts.leave_sick_count,
-    counts.leave_absent_count,
-    counts.leave_deserted_count,
-    counts.leave_resigned_count,
-    counts.leave_terminated_count,
-    counts.shift_18_count,
-    counts.shift_24_count,
-    counts.shift_36_count,
-    counts.training_shift_change_count,
-    counts.training_planned_count,
-    counts.training_supervise_onsite_count,
-    counts.training_supervise_virtual_simulation_count,
-
-    dynamicGroup2,
-    dynamicGroup3,
-    formPersistenceKey,
-    isLoading,
-  ]);
-
-  // Function to clear form data from localStorage when form is successfully submitted
-  const clearFormData = () => {
-    localStorage.removeItem(formPersistenceKey);
-  };
-
-  // modal state for adding a row into group2 (discipline)
+  // ---- 8. Group 2 Modal State (Discipline) ----
   const [showAddGroup2, setShowAddGroup2] = useState(false);
   const [newGroup2Label, setNewGroup2Label] = useState("");
   const [newGroup2Unit, setNewGroup2Unit] = useState("คน");
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [isOtherMode, setIsOtherMode] = useState(false);
+
+  // ---- 9. Group 3 Modal State (Meeting) ----
+  const [showAddGroup3, setShowAddGroup3] = useState(false);
+  const [newGroup3Label, setNewGroup3Label] = useState("");
+  const [newGroup3Detail, setNewGroup3Detail] = useState("");
+  const [newGroup3Status, setNewGroup3Status] = useState("warning");
+  const [newGroup3Note, setNewGroup3Note] = useState("");
+  const [editingGroup3Index, setEditingGroup3Index] = useState<number | null>(
+    null,
+  );
+
+  // ---- 10. Group 4 Modal State (guard_post_movement) ----
+  const [dynamicGroup4, setDynamicGroup4] = useState(() => {
+    return group4;
+  });
+  const [showAddGroup4, setShowAddGroup4] = useState(false);
+  const [newGroup4Label, setNewGroup4Label] = useState("");
+  const [newGroup4Detail, setNewGroup4Detail] = useState("");
+  const [newGroup4Status, setNewGroup4Status] = useState("");
+  const [newGroup4Note, setNewGroup4Note] = useState("");
+  const [editingGroup4Index, setEditingGroup4Index] = useState<number | null>(
+    null,
+  );
+  const [isGroup4OtherMode, setIsGroup4OtherMode] = useState(false);
+
+  // ==========================================================
+  // EFFECTS
+  // ==========================================================
+
+  // -- Cleanup submit timer on unmount --
+  useEffect(() => {
+    return () => {
+      if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
+    };
+  }, []);
+
+  // -- Validate selectedDivision against available options --
+  useEffect(() => {
+    if (availableDivisionOptions.length === 0) {
+      if (selectedDivision) setSelectedDivision("");
+      return;
+    }
+
+    const selectedStillAvailable = availableDivisionOptions.some(
+      (option) => option.shortName === selectedDivision,
+    );
+    if (!selectedStillAvailable) {
+      setSelectedDivision(availableDivisionOptions[0].shortName);
+    }
+  }, [availableDivisionOptions, selectedDivision]);
+
+  // -- Initialize rowStatus from dynamicGroup3 status values --
+  useEffect(() => {
+    setRowStatus((prev) => {
+      const next = { ...prev };
+      // Remove old group3 keys
+      Object.keys(prev).forEach((k) => {
+        if (!k.startsWith("g4_")) delete next[k];
+      });
+      dynamicGroup3.forEach((g) => {
+        g.items.forEach((it, i) => {
+          const idx = statusOptions.findIndex(
+            (s) => s.key === (it as any).status,
+          );
+          next[String(i)] = idx >= 0 ? idx : 0;
+        });
+      });
+      return next;
+    });
+  }, [dynamicGroup3]);
+
+  // -- Hydrate dynamicGroup3 from static template on mount --
+  useEffect(() => {
+    setDynamicGroup3(group3);
+  }, []);
+
+  // -- Hydrate dynamicGroup4 from static template on mount --
+  useEffect(() => {
+    setDynamicGroup4(group4);
+  }, []);
+
+  // -- Ensure counts contains entries for all dynamicGroup2 keys --
+  useEffect(() => {
+    setCounts((prev) => {
+      const next = { ...prev };
+      dynamicGroup2.forEach((g) => {
+        g.items.forEach((it) => {
+          if (!(it.key in next)) next[it.key] = "0";
+        });
+      });
+      return next;
+    });
+  }, [dynamicGroup2, dynamicGroup3]);
+
+  // -- Sanitize any pre-existing counts on mount --
+  useEffect(() => {
+    setCounts((prev) => {
+      const next: Record<string, string> = {};
+      Object.keys(prev).forEach((k) => {
+        next[k] = toDigitString(prev[k]);
+      });
+      return next;
+    });
+  }, []);
+
+  // -- Adjust textarea heights after render (for auto-resize) --
+  useEffect(() => {
+    const selector = `.${styles["mo-table-wrapper"]} textarea`;
+    const nodes = Array.from(
+      document.querySelectorAll(selector),
+    ) as HTMLTextAreaElement[];
+    if (nodes.length === 0) return;
+
+    let rafId = 0;
+    const adjustAll = () => {
+      nodes.forEach((ta) => adjustTextareaHeight(ta));
+    };
+    rafId = requestAnimationFrame(adjustAll);
+    return () => cancelAnimationFrame(rafId);
+  }, [counts, editingKey, openGroups]);
+
+  // -- Adjust modal textarea on modal open --
+  useEffect(() => {
+    if (!showAddGroup2 && !showAddGroup3) return;
+    const id = requestAnimationFrame(() => {
+      try {
+        adjustTextareaHeight(labelInputRef.current);
+      } catch {
+        // best-effort
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showAddGroup2, showAddGroup3]);
+
+  // ==========================================================
+  // UTILITY FUNCTIONS
+  // ==========================================================
+
+  const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + 2}px`;
+  };
+
+  const toDigitString = (v: string) => {
+    const digits = String(v || "").replace(/\D/g, "");
+    if (digits === "") return "0";
+    const n = digits.replace(/^0+/, "");
+    return n === "" ? "0" : n.slice(0, 15);
+  };
+
+  const getDisplayValue = (key: string) => {
+    return toDigitString(counts[key] ?? "0");
+  };
+
+  const hasAnyData = () => {
+    const hasCounts = Object.values(counts).some((v) => Number(v) > 0);
+    const hasGroup3Items = dynamicGroup3.some((g) => g.items.length > 0);
+    const hasGroup4Items = dynamicGroup4.some((g) => g.items.length > 0);
+    const hasEditingValue = editingKey ? Number(editingRaw) > 0 : false;
+    return hasCounts || hasGroup3Items || hasGroup4Items || hasEditingValue;
+  };
+
+  useEffect(() => {
+    props.onDirtyChange?.(hasAnyData());
+  }, [counts, dynamicGroup2, dynamicGroup3, dynamicGroup4, editingKey, editingRaw]);
+
+  // ==========================================================
+  // TEXTAREA EDITING HANDLERS
+  // ==========================================================
+
+  const handleTextareaChange = (
+    key: string,
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    const raw = el.value;
+    const sanitized = raw.replace(/\s/g, "");
+
+    if (sanitized === "" || sanitized === "-") {
+      setEditingRaw(sanitized);
+      adjustTextareaHeight(el);
+      return;
+    }
+
+    if (!/\d/.test(sanitized)) {
+      adjustTextareaHeight(el);
+      return;
+    }
+
+    const clean = toDigitString(sanitized);
+    setEditingRaw(clean);
+    adjustTextareaHeight(el);
+  };
+
+  const handleTextareaFocus = (
+    key: string,
+    e: React.FocusEvent<HTMLTextAreaElement>,
+  ) => {
+    setEditingKey(key);
+    const clean = toDigitString(counts[key] ?? "0");
+    setEditingRaw(clean);
+    adjustTextareaHeight(e.target as HTMLTextAreaElement);
+  };
+
+  const handleTextareaKeyDown = (
+    key: string,
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      (e.target as HTMLTextAreaElement).blur();
+      return;
+    }
+    if (e.key === "Escape") {
+      setEditingKey(null);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const valStr = editingRaw || "0";
+      try {
+        setEditingRaw(String(BigInt(valStr) + 1n));
+      } catch {
+        setEditingRaw(String(Number(valStr) + 1));
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const valStr = editingRaw || "0";
+      try {
+        const base = BigInt(valStr);
+        setEditingRaw(base > 0n ? String(base - 1n) : "0");
+      } catch {
+        setEditingRaw(String(Math.max(0, Number(valStr) - 1)));
+      }
+    }
+  };
+
+  const handleTextareaBlur = (key: string) => {
+    const final = toDigitString(editingRaw);
+    setCounts((s) => ({ ...s, [key]: final }));
+    setEditingRaw(final);
+    setEditingKey(null);
+  };
+
+  const handleTextareaPaste = (
+    key: string,
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+  ) => {
+    const paste =
+      (e.clipboardData || (window as any).clipboardData).getData("text") || "";
+    const digitsOnly = paste.replace(/\D/g, "");
+    if (digitsOnly === "") {
+      e.preventDefault();
+      return;
+    }
+    const normalized = toDigitString(digitsOnly);
+    e.preventDefault();
+    const el = e.target as HTMLTextAreaElement;
+    el.value = normalized;
+    setEditingRaw(normalized);
+    adjustTextareaHeight(el);
+  };
+
+  // ==========================================================
+  // GROUP 2 (DISCIPLINE) HANDLERS
+  // ==========================================================
 
   const openAddGroup2 = () => {
     setNewGroup2Label("");
@@ -690,7 +679,6 @@ export default function MoNewForm(props: Props) {
   };
 
   const addItemToGroup2 = (initialValue?: string) => {
-    // temporary key — backend will replace "auto_gen" with discipline_custom_{N} on submit
     const g = dynamicGroup2.find((x) => x.key === "discipline");
     const autoGenCount = g
       ? g.items.filter((it) => String(it.key).startsWith("auto_gen")).length
@@ -710,7 +698,6 @@ export default function MoNewForm(props: Props) {
       ),
     );
 
-    // initialize count for the new item using the provided value or any currently edited value
     setCounts((prev) => ({
       ...prev,
       [newKey]: initialValue || editingRaw || "0",
@@ -728,7 +715,6 @@ export default function MoNewForm(props: Props) {
         ),
       })),
     );
-    // also reset the count so hasAnyData() re-evaluates correctly
     setCounts((prev) => ({ ...prev, [key]: "0" }));
   };
 
@@ -766,7 +752,6 @@ export default function MoNewForm(props: Props) {
 
         let items = pg.items;
 
-        // Add item from API if it doesn't exist yet
         if (!exists) {
           const disc = distinctDisciplineTypes.find(
             (d) => d.key === selectedKey,
@@ -783,7 +768,6 @@ export default function MoNewForm(props: Props) {
           ];
         }
 
-        // Activate the checked item if value > 0
         items = items.map((item) => {
           if (item.key !== selectedKey) return item;
           const val =
@@ -799,15 +783,9 @@ export default function MoNewForm(props: Props) {
     setShowAddGroup2(false);
   };
 
-  // modal state for adding a row into group3
-  const [showAddGroup3, setShowAddGroup3] = useState(false);
-  const [newGroup3Label, setNewGroup3Label] = useState("");
-  const [newGroup3Detail, setNewGroup3Detail] = useState("");
-  const [newGroup3Status, setNewGroup3Status] = useState("warning");
-  const [newGroup3Note, setNewGroup3Note] = useState("");
-  const [editingGroup3Index, setEditingGroup3Index] = useState<number | null>(
-    null,
-  );
+  // ==========================================================
+  // GROUP 3 (MEETING) HANDLERS
+  // ==========================================================
 
   const closeGroup3Modal = () => {
     setShowAddGroup3(false);
@@ -897,72 +875,6 @@ export default function MoNewForm(props: Props) {
     setNewGroup3Status(e.target.value);
   };
 
-  // ensure counts contain any newly added keys from dynamicGroup2 and dynamicGroup3
-  useEffect(() => {
-    setCounts((prev) => {
-      const next = { ...prev };
-      dynamicGroup2.forEach((g) => {
-        g.items.forEach((it) => {
-          if (!(it.key in next)) next[it.key] = "0";
-        });
-      });
-      // group3 items have inline note — skip counts
-      return next;
-    });
-  }, [dynamicGroup2, dynamicGroup3]);
-
-  const group3 = [
-    {
-      key: "meeting",
-      title: "เข้าพบผู้ว่าจ้าง",
-      items: [] as {
-        label: string;
-        detail: string;
-        status: string;
-        note: string;
-      }[],
-    },
-  ];
-
-  // hydrate dynamicGroup3 from static group3 on mount
-  useEffect(() => {
-    setDynamicGroup3(group3);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // open/closed state per group to render sections dynamically
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    [...group1, ...dynamicGroup2, ...group3].reduce(
-      (acc, g, i) => {
-        acc[g.key] = i === 0; // open first group by default
-        return acc;
-      },
-      {} as Record<string, boolean>,
-    ),
-  );
-
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [editingRaw, setEditingRaw] = useState<string>("");
-
-  const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
-  const labelInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  // track warning flags per-row to show brief validation hint
-  const [warnings, setWarnings] = useState<Record<string, boolean>>({});
-  const warningTimersRef = useRef<Record<string, number | null>>({});
-
-  const triggerWarning = (key: string) => {
-    // clear any existing timer
-    const existing = warningTimersRef.current[key];
-    if (existing) window.clearTimeout(existing);
-    setWarnings((s) => ({ ...s, [key]: true }));
-    const t = window.setTimeout(() => {
-      setWarnings((s) => ({ ...s, [key]: false }));
-      warningTimersRef.current[key] = null;
-    }, 1200);
-    warningTimersRef.current[key] = t as unknown as number;
-  };
-
   const handleLabelChangeGroup3 = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
@@ -973,7 +885,6 @@ export default function MoNewForm(props: Props) {
 
   const handleLabelFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
     adjustTextareaHeight(e.target as HTMLTextAreaElement);
-    // focus the inputRef so keyboard behavior stays consistent
     labelInputRef.current = e.target as HTMLTextAreaElement;
   };
 
@@ -985,179 +896,125 @@ export default function MoNewForm(props: Props) {
     }
   };
 
-  // helper to auto-resize textarea when editing
-  const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
-    if (!el) return;
-    el.style.height = "auto";
-    // add 2px to avoid scrollbar in some browsers
-    el.style.height = `${el.scrollHeight + 2}px`;
+  // ==========================================================
+  // GROUP 4 HANDLERS
+  // ==========================================================
+
+  const closeGroup4Modal = () => {
+    setShowAddGroup4(false);
+    setEditingGroup4Index(null);
+    setNewGroup4Label("");
+    setNewGroup4Detail("");
+    setNewGroup4Status("");
+    setNewGroup4Note("");
+    setIsGroup4OtherMode(false);
   };
 
-  // normalize to clean digit string
-  const toDigitString = (v: string) => {
-    const digits = String(v || "").replace(/\D/g, "");
-    if (digits === "") return "0";
-    const n = digits.replace(/^0+/, "");
-    // Limit to 15 digits to stay within JavaScript safe integer range
-    return n === "" ? "0" : n.slice(0, 15);
+  const openAddGroup4 = () => {
+    setEditingGroup4Index(null);
+    setNewGroup4Label("");
+    setNewGroup4Detail("");
+    setNewGroup4Status("");
+    setNewGroup4Note("");
+    setShowAddGroup4(true);
   };
 
-  // sanitize any pre-existing counts on mount (in case invalid values were stored before)
-  useEffect(() => {
-    setCounts((prev) => {
-      const next: Record<string, string> = {};
-      Object.keys(prev).forEach((k) => {
-        next[k] = toDigitString(prev[k]);
-      });
-      return next;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const handleRemoveGroup4Item = (groupKey: string, itemIdx: number) => {
+    setDynamicGroup4((prev) =>
+      prev.map((pg) =>
+        pg.key === groupKey
+          ? { ...pg, items: pg.items.filter((_, i) => i !== itemIdx) }
+          : pg,
+      ),
+    );
+  };
 
-  // --- textarea handlers moved out of JSX for clarity ---
-  const handleTextareaChange = (
-    key: string,
+  const handleOpenRowGroup4 = (idx: number) => {
+    const movementGroup = dynamicGroup4.find(
+      (g) => g.key === "guard_post_movement",
+    );
+    const item = movementGroup?.items[idx];
+    if (!item) return;
+
+    const savedStatus = item.status ?? "ปกติ";
+    const isKnown = guardPostStatusesOptions.includes(savedStatus);
+
+    setEditingGroup4Index(idx);
+    setNewGroup4Label(item.label ?? "");
+    setNewGroup4Detail(item.detail ?? "");
+    setNewGroup4Status(savedStatus);
+    setNewGroup4Note(item.note ?? "");
+    setIsGroup4OtherMode(!isKnown);
+    setShowAddGroup4(true);
+  };
+
+  const saveGroup4Modal = () => {
+    const nextItem = {
+      label: newGroup4Label || "รายการใหม่",
+      detail: newGroup4Detail,
+      status: newGroup4Status,
+      note: newGroup4Note,
+    };
+
+    setDynamicGroup4((prev) =>
+      prev.map((pg) =>
+        pg.key === "guard_post_movement"
+          ? {
+              ...pg,
+              items:
+                editingGroup4Index === null
+                  ? [...pg.items, nextItem]
+                  : pg.items.map((item, index) =>
+                      index === editingGroup4Index ? nextItem : item,
+                    ),
+            }
+          : pg,
+      ),
+    );
+
+    closeGroup4Modal();
+  };
+
+  const handleGroup4DetailChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
     const el = e.target;
-    const raw = el.value;
-    const sanitized = raw.replace(/\s/g, "");
-
-    // allow empty / minus prefix for entering negative
-    if (sanitized === "" || sanitized === "-") {
-      setEditingRaw(sanitized);
-      adjustTextareaHeight(el);
-      return;
-    }
-
-    // if everything is non-digit, warn and reject (don't update state)
-    if (!/\d/.test(sanitized)) {
-      triggerWarning(key);
-      adjustTextareaHeight(el);
-      return;
-    }
-
-    const clean = toDigitString(sanitized);
-    setEditingRaw(clean);
+    setNewGroup4Detail(el.value);
     adjustTextareaHeight(el);
   };
 
-  const handleTextareaFocus = (
-    key: string,
-    e: React.FocusEvent<HTMLTextAreaElement>,
+  const handleGroup4NoteChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    setEditingKey(key);
-    const clean = toDigitString(counts[key] ?? "0");
-    setEditingRaw(clean);
-    adjustTextareaHeight(e.target as HTMLTextAreaElement);
-  };
-
-  const handleTextareaKeyDown = (
-    key: string,
-    e: React.KeyboardEvent<HTMLTextAreaElement>,
-  ) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      (e.target as HTMLTextAreaElement).blur();
-      return;
-    }
-    if (e.key === "Escape") {
-      setEditingKey(null);
-      return;
-    }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const valStr = editingRaw || "0";
-      try {
-        setEditingRaw(String(BigInt(valStr) + 1n));
-      } catch {
-        setEditingRaw(String(Number(valStr) + 1));
-      }
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      const valStr = editingRaw || "0";
-      try {
-        const base = BigInt(valStr);
-        setEditingRaw(base > 0n ? String(base - 1n) : "0");
-      } catch {
-        setEditingRaw(String(Math.max(0, Number(valStr) - 1)));
-      }
-    }
-  };
-
-  const handleTextareaBlur = (key: string) => {
-    const final = toDigitString(editingRaw);
-    setCounts((s) => ({ ...s, [key]: final }));
-    setEditingRaw(final);
-    setEditingKey(null);
-  };
-
-  const handleTextareaPaste = (
-    key: string,
-    e: React.ClipboardEvent<HTMLTextAreaElement>,
-  ) => {
-    const paste =
-      (e.clipboardData || (window as any).clipboardData).getData("text") || "";
-    const digitsOnly = paste.replace(/\D/g, "");
-    if (digitsOnly === "") {
-      e.preventDefault();
-      triggerWarning(key);
-      return;
-    }
-    let normalized = toDigitString(digitsOnly);
-    e.preventDefault();
-    const el = e.target as HTMLTextAreaElement;
-    el.value = normalized;
-    setEditingRaw(normalized);
+    const el = e.target;
+    setNewGroup4Note(el.value);
     adjustTextareaHeight(el);
   };
 
-  const getDisplayValue = (key: string) => {
-    return toDigitString(counts[key] ?? "0");
+  const handleGroup4StatusChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const val = e.target.value;
+    if (val === "__other__") {
+      setIsGroup4OtherMode(true);
+      setNewGroup4Status("");
+    } else {
+      setIsGroup4OtherMode(false);
+      setNewGroup4Status(val);
+    }
   };
 
-  // ensure textarea heights match their content for both editing and non-editing states
-  useEffect(() => {
-    // find all textareas inside any mo-table-wrapper. We avoid relying on a single ref
-    // because the section can be mounted/unmounted and refs may change.
-    const selector = `.${styles["mo-table-wrapper"]} textarea`;
-    const nodes = Array.from(
-      document.querySelectorAll(selector),
-    ) as HTMLTextAreaElement[];
-    if (nodes.length === 0) return;
-
-    // run adjustment on the next animation frame so layout has settled after collapse/expand
-    let rafId = 0;
-    const adjustAll = () => {
-      nodes.forEach((ta) => adjustTextareaHeight(ta));
-    };
-    rafId = requestAnimationFrame(adjustAll);
-    return () => cancelAnimationFrame(rafId);
-  }, [counts, editingKey, openGroups]);
-
-  // when an "add" modal opens (group2 or group3), ensure the label textarea gets an initial height
-  useEffect(() => {
-    if (!showAddGroup2 && !showAddGroup3) return;
-    // wait until the modal has rendered and layout is stable
-    const id = requestAnimationFrame(() => {
-      try {
-        adjustTextareaHeight(labelInputRef.current);
-      } catch (e) {
-        // swallow errors — adjustment is best-effort
-      }
-    });
-    return () => cancelAnimationFrame(id);
-  }, [showAddGroup2, showAddGroup3]);
-
-  // require at least one meaningful value (non-zero or non-empty text) from group counts
-  // or any group3 items (meeting records are text-only, no numeric counts)
-  const hasAnyData = () => {
-    const hasCounts = Object.values(counts).some((v) => Number(v) > 0);
-    const hasGroup3Items = dynamicGroup3.some((g) => g.items.length > 0);
-    // also check the field currently being edited (counts hasn't saved yet)
-    const hasEditingValue = editingKey ? Number(editingRaw) > 0 : false;
-    return hasCounts || hasGroup3Items || hasEditingValue;
+  const handleLabelChangeGroup4 = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const el = e.target;
+    setNewGroup4Label(el.value);
+    adjustTextareaHeight(el);
   };
+
+  // ==========================================================
+  // SUBMIT HANDLER
+  // ==========================================================
 
   const onSubmit = async (
     e?: React.FormEvent,
@@ -1169,24 +1026,21 @@ export default function MoNewForm(props: Props) {
     const payload: Record<string, unknown> = {
       department_id: selectedDepartment,
       division_name:
-        selectedSubLocation || availableSubSectorOptions[0]?.shortName || "",
+        selectedDivision || availableDivisionOptions[0]?.shortName || "",
       division_id:
-        availableSubSectorOptions.find(
-          (d) => d.shortName === selectedSubLocation,
-        )?.id ||
-        availableSubSectorOptions[0]?.id ||
+        availableDivisionOptions.find((d) => d.shortName === selectedDivision)
+          ?.id ||
+        availableDivisionOptions[0]?.id ||
         0,
       department_name: authEmployee?.department_name || "",
       created_by: authEmployee?.employee_code || "ADMIN",
     };
 
-    // Send all inline-edit group counts mapped to their field names
     for (const [key, value] of Object.entries(counts)) {
       const num = Number(value);
       if (num > 0 || value !== "0") payload[key] = value;
     }
 
-    // Build disciplines array from dynamicGroup2 (active items with values)
     const disciplines: Array<{
       key: string;
       label: string;
@@ -1200,7 +1054,7 @@ export default function MoNewForm(props: Props) {
         if (val > 0) {
           disciplines.push({
             key: item.key,
-            label: item.label.replace(/\s*:$/, ""),
+            label: item.label,
             value: val,
           });
         }
@@ -1208,7 +1062,6 @@ export default function MoNewForm(props: Props) {
     }
     if (disciplines.length > 0) payload.disciplines = disciplines;
 
-    // Build projects array from dynamicGroup3
     const projects: Array<{
       key: string;
       name: string;
@@ -1229,6 +1082,26 @@ export default function MoNewForm(props: Props) {
     }
     if (projects.length > 0) payload.projects = projects;
 
+    // Guard post movements (group4)
+    const guardPostMovements: Array<{
+      name: string;
+      detail: string;
+      status: string;
+      note: string;
+    }> = [];
+    for (const g of dynamicGroup4) {
+      g.items.forEach((it) => {
+        guardPostMovements.push({
+          name: it.label,
+          detail: it.detail ?? "",
+          status: it.status ?? "",
+          note: it.note ?? "",
+        });
+      });
+    }
+    if (guardPostMovements.length > 0)
+      payload.guard_post_movements = guardPostMovements;
+
     if (opts?.approve) {
       payload.approved_status = "APPROVED";
       payload.approved_by = authEmployee?.employee_code || "ADMIN";
@@ -1241,7 +1114,6 @@ export default function MoNewForm(props: Props) {
 
       await createReport(payload as any);
 
-      // Ensure minimum 2-second display time
       const elapsed = Date.now() - submitStartRef.current;
       const remaining = MIN_SUBMIT_MS - elapsed;
       if (remaining > 0) {
@@ -1252,9 +1124,6 @@ export default function MoNewForm(props: Props) {
 
       setIsSubmitting(false);
       setShowSuccess(true);
-
-      // Clear form data from localStorage after successful submission
-      clearFormData();
     } catch (err: unknown) {
       setIsSubmitting(false);
       const msg = err instanceof Error ? err.message : String(err);
@@ -1263,11 +1132,15 @@ export default function MoNewForm(props: Props) {
     }
   };
 
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
   return (
     <>
       <form className={styles["guts-mo-form"]} onSubmit={(e) => onSubmit(e)}>
         <div className={styles["guts-Mo-layout"]}>
-          {/* หน่วยงาน / Sector row */}
+          {/* ---- Sector Selector (Department / Sub-location) ---- */}
           <div className={styles["sector-table-wrapper"]}>
             <table className={styles["mo-table"]}>
               <thead>
@@ -1277,7 +1150,7 @@ export default function MoNewForm(props: Props) {
                     className={`${styles["location-table-header"]} ${styles["no-border"]}`}
                   >
                     <div className={styles["sector-header-fullwidth"]}>
-                      {locations.length > 1 ? (
+                      {departments.length > 1 ? (
                         <select
                           className={`${styles["sector-cell-select"]} ${styles["sector-cell-select-full"]}`}
                           value={selectedDepartment}
@@ -1285,9 +1158,9 @@ export default function MoNewForm(props: Props) {
                             setSelectedDepartment(Number(e.target.value))
                           }
                         >
-                          {locations.map((loc) => (
+                          {departments.map((loc) => (
                             <option key={loc.id} value={loc.id}>
-                              {loc.location}
+                              {loc.department}
                             </option>
                           ))}
                         </select>
@@ -1296,7 +1169,7 @@ export default function MoNewForm(props: Props) {
                           className={styles["sector-cell-single-value"]}
                           style={{ color: "#fff" }}
                         >
-                          {locations[0]?.location}
+                          {departments[0]?.department}
                         </span>
                       )}
                     </div>
@@ -1318,21 +1191,21 @@ export default function MoNewForm(props: Props) {
                       gap: 8,
                     }}
                   >
-                    {availableSubSectorOptions.length > 1 ? (
+                    {availableDivisionOptions.length > 1 ? (
                       <select
-                        className={`${styles["sector-cell-select"]} ${styles["sector-cell-bodytext"]} ${styles["sector-cell-select-green"]} ${styles["sector-cell-select-full"]}`}
-                        value={selectedSubLocation}
-                        onChange={(e) => setSelectedSubLocation(e.target.value)}
+                        className={`${styles["sector-cell-select"]} ${styles["sector-cell-select-green"]} ${styles["sector-cell-select-full"]}`}
+                        value={selectedDivision}
+                        onChange={(e) => setSelectedDivision(e.target.value)}
                       >
-                        {availableSubSectorOptions.map((opt) => (
+                        {availableDivisionOptions.map((opt) => (
                           <option key={opt.id} value={opt.shortName}>
                             {opt.shortName}
                           </option>
                         ))}
                       </select>
-                    ) : availableSubSectorOptions.length >= 1 ? (
+                    ) : availableDivisionOptions.length >= 1 ? (
                       <span className={styles["sector-cell-single-value"]}>
-                        {availableSubSectorOptions[0].shortName}
+                        {availableDivisionOptions[0].shortName}
                       </span>
                     ) : (
                       <span className={styles["sector-cell-single-value"]}>
@@ -1344,7 +1217,8 @@ export default function MoNewForm(props: Props) {
               </tbody>
             </table>
           </div>
-          {/* dynamic sections rendered from group1 */}
+
+          {/* ---- Sections 1-4: Numeric Count Groups ---- */}
           {group1.map((g, idx) => (
             <div
               key={g.key}
@@ -1391,7 +1265,7 @@ export default function MoNewForm(props: Props) {
                           {idx + 1}.{itemIdx + 1}
                         </td>
                         <td className={styles["second-column-cell"]}>
-                          {r.label}
+                          {fieldLabel(r.label)}
                         </td>
                         <td
                           className={`${styles["third-column-cell"]} ${counts[r.key].toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
@@ -1431,14 +1305,13 @@ export default function MoNewForm(props: Props) {
             </div>
           ))}
 
-          {/* Add item modal (appears when 'add from group2  header' clicked) */}
+          {/* ---- Group 2 Add Modal (Discipline) ---- */}
           {showAddGroup2 && (
             <div
               className={styles["modal-overlay"]}
               role="dialog"
               aria-modal="true"
               onMouseDown={(e) => {
-                // click backdrop to close
                 if (e.target === e.currentTarget) setShowAddGroup2(false);
               }}
             >
@@ -1450,7 +1323,6 @@ export default function MoNewForm(props: Props) {
                   <h3>เพิ่มข้อมูลวินัยและการลงโทษ</h3>
                 </div>
 
-                {/* modal body rendered as a mini table to match form style */}
                 <div className={styles["modal-body"]}>
                   <div className={styles["mo-table-wrapper"]}>
                     <table className={styles["mo-table"]}>
@@ -1481,9 +1353,7 @@ export default function MoNewForm(props: Props) {
                         </tr>
                       </thead>
                       <tbody>
-                        {/* single selector row — pick one discipline type not yet active */}
                         {(() => {
-                          // Get keys already active in the current form
                           const activeKeys = new Set(
                             dynamicGroup2
                               .filter((g) => g.key === "discipline")
@@ -1494,15 +1364,12 @@ export default function MoNewForm(props: Props) {
                               ),
                           );
 
-                          // Available options: from API distinct types, minus already-active ones
-                          // Deduplicated by key to prevent React duplicate-key errors
                           const availableOptionsRaw =
                             distinctDisciplineTypes.length > 0
                               ? distinctDisciplineTypes.filter(
                                   (d) => !activeKeys.has(d.key),
                                 )
-                              : // Fallback to hardcoded inactive items when API hasn't loaded yet
-                                dynamicGroup2
+                              : dynamicGroup2
                                   .filter((g) => g.key === "discipline")
                                   .flatMap((g) =>
                                     g.items.filter(
@@ -1667,7 +1534,6 @@ export default function MoNewForm(props: Props) {
                             </tr>
                           );
                         })()}
-                        {/* add new item row — commented out */}
                       </tbody>
                     </table>
                   </div>
@@ -1719,8 +1585,9 @@ export default function MoNewForm(props: Props) {
               </div>
             </div>
           )}
-          {/* dynamic sections rendered from group2 */}
-          {dynamicGroup2.map((g, idx) => (
+
+          {/* ---- Section 5: Discipline (Dynamic Group 2) ---- */}
+          {dynamicGroup2.map((g) => (
             <div
               key={g.key}
               ref={wrapperRef}
@@ -1777,7 +1644,7 @@ export default function MoNewForm(props: Props) {
                             5.{itemIdx + 1}
                           </td>
                           <td className={styles["group3-second-column-cell"]}>
-                            {r.label}
+                            {fieldLabel(r.label)}
                           </td>
                           <td
                             className={`${styles["third-column-cell"]} ${counts[r.key].toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
@@ -1811,7 +1678,7 @@ export default function MoNewForm(props: Props) {
                           </td>
                         </tr>
                       ))}
-                    {/* add discipline row — follows column layout */}
+                    {/* Add discipline row */}
                     {g.key === "discipline" &&
                       (() => {
                         const items = dynamicGroup2
@@ -1846,13 +1713,14 @@ export default function MoNewForm(props: Props) {
               </table>
             </div>
           ))}
+
+          {/* ---- Group 3 Add/Edit Modal (Meeting) ---- */}
           {showAddGroup3 && (
             <div
               className={styles["modal-overlay"]}
               role="dialog"
               aria-modal="true"
               onMouseDown={(e) => {
-                // click backdrop to close
                 if (e.target === e.currentTarget) closeGroup3Modal();
               }}
             >
@@ -1966,6 +1834,7 @@ export default function MoNewForm(props: Props) {
                           <td className={`${styles["second-column-cell"]} `}>
                             <div className={styles["radio-group"]}>
                               {/* temporarily disabled
+                              <label className={styles["radio-item"]}>
                                 <input
                                   type="radio"
                                   name="newGroup3Status"
@@ -1974,7 +1843,9 @@ export default function MoNewForm(props: Props) {
                                   onChange={handleGroup3StatusChange}
                                   className={styles["radio-input"]}
                                 />
-                                <span>ปกติ</span>
+                                <span className={styles["option-normal"]}>
+                                  ปกติ
+                                </span>
                               </label>
                               */}
                               <label className={styles["radio-item"]}>
@@ -1986,7 +1857,9 @@ export default function MoNewForm(props: Props) {
                                   onChange={handleGroup3StatusChange}
                                   className={styles["radio-input"]}
                                 />
-                                <span>ผิดปกติ</span>
+                                <span className={styles["option-warning"]}>
+                                  ผิดปกติ
+                                </span>
                               </label>
                               <label className={styles["radio-item"]}>
                                 <input
@@ -1997,7 +1870,9 @@ export default function MoNewForm(props: Props) {
                                   onChange={handleGroup3StatusChange}
                                   className={styles["radio-input"]}
                                 />
-                                <span>ฉุกเฉิน</span>
+                                <span className={styles["option-danger"]}>
+                                  ฉุกเฉิน
+                                </span>
                               </label>
                             </div>
                           </td>
@@ -2055,8 +1930,9 @@ export default function MoNewForm(props: Props) {
               </div>
             </div>
           )}
-          {/* dynamic sections rendered from group3 */}
-          {dynamicGroup3.map((g, idx) => (
+
+          {/* ---- Section 6: Meeting Records (Dynamic Group 3) ---- */}
+          {dynamicGroup3.map((g) => (
             <div
               key={g.key}
               ref={wrapperRef}
@@ -2147,7 +2023,7 @@ export default function MoNewForm(props: Props) {
                         </td>
                       </tr>
                     ))}
-                    {/* add group3 row */}
+                    {/* Add meeting row */}
                     <tr
                       style={{ cursor: "pointer" }}
                       onClick={openAddGroup3}
@@ -2175,7 +2051,367 @@ export default function MoNewForm(props: Props) {
               </table>
             </div>
           ))}
+
+          {/* ---- Group 4 Add/Edit Modal (guard post Movement) ---- */}
+          {showAddGroup4 && (
+            <div
+              className={styles["modal-overlay"]}
+              role="dialog"
+              aria-modal="true"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) closeGroup4Modal();
+              }}
+            >
+              <div
+                className={styles["modal"]}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <div className={styles["modal-header"]}>
+                  <h3>
+                    {editingGroup4Index === null
+                      ? "เพิ่มข้อมูลเปลี่ยนแปลงจุดรักษาการณ์"
+                      : "รายละเอียดการเปลี่ยนแปลงจุดรักษาการณ์"}
+                  </h3>
+                </div>
+                <div className={styles["modal-body"]}>
+                  <div className={styles["mo-table-wrapper"]}>
+                    <table className={styles["mo-table"]}>
+                      <thead>
+                        <tr>
+                          <th
+                            colSpan={1}
+                            className={`${styles["first-column-cell"]} ${styles["no-border"]} `}
+                          >
+                            7.
+                          </th>
+                          <th
+                            colSpan={4}
+                            className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                          >
+                            <div
+                              className={`${styles["mo-header"]}`}
+                              style={{
+                                padding: "6px 8px",
+                                justifyContent: "flex-start",
+                              }}
+                            >
+                              <p className={styles["mo-header-red-text"]}>
+                                การเปลี่ยนแปลงจุดรักษาการณ์
+                              </p>
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className={styles["first-column-cell"]}>
+                            {(() => {
+                              if (editingGroup4Index !== null) {
+                                return `7.${editingGroup4Index + 1}`;
+                              }
+                              const grp = dynamicGroup4.find(
+                                (x) => x.key === "guard_post_movement",
+                              );
+                              return `7.${grp ? grp.items.length + 1 : 1}`;
+                            })()}
+                          </td>
+                          <td
+                            colSpan={3}
+                            className={`${styles["group4-second-column-cell"]} ${styles["second-column-cell-left"]}`}
+                          >
+                            <textarea
+                              ref={labelInputRef as any}
+                              className={`${styles["third-column-textarea"]} ${styles["textarea-left"]}`}
+                              value={newGroup4Label}
+                              rows={1}
+                              onChange={handleLabelChangeGroup4}
+                              onPaste={() => {
+                                /* allow any text paste */
+                              }}
+                              onFocus={handleLabelFocus}
+                              onKeyDown={handleLabelKeyDown}
+                              onBlur={(e) =>
+                                adjustTextareaHeight(
+                                  e.target as HTMLTextAreaElement,
+                                )
+                              }
+                              placeholder="เช่น การเปลี่ยนแปลงจุดรักษาการณ์"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className={styles["first-column-cell"]}>สถานะ</td>
+                          <td
+                            className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                            colSpan={2}
+                            style={{ position: "relative" }}
+                          >
+                            {isGroup4OtherMode ? (
+                              <div style={{ paddingLeft: 8 }}>
+                                <textarea
+                                  className={`${styles["third-column-textarea"]} ${styles["third-column-textarea-danger"]}`}
+                                  value={newGroup4Status}
+                                  placeholder="ระบุสถานะอื่น..."
+                                  rows={1}
+                                  onChange={(e) => {
+                                    setNewGroup4Status(e.target.value);
+                                    adjustTextareaHeight(e.target);
+                                  }}
+                                  onFocus={handleLabelFocus}
+                                  onKeyDown={handleLabelKeyDown}
+                                  onBlur={(e) =>
+                                    adjustTextareaHeight(
+                                      e.target as HTMLTextAreaElement,
+                                    )
+                                  }
+                                  style={{
+                                    paddingRight: 28,
+                                    textAlign: "left",
+                                    fontSize: 12,
+                                    fontWeight: 400,
+                                  }}
+                                />
+                                <X
+                                  size={18}
+                                  style={{
+                                    position: "absolute",
+                                    top: 5,
+                                    right: 8,
+                                    cursor: "pointer",
+                                    background: "rgba(183, 28, 28, 0.7)",
+                                    borderRadius: "50%",
+                                    padding: 1,
+                                    color: "#fff",
+                                  }}
+                                  onClick={() => {
+                                    setIsGroup4OtherMode(false);
+                                    setNewGroup4Status("");
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <select
+                                className={styles["sector-cell-select"]}
+                                style={{
+                                  width: "100%",
+                                  maxWidth: "100%",
+                                  background: "transparent",
+                                  color: "inherit",
+                                  border: "1px solid #ccc",
+                                  padding: "4px 8px",
+                                  fontSize: 12,
+                                }}
+                                value={newGroup4Status}
+                                onChange={handleGroup4StatusChange}
+                              >
+                                <option value="">-- เลือกสถานะ --</option>
+                                {guardPostStatusesOptions.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                                <option value="__other__">-- อื่นๆ --</option>
+                              </select>
+                            )}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className={styles["first-column-cell"]}>
+                            รายละเอียด
+                          </td>
+                          <td
+                            className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                            colSpan={2}
+                          >
+                            <textarea
+                              ref={labelInputRef as any}
+                              className={`${styles["group4-popup-third-column-textarea1"]} ${styles["textarea-left"]}`}
+                              value={newGroup4Detail}
+                              rows={1}
+                              onChange={handleGroup4DetailChange}
+                              onPaste={() => {
+                                /* allow any text paste */
+                              }}
+                              onFocus={handleLabelFocus}
+                              onKeyDown={handleLabelKeyDown}
+                              onBlur={(e) =>
+                                adjustTextareaHeight(
+                                  e.target as HTMLTextAreaElement,
+                                )
+                              }
+                              placeholder="เช่น รายละเอียดการเปลี่ยนแปลง"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className={styles["first-column-cell"]}>
+                            หมายเหตุ
+                          </td>
+                          <td
+                            className={`${styles["second-column-cell"]} ${styles["textarea-cell"]}`}
+                            colSpan={2}
+                          >
+                            <textarea
+                              ref={labelInputRef as any}
+                              className={`${styles["group4-popup-third-column-textarea2"]} ${styles["textarea-left"]}`}
+                              value={newGroup4Note}
+                              rows={1}
+                              onChange={handleGroup4NoteChange}
+                              onPaste={() => {
+                                /* allow any text paste */
+                              }}
+                              onFocus={handleLabelFocus}
+                              onKeyDown={handleLabelKeyDown}
+                              onBlur={(e) =>
+                                adjustTextareaHeight(
+                                  e.target as HTMLTextAreaElement,
+                                )
+                              }
+                              placeholder="เช่น หมายเหตุเพิ่มเติม"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className={styles["modal-footer"]}>
+                  <button
+                    type="button"
+                    className={styles["btn-secondary"]}
+                    onClick={closeGroup4Modal}
+                  >
+                    ปิดหน้าจอ
+                  </button>
+                  <button
+                    type="button"
+                    className={styles["btn-primary"]}
+                    onClick={saveGroup4Modal}
+                    disabled={
+                      newGroup4Label.trim() === "" ||
+                      newGroup4Status.trim() === ""
+                    }
+                  >
+                    บันทึก
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ---- Section 7: การเปลี่ยนแปลงจุดรักษาการณ์ (Dynamic Group 4) ---- */}
+          {dynamicGroup4.map((g) => (
+            <div
+              key={g.key}
+              ref={wrapperRef}
+              className={styles["mo-table-wrapper"]}
+            >
+              <table className={styles["mo-table"]}>
+                <thead>
+                  <tr>
+                    <th
+                      colSpan={1}
+                      className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
+                    >
+                      7.
+                    </th>
+                    <th
+                      colSpan={5}
+                      className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                    >
+                      <div
+                        className={`${styles["mo-header"]}`}
+                        onClick={() =>
+                          setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
+                        }
+                        style={{ cursor: "pointer" }}
+                      >
+                        <p className={styles["mo-header-red-text"]}>
+                          {g.title}
+                        </p>
+                        <div>
+                          {openGroups[g.key] ? (
+                            <ChevronDown size={18} />
+                          ) : (
+                            <ChevronRight size={18} />
+                          )}
+                        </div>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                {openGroups[g.key] && (
+                  <tbody>
+                    {g.items.map((r, itemIdx) => (
+                      <tr key={itemIdx}>
+                        <td className={styles["first-column-cell"]}>
+                          7.{itemIdx + 1}
+                        </td>
+                        <td className={styles["group3-second-column-cell"]}>
+                          {r.label}
+                        </td>
+                        <td className={`${styles["group4-third-column-cell"]}`}>
+                          {r.status}
+                        </td>
+                        <td
+                          className={`${styles["group3-fourth-column-cell"]} `}
+                        >
+                          <button
+                            type="button"
+                            className={styles["action-link"]}
+                            onClick={() => handleOpenRowGroup4(itemIdx)}
+                          >
+                            คลิกดู
+                          </button>
+                        </td>
+                        <td
+                          className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
+                          onClick={() => handleRemoveGroup4Item(g.key, itemIdx)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleRemoveGroup4Item(g.key, itemIdx);
+                            }
+                          }}
+                        >
+                          ลบ
+                        </td>
+                      </tr>
+                    ))}
+                    {/* Add guard post movement row */}
+                    <tr
+                      style={{ cursor: "pointer" }}
+                      onClick={openAddGroup4}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openAddGroup4();
+                        }
+                      }}
+                    >
+                      <td className={styles["first-column-cell"]}>
+                        7.{g.items.length + 1}
+                      </td>
+                      <td colSpan={4} className={styles["add-row-cell"]}>
+                        <div className={styles["add-row-centered"]}>
+                          <PlusIcon className={styles["pin-icon"]} />
+                          เพิ่มข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                )}
+              </table>
+            </div>
+          ))}
         </div>
+
+        {/* ---- Submit Button ---- */}
         <div className={styles["guts-Mo-actions"]}>
           <button
             type="submit"
@@ -2185,7 +2421,7 @@ export default function MoNewForm(props: Props) {
             disabled={
               !hasAnyData() ||
               isSubmitting ||
-              availableSubSectorOptions.length === 0
+              availableDivisionOptions.length === 0
             }
           >
             บันทึกรายงาน

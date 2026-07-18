@@ -44,14 +44,14 @@ import {
   groupDefs,
   buildGroup2Disciplines,
   buildGroup3Projects,
-  // buildGroup4GuardMovements as buildSectorGroup4, // DISABLED — will use later
+  buildGroup4GuardMovements as buildSectorGroup4,
 } from "../division/DivisionGroups";
 import {
   group1,
   buildGroup2ForSummary,
   group3Static,
-  // buildGroup4ForSummary, // DISABLED — will use later
-  // buildGroup4GuardMovements as buildSummaryGroup4, // DISABLED — will use later
+  buildGroup4ForSummary,
+  buildGroup4GuardMovements as buildSummaryGroup4,
 } from "../summaries/summaryGroups";
 import {
   getCols,
@@ -166,10 +166,12 @@ const COLOR_GRID_LINE: [number, number, number] = [208, 208, 208]; // #d0d0d0
 
 // Status colors (no bold). Group 6 only uses warning/danger.
 const STATUS_COLORS: Record<string, [number, number, number]> = {
+  // normal: [76, 175, 80], // #4caf50 temporarily disabled
   warning: [255, 152, 0], // #ff9800
   danger: [183, 28, 28], // #b71c1c
 };
 const STATUS_LABELS: Record<string, string> = {
+  // normal: "ปกติ", // temporarily disabled
   warning: "ผิดปกติ",
   danger: "ฉุกเฉิน",
 };
@@ -475,9 +477,7 @@ async function renderGroupTable(
         [
           {
             content:
-              isDiscipline || isGroup3 || group.key === "guard_movements"
-                ? "ไม่มีข้อมูล"
-                : "-",
+              isGroup3 || group.key === "guard_movements" ? "ไม่มีข้อมูล" : "-",
             colSpan: 4,
             styles: {
               halign: "center",
@@ -595,7 +595,7 @@ async function renderGroupTable(
           content: STATUS_LABELS[st] || st,
           styles: {
             textColor: STATUS_COLORS[st] || COLOR_TEXT,
-            // NO bold — matches CSS status text weight.
+            // NO bold — matches CSS status-normal etc (font-weight: 400)
             fontStyle: "normal" as const,
             fontSize: FONT_SIZE_TABLE_CELL,
             halign: "center",
@@ -1196,6 +1196,7 @@ async function renderSummaryTable(
 
   for (const c of cols) {
     const shortName = (() => {
+      // Shorten for table column header (narrow column)
       const nm = String(c.division ?? "");
       const m = nm.match(/เขต\s+[\d.]+/);
       if (m) return m[0];
@@ -1241,19 +1242,7 @@ async function renderSummaryTable(
   });
 
   // Build body rows with object syntax for cell styles
-  const bodyRows: any[] = g.items.length === 0
-    ? [[
-        {
-          content: "ไม่มีข้อมูล",
-          colSpan: cols.length + 4,
-          styles: {
-            fontSize: FONT_SIZE_EMPTY,
-            halign: "center",
-            textColor: COLOR_TEXT,
-          },
-        },
-      ]]
-    : g.items.map((r, i) => {
+  const bodyRows: any[] = g.items.map((r, i) => {
     const itemNum = itemOffset + i + 1;
     const perLocVals = cols.map((c) => {
       if (g.key === "guard_movements")
@@ -1299,7 +1288,7 @@ async function renderSummaryTable(
     });
 
     return row;
-    });
+  });
 
   // Build columns array for autoTable
   const columns: any[] = [
@@ -1384,18 +1373,18 @@ export async function buildSectorPdf(
   // ── Build groups ─────────────────────────────────────────
   const group2Disciplines = buildGroup2Disciplines(item);
   const group3Projects = buildGroup3Projects(item);
-  // const group4GuardMovements = buildSectorGroup4(item); // DISABLED — will use later
+  const group4GuardMovements = buildSectorGroup4(item);
 
   const allGroups: PdfGroup[] = [
     ...groupDefs,
     ...group2Disciplines,
     ...(group3Projects.length > 0 ? [group3Projects[0]] : []),
-    // ...group4GuardMovements, // DISABLED — will use later
+    ...group4GuardMovements,
   ];
 
   const group2Keys = group2Disciplines.map((g) => g.key);
   const group3Keys = group3Projects.map((g) => g.key);
-  // const group4Keys = group4GuardMovements.map((g) => g.key); // DISABLED — will use later
+  const group4Keys = group4GuardMovements.map((g) => g.key);
 
   let pageNo = 1;
 
@@ -1520,7 +1509,32 @@ export async function buildSectorPdf(
     }
   }
 
-  // ── Guard Movement Detail Pages (group 7) disabled — will use later ──
+  // ── Render Guard Movement Detail Pages ───────────────────
+  // Group index is fixed (7 = การเปลี่ยนแปลงจุดรักษาการณ์)
+  const guardItems: PdfGroupItem[] =
+    group4GuardMovements.length > 0 ? group4GuardMovements[0].items : [];
+  const GUARD_GROUP_IDX = 7;
+
+  y = await startNewPage();
+  y += 2;
+
+  let guardRemaining: PdfGroupItem[] | null = guardItems;
+  while (guardRemaining) {
+    const result = renderGuardMovementDetails(
+      doc,
+      guardRemaining,
+      GUARD_GROUP_IDX,
+      y,
+    );
+    guardRemaining = result.overflow;
+
+    if (guardRemaining) {
+      y = await startNewPage();
+      y += 2;
+    } else {
+      y = result.finalY;
+    }
+  }
 
   // ── Finalize: add page numbers ──────────────────────────
   const totalPages = doc.getNumberOfPages();
@@ -1583,8 +1597,8 @@ export async function buildSummariesPdf(
     // Skip empty column chunks
     if (!cols || cols.length === 0) continue;
 
-    // const group4Summary = buildGroup4ForSummary(summaryReports); // DISABLED — will use later
     const dynamicGroup2 = buildGroup2ForSummary(summaryReports);
+    const group4Summary = buildGroup4ForSummary(summaryReports);
     const allSummaryGroups: Array<{
       g: PdfGroup;
       index: number;
@@ -1597,11 +1611,11 @@ export async function buildSummariesPdf(
         isGroup3: false,
       })),
       ...group3Static.map((g) => ({ g, index: 6, isGroup3: true })),
-      // {
-      //   g: group4Summary,
-      //   index: 7,
-      //   isGroup3: false,
-      // }, // DISABLED — will use later
+      {
+        g: group4Summary,
+        index: 7,
+        isGroup3: false,
+      },
     ];
 
     let y = chunkIdx === 0 ? HEADER_HEIGHT : HEADER_HEIGHT;
@@ -1687,12 +1701,12 @@ export async function buildSummariesPdf(
       // ── Build groups for detailed sector tables ──────────
       const detailGroup2 = buildGroup2Disciplines(colReport);
       const detailGroup3 = buildGroup3Projects(colReport);
-      // const detailGroup4 = buildSummaryGroup4(colReport); // DISABLED — will use later
+      const detailGroup4 = buildSummaryGroup4(colReport);
       const detailGroups: PdfGroup[] = [
         ...group1,
         ...detailGroup2,
         ...(detailGroup3.length > 0 ? [detailGroup3[0]] : []),
-        // detailGroup4, // DISABLED — will use later
+        detailGroup4,
       ];
 
       const group2Keys = detailGroup2.map((g) => g.key);
@@ -1802,7 +1816,32 @@ export async function buildSummariesPdf(
         }
       }
 
-      // ── Page type 3: Guard movement details disabled — will use later ──
+      // ── Page type 3: Guard movement details ────────────
+      const guardItems: PdfGroupItem[] = detailGroup4.items;
+      const GROUP_IDX_GUARD = 7;
+
+      if (y + 15 > pageH - MARGIN_BOTTOM) {
+        y = await startNewPage("รายงานประจำวันฝ่ายปฏิบัติการ", col.division);
+      } else {
+        y = await startNewPage("รายงานประจำวันฝ่ายปฏิบัติการ", col.division);
+      }
+
+      let guardRemaining: PdfGroupItem[] | null = guardItems;
+      while (guardRemaining) {
+        const result = renderGuardMovementDetails(
+          doc,
+          guardRemaining,
+          GROUP_IDX_GUARD,
+          y,
+        );
+        guardRemaining = result.overflow;
+
+        if (guardRemaining) {
+          y = await startNewPage("รายงานประจำวันฝ่ายปฏิบัติการ", col.division);
+        } else {
+          y = result.finalY;
+        }
+      }
     }
   }
 

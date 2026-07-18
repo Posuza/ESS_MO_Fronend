@@ -2,17 +2,17 @@ import React, { useEffect, useMemo } from "react";
 import styles from "./MoSummariesForm.module.css";
 import { useStore } from "../../../store/store";
 
-export type EmployeeLocation = {
+export type EmployeeDepartment = {
   id: number;
-  location: string;
-  sub_locations: string[];
+  department: string;
+  divisions: string[];
 };
 
 type Props = {
   onCancel?: () => void;
-  selectedLocation?: string;
+  selectedDivision?: string;
   empCode?: string;
-  locations?: EmployeeLocation[];
+  departments?: EmployeeDepartment[];
   departmentId?: number | null;
   selectedDate?: string;
 };
@@ -35,15 +35,9 @@ interface StatusOption {
   key: string;
 }
 
-function shortDivisionName(value: unknown): string {
-  const name = String(value ?? "");
-  const match = name.match(/เขต\s+[\d.]+/);
-  if (match) return match[0];
-  const words = name.trim().split(/\s+/);
-  return words.length >= 2
-    ? words.slice(0, 2).map((word) => word.charAt(0)).join("")
-    : name;
-}
+const fieldLabel = (label: string) => `${label} :`;
+const shouldFormatFieldLabel = (groupKey: string) =>
+  ["dept", "leave", "shift", "training", "discipline"].includes(groupKey);
 
 export default function MoSummariesForm(props: Props) {
   const { authEmployee, fetchReports, reports, isLoading } = useStore();
@@ -70,8 +64,8 @@ export default function MoSummariesForm(props: Props) {
     fetchReports(filters);
   }, [props.departmentId, props.selectedDate, authEmployee?.department_id]);
 
-  // ── Derive locations from fetched reports ────────────────────────────────
-  const derivedLocations: EmployeeLocation[] = useMemo(() => {
+  // ── Derive departments from fetched reports ────────────────────────────────
+  const derivedDepartments: EmployeeDepartment[] = useMemo(() => {
     const map: Record<string, Set<string>> = {};
     (reports || []).forEach((r) => {
       const id = Number(r.department_id) || 0;
@@ -81,21 +75,24 @@ export default function MoSummariesForm(props: Props) {
     });
     return Object.keys(map).map((k) => ({
       id: Number(k),
-      location: `Department ${k}`,
-      sub_locations: Array.from(map[k]),
+      department: `Department ${k}`,
+      divisions: Array.from(map[k]),
     }));
   }, [reports]);
 
-  const locations =
-    props.locations && props.locations.length > 0
-      ? props.locations
-      : derivedLocations;
+  const departments =
+    props.departments && props.departments.length > 0
+      ? props.departments
+      : derivedDepartments;
 
   const selectedSector = useMemo(() => {
     return (
-      props.departmentId ?? authEmployee?.department_id ?? locations[0]?.id ?? 1
+      props.departmentId ??
+      authEmployee?.department_id ??
+      departments[0]?.id ??
+      1
     );
-  }, [props.departmentId, authEmployee?.department_id, locations]);
+  }, [props.departmentId, authEmployee?.department_id, departments]);
 
   // ── Static group definitions ─────────────────────────────────────────────
   const group1: Group[] = [
@@ -104,43 +101,43 @@ export default function MoSummariesForm(props: Props) {
       title: "หน่วยงานที่รับผิดชอบ",
       items: [
         {
-          key: "dept_recruitment_count",
-          label: "รับ รปภ. ใหม่ :",
-          unit: "คน",
-        },
-        {
           key: "dept_guard_post_count",
-          label: "จุดรักษาการณ์ :",
+          label: "จุดรักษาการณ์",
           unit: "หน่วยงาน",
         },
         {
           key: "dept_current_personnel_count",
-          label: "กำลังพลปัจจุบัน :",
+          label: "กำลังพลปัจจุบัน",
           unit: "คน",
         },
         {
           key: "dept_missing_regular_count",
-          label: "ขาดตัวประจำ :",
+          label: "ขาดตัวประจำ",
           unit: "หน่วยงาน",
         },
         {
           key: "dept_missing_personnel_count",
-          label: "ขาดกำลังพล :",
+          label: "ขาดกำลังพล",
           unit: "คน",
         },
         {
           key: "dept_supplement_count",
-          label: "จัดกำลังพลเสริมพิเศษ :",
+          label: "จัดกำลังพลเสริมพิเศษ",
+          unit: "คน",
+        },
+        {
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่",
           unit: "คน",
         },
         {
           key: "dept_reserve_units_count",
-          label: "จำนวนหน่วยงานสำรองเวร :",
+          label: "จำนวนหน่วยงานสำรองเวร",
           unit: "หน่วย",
         },
         {
           key: "dept_reserve_personnel_count",
-          label: "จำนวนกำลังพลสำรองเวร :",
+          label: "จำนวนกำลังพลสำรองเวร",
           unit: "คน",
         },
       ],
@@ -149,21 +146,21 @@ export default function MoSummariesForm(props: Props) {
       key: "2",
       title: "การลา",
       items: [
-        { key: "leave_personal_count", label: "ลากิจ :", unit: "คน" },
-        { key: "leave_sick_count", label: "ลาป่วย :", unit: "คน" },
-        { key: "leave_absent_count", label: "ขาดงาน :", unit: "คน" },
-        { key: "leave_deserted_count", label: "หนีหาย :", unit: "คน" },
-        { key: "leave_resigned_count", label: "ลาออก :", unit: "คน" },
-        { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล :", unit: "คน" },
+        { key: "leave_personal_count", label: "ลากิจ", unit: "คน" },
+        { key: "leave_sick_count", label: "ลาป่วย", unit: "คน" },
+        { key: "leave_absent_count", label: "ขาดงาน", unit: "คน" },
+        { key: "leave_deserted_count", label: "หนีหาย", unit: "คน" },
+        { key: "leave_resigned_count", label: "ลาออก", unit: "คน" },
+        { key: "leave_terminated_count", label: "ส่ง รปภ. คืนฝ่ายบริหารงานบุคคล", unit: "คน" },
       ],
     },
     {
       key: "3",
       title: "การบริหารการควงเวร",
       items: [
-        { key: "shift_18_count", label: "18 ชั่วโมง :", unit: "คน" },
-        { key: "shift_24_count", label: "24 ชั่วโมง :", unit: "คน" },
-        { key: "shift_36_count", label: "36 ชั่วโมง :", unit: "คน" },
+        { key: "shift_18_count", label: "18 ชั่วโมง", unit: "คน" },
+        { key: "shift_24_count", label: "24 ชั่วโมง", unit: "คน" },
+        { key: "shift_36_count", label: "36 ชั่วโมง", unit: "คน" },
       ],
     },
     {
@@ -172,22 +169,22 @@ export default function MoSummariesForm(props: Props) {
       items: [
         {
           key: "training_shift_change_count",
-          label: "อบรมเปลี่ยนผลัด :",
+          label: "อบรมเปลี่ยนผลัด",
           unit: "หน่วยงาน",
         },
         {
           key: "training_planned_count",
-          label: "อบรมตามแผนงานที่กำหนด :",
+          label: "อบรมตามแผนงานที่กำหนด",
           unit: "หน่วยงาน",
         },
         {
           key: "training_supervise_onsite_count",
-          label: "ควบคุมหน้างาน :",
+          label: "ควบคุมหน้างาน",
           unit: "หน่วยงาน",
         },
         {
           key: "training_supervise_virtual_simulation_count",
-          label: "จำลองสถานการณ์เสมือนจริง :",
+          label: "จำลองสถานการณ์เสมือนจริง",
           unit: "หน่วยงาน",
         },
       ],
@@ -252,65 +249,11 @@ export default function MoSummariesForm(props: Props) {
       Array.from(disciplineMap.keys()),
     );
 
-    const items: GroupItem[] =
-      disciplineMap.size > 0
-        ? Array.from(disciplineMap.values()).map((d) => ({
-            key: d.key,
-            label: d.label + " :",
-            unit: "คน",
-          }))
-        : [
-            {
-              key: "discipline_sleeping_on_duty_count",
-              label: "หลับเวร :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_abandoning_post_count",
-              label: "ทิ้งจุด :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_absent_work_count",
-              label: "ขาดงาน :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_early_leaved_duty_count",
-              label: "ออกเวรก่อนเวลา :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_using_phone_on_duty_count",
-              label: "เล่นโทรศัพท์ :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_client_complained_count",
-              label: "ผู้ว่าจ้างตำหนิ :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_improper_attire_count",
-              label: "แต่งการไม่เรียบร้อย :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_failed_write_report_count",
-              label: "ไม่เขียนรายงาน :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_early_write_report_count",
-              label: "เขียนรายงานล่วงหน้า :",
-              unit: "คน",
-            },
-            {
-              key: "discipline_using_drugs_on_duty_count",
-              label: "ดื่ม/มีกลิ่นสุรา ขณะทำงาน :",
-              unit: "คน",
-            },
-          ];
+    const items: GroupItem[] = Array.from(disciplineMap.values()).map((d) => ({
+      key: d.key,
+      label: d.label,
+      unit: "คน",
+    }));
 
     return [{ key: "5", title: "วินัยและการลงโทษ", items }];
   }, [sectorReports]);
@@ -328,7 +271,7 @@ export default function MoSummariesForm(props: Props) {
           projectMap.set(p.id, {
             id: p.id,
             label: p.project_name ?? p.name ?? "-",
-            status: p.status || "warning",
+            status: p.status === "normal" ? "warning" : p.status || "warning",
           });
         }
       });
@@ -350,6 +293,16 @@ export default function MoSummariesForm(props: Props) {
     return [{ key: "6", title: "เข้าพบผู้ว่าจ้าง", items }];
   }, [sectorReports]);
 
+  // ── Dynamic group4: guard post movements (total per division) ────────────
+  /** Check if any report has guard post movements */
+  const hasGuardPostMovements = useMemo(
+    () =>
+      sectorReports.some(
+        (r) => ((r as any).guard_post_movements?.length ?? 0) > 0,
+      ),
+    [sectorReports],
+  );
+
   // ── Helper: get project value for a column report ────────────────────────
   const getProjectVal = (
     report: (typeof sectorReports)[0],
@@ -358,7 +311,7 @@ export default function MoSummariesForm(props: Props) {
     const proj = report.projects?.find((p) => p.id === projId);
     return {
       value: proj ? 1 : 0,
-      status: proj?.status ?? "warning",
+      status: proj?.status === "normal" ? "warning" : proj?.status ?? "warning",
     };
   };
 
@@ -403,7 +356,18 @@ export default function MoSummariesForm(props: Props) {
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  {shortDivisionName(c.division_name)}
+                  {(() => {
+                    const name = String(c.division_name ?? "");
+                    const m = name.match(/เขต\s+[\d.]+/);
+                    if (m) return m[0];
+                    const words = name.trim().split(/\s+/);
+                    return words.length >= 2
+                      ? words
+                          .slice(0, 2)
+                          .map((w) => w.charAt(0))
+                          .join("")
+                      : name;
+                  })()}
                 </td>
               ))}
               <td className={styles["third-column-header2-cell"]}>รวม</td>
@@ -431,7 +395,11 @@ export default function MoSummariesForm(props: Props) {
                   <td className={styles["first-column-cell"]}>
                     {groupIdx + 1}.{itemIdx + 1}
                   </td>
-                  <td className={styles["second-column-cell"]}>{item.label}</td>
+                  <td className={styles["second-column-cell"]}>
+                    {shouldFormatFieldLabel(g.key)
+                      ? fieldLabel(item.label)
+                      : item.label}
+                  </td>
 
                   {perLocVals.map((val, i) => (
                     <td
@@ -566,7 +534,20 @@ export default function MoSummariesForm(props: Props) {
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  <strong>{shortDivisionName(c.division_name)}</strong>
+                  <strong>
+                    {(() => {
+                      const name = String(c.division_name ?? "");
+                      const m = name.match(/เขต\s+[\d.]+/);
+                      if (m) return m[0];
+                      const words = name.trim().split(/\s+/);
+                      return words.length >= 2
+                        ? words
+                            .slice(0, 2)
+                            .map((w) => w.charAt(0))
+                            .join("")
+                        : name;
+                    })()}
+                  </strong>
                 </td>
               ))}
               <td className={styles["third-column-header2-cell"]}>รวม</td>
@@ -595,6 +576,147 @@ export default function MoSummariesForm(props: Props) {
                         fontWeight: 800,
                       }}
                     >
+                      {counts[status]}
+                    </span>
+                  </td>
+                ))}
+
+                <td className={styles["third-column-cell"]}>
+                  <div className={styles["third-column-text"]}>
+                    {totalCounts[status] || 0}
+                  </div>
+                </td>
+
+                <td className={`${styles["fourth-column-cell"]} ${cellClass}`}>
+                  หน่วยงาน
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // ── Guard post movement table renderer (summary view, status-grouped) ──
+  const renderGuardPostTable = (
+    groupIdx: number,
+    headerClass: string,
+    cellClass: string,
+  ) => {
+    const headerColSpan = cols.length + 4;
+
+    const statusLabel = (s: string): string => {
+      if (s === "normal") return "ปกติ";
+      if (s === "warning") return "ผิดปกติ";
+      if (s === "danger") return "ฉุกเฉิน";
+      return s;
+    };
+
+    // Collect all unique status types from guard_post_movements across all reports
+    const allStatuses = new Set<string>();
+    sectorReports.forEach((r) => {
+      ((r as any).guard_post_movements || []).forEach((m: any) => {
+        allStatuses.add(m.status || "normal");
+      });
+    });
+    const statusTypes =
+      allStatuses.size > 0
+        ? Array.from(allStatuses)
+        : ["normal", "warning", "danger"];
+
+    // For each division_name, count guard post movements by status
+    const perLocCounts: Record<string, number>[] = cols.map((c) => {
+      const report = sectorReports.find(
+        (r) => r.division_name === c.division_name,
+      );
+      const counts: Record<string, number> = {};
+      statusTypes.forEach((s) => (counts[s] = 0));
+      if (report) {
+        ((report as any).guard_post_movements || []).forEach((m: any) => {
+          const s = m.status || "normal";
+          counts[s] = (counts[s] || 0) + 1;
+        });
+      }
+      return counts;
+    });
+
+    // Total counts across all division_names
+    const totalCounts = perLocCounts.reduce<Record<string, number>>(
+      (acc, loc) => {
+        Object.entries(loc).forEach(([s, c]) => {
+          acc[s] = (acc[s] || 0) + c;
+        });
+        return acc;
+      },
+      {},
+    );
+
+    return (
+      <div className={styles["mo-table-wrapper"]} key="guard_post_movement">
+        <table className={styles["mo-table"]}>
+          <thead>
+            <tr>
+              <th
+                colSpan={1}
+                className={`${styles["first-column-cell"]} ${styles["no-border"]} ${headerClass}`}
+              >
+                {groupIdx + 1}.
+              </th>
+              <th
+                colSpan={headerColSpan}
+                className={`${styles["mo-table-header"]} ${headerClass} ${styles["no-border"]}`}
+              >
+                <div className={styles["mo-header"]}>
+                  <p>การเปลี่ยนแปลงจุดรักษาการณ์</p>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Column headers */}
+            <tr>
+              <td colSpan={2} className={styles["second-column-header-cell"]}>
+                <strong>หัวข้อ</strong>
+              </td>
+              {cols.map((c) => (
+                <td
+                  key={c.division_name}
+                  className={styles["third-column-header1-cell"]}
+                >
+                  <strong>
+                    {(() => {
+                      const name = String(c.division_name ?? "");
+                      const m = name.match(/เขต\s+[\d.]+/);
+                      if (m) return m[0];
+                      const words = name.trim().split(/\s+/);
+                      return words.length >= 2
+                        ? words
+                            .slice(0, 2)
+                            .map((w) => w.charAt(0))
+                            .join("")
+                        : name;
+                    })()}
+                  </strong>
+                </td>
+              ))}
+              <td className={styles["third-column-header2-cell"]}>รวม</td>
+              <td className={styles["fourth-column-header-cell"]} />
+            </tr>
+
+            {/* Data rows — one row per status type */}
+            {statusTypes.map((status, idx) => (
+              <tr key={status}>
+                <td className={styles["first-column-cell"]}>
+                  {groupIdx + 1}.{idx + 1}
+                </td>
+                <td className={styles["second-column-cell"]}>
+                  {statusLabel(status)}
+                </td>
+
+                {perLocCounts.map((counts, i) => (
+                  <td key={i} className={styles["group3-third-column-cell"]}>
+                    <span className={styles["guard-post-count"]}>
                       {counts[status]}
                     </span>
                   </td>
@@ -652,6 +774,14 @@ export default function MoSummariesForm(props: Props) {
             styles["fourth-column-cell-success"],
           ),
         )}
+
+        {/* Group 4 — การเปลี่ยนแปลงจุดรักษาการณ์ */}
+        {hasGuardPostMovements &&
+          renderGuardPostTable(
+            group1.length + group2.length + group3.length,
+            styles["mo-table-header-green"],
+            styles["fourth-column-cell-success"],
+          )}
 
         {/* Notes — read-only from last matching report */}
         {(() => {
