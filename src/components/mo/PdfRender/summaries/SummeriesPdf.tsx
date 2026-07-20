@@ -263,6 +263,18 @@ export default function SummeriesPdf({
 
     allCols.forEach((col) => {
       // ── Build dynamic group3 from this column's actual projects ──
+      const employerItems = [
+        {
+          key: "employer_number_count",
+          label: "เข้าพบผู้ว่าจ้าง",
+          unit: "หน่วยงาน",
+        },
+        {
+          key: "employer_problem_count",
+          label: "พบปัญหา",
+          unit: "หน่วยงาน",
+        },
+      ];
       const projectItems = (col.report.projects || []).map((p: any) => ({
         key: p.id ?? p.name ?? String(Math.random()),
         label: p.project_name ?? p.name ?? "-",
@@ -272,7 +284,7 @@ export default function SummeriesPdf({
       const dynamicGroup3: PdfGroup = {
         key: "meeting",
         title: "เข้าพบผู้ว่าจ้าง",
-        items: projectItems,
+        items: [...employerItems, ...projectItems],
       };
       const dynamicGroup4 = buildGroup4GuardMovements(col.report);
       const dynamicGroup2 = buildGroup2Disciplines(col.report);

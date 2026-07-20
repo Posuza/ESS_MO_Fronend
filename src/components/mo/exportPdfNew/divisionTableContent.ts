@@ -15,8 +15,9 @@
 //   B) GUARD MOVEMENTS (group.key === "guard_movements"):
 //      Aggregated status counts.
 //
-//   C) GROUP 3 — PROJECTS (isGroup3 === true):
-//      Each item: [No. | Project Name (colspan=2) | Colored Status]
+//   C) GROUP 3 — EMPLOYER COUNTS / PROJECTS (isGroup3 === true):
+//      Counts:   [No. | Label | Value | Unit]
+//      Projects: [No. | Label | Status (colspan=2)]
 //
 //   D) REGULAR GROUPS (default):
 //      [No. | Label | Value | Unit]
@@ -61,13 +62,16 @@ export function preCalcGroupTableHeight(
   const INDEX_W = Math.min(10, width * 0.12);
   const VALUE_W = Math.min(11, width * 0.18);
   const UNIT_W = Math.min(9, width * 0.16);
-  const STATUS_W = Math.min(18, width * 0.3);
 
   doc.setFont(FONT_NAME, "normal");
   doc.setFontSize(FONT_SIZE_TABLE_CELL);
 
   // Empty state: 1 header row + 1 empty row
-  if (group.items.length === 0) {
+  if (
+    group.items.length === 0 ||
+    (isDiscipline &&
+      group.items.every((item) => Number(item.value ?? 0) <= 0))
+  ) {
     const ptToMm = 0.352778;
     const lh = FONT_SIZE_TABLE_CELL * ptToMm * 1.2;
     const pad = 1.5;
@@ -104,14 +108,16 @@ export function preCalcGroupTableHeight(
     );
   }
 
-  // Group 3 — projects: [No., Project Name (colspan=2), Status]
+  // Group 3 — employer counts / projects.
+  // Count rows use value + unit; project rows span those two cells for status.
   if (isGroup3) {
     return preCalcTableHeight(
       doc, group.items,
       [
         { width: INDEX_W, getText: () => "" },
-        { width: width - INDEX_W - STATUS_W, getText: (it) => it.label },
-        { width: STATUS_W, getText: (it) => it.status || "warning" },
+        { width: width - INDEX_W - VALUE_W - UNIT_W, getText: (it) => it.label },
+        { width: VALUE_W, getText: (it) => (it.status ? "" : String(data[it.key] ?? 0)) },
+        { width: UNIT_W, getText: (it) => it.status || it.unit || "" },
       ],
       FONT_SIZE_TABLE_CELL,
       { top: 1.5, right: 1.5, bottom: 1.5, left: 1.5 },
@@ -165,7 +171,6 @@ export async function renderGroupTable(
   const INDEX_W = Math.min(10, width * 0.12);
   const VALUE_W = Math.min(11, width * 0.18);
   const UNIT_W = Math.min(9, width * 0.16);
-  const STATUS_W = Math.min(18, width * 0.3);
 
   // ── Page break: pre-calculate exact height and push to next page if needed ──
   const pageH = doc.internal.pageSize.getHeight();
@@ -200,7 +205,17 @@ export async function renderGroupTable(
   };
 
   // ── Empty state ──
-  if (group.items.length === 0) {
+  const shouldShowNoData =
+    group.items.length === 0 ||
+    (isDiscipline &&
+      group.items.every((item) => Number(item.value ?? 0) <= 0));
+  const emptyText = isDiscipline
+    ? "ไม่มีข้อมูลวินัยและการลงโทษ"
+    : isGroup3 || group.key === "guard_movements"
+      ? "ไม่มีข้อมูล"
+      : "-";
+
+  if (shouldShowNoData) {
     const startPages = doc.getNumberOfPages();
     autoTable(doc, {
       startY,
@@ -223,8 +238,7 @@ export async function renderGroupTable(
       body: [
         [
           {
-            content:
-              isGroup3 || group.key === "guard_movements" ? "ไม่มีข้อมูล" : "-",
+            content: emptyText,
             colSpan: 4,
             styles: {
               halign: "center",
@@ -310,30 +324,54 @@ export async function renderGroupTable(
       await drawHeadersIfNewPages(doc, headerInfo.sectorName, headerInfo.title, startPages2, headerInfo.division);
     }
   } else if (isGroup3) {
-    // ── Group 3 — projects: [No., Project Name (colspan=2), Status] ──
+    // ── Group 3 — count rows + project rows ──
     const bodyRows = group.items.map((it: PdfGroupItem, i: number) => {
       const itemNum = itemOffset + i + 1;
-      const st = it.status || "warning";
-      return [
+      const st = it.status;
+      const row: Record<string, unknown>[] = [
         {
           content: `${groupIndex}.${itemNum}`,
           styles: { fontSize: FONT_SIZE_TABLE_CELL, halign: "center" },
         },
         {
           content: it.label,
-          colSpan: 2,
           styles: { halign: "left", fontSize: FONT_SIZE_TABLE_CELL },
         },
-        {
+      ];
+
+      if (st) {
+        row.push({
           content: STATUS_LABELS[st] || st,
+          colSpan: 2,
           styles: {
             textColor: STATUS_COLORS[st] || COLOR_TEXT,
             fontStyle: "normal" as const,
             fontSize: FONT_SIZE_TABLE_CELL,
             halign: "center",
           },
+        });
+        return row;
+      }
+
+      row.push(
+        {
+          content: String(data[it.key] ?? 0),
+          styles: {
+            fontSize: FONT_SIZE_TABLE_CELL,
+            halign: "center",
+          },
         },
-      ];
+        {
+          content: it.unit || "",
+          styles: {
+            textColor: COLOR_TEXT,
+            fontStyle: "normal" as const,
+            fontSize: FONT_SIZE_TABLE_CELL,
+            halign: "center",
+          },
+        },
+      );
+      return row;
     });
 
     const startPages3 = doc.getNumberOfPages();
@@ -362,7 +400,8 @@ export async function renderGroupTable(
       columnStyles: {
         0: { cellWidth: INDEX_W, halign: "center" },
         1: { halign: "left" },
-        3: { halign: "center", cellWidth: STATUS_W },
+        2: { halign: "center", cellWidth: VALUE_W },
+        3: { halign: "center", cellWidth: UNIT_W },
       },
     });
     if (headerInfo) {

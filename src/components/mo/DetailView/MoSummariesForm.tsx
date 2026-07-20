@@ -121,13 +121,13 @@ export default function MoSummariesForm(props: Props) {
           unit: "คน",
         },
         {
-          key: "dept_supplement_count",
-          label: "จัดกำลังพลเสริมพิเศษ",
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่",
           unit: "คน",
         },
         {
-          key: "dept_recruitment_count",
-          label: "รับ รปภ. ใหม่",
+          key: "dept_supplement_count",
+          label: "จัดกำลังพลเสริมพิเศษ",
           unit: "คน",
         },
         {
@@ -293,16 +293,6 @@ export default function MoSummariesForm(props: Props) {
     return [{ key: "6", title: "เข้าพบผู้ว่าจ้าง", items }];
   }, [sectorReports]);
 
-  // ── Dynamic group4: guard post movements (total per division) ────────────
-  /** Check if any report has guard post movements */
-  const hasGuardPostMovements = useMemo(
-    () =>
-      sectorReports.some(
-        (r) => ((r as any).guard_post_movements?.length ?? 0) > 0,
-      ),
-    [sectorReports],
-  );
-
   // ── Helper: get project value for a column report ────────────────────────
   const getProjectVal = (
     report: (typeof sectorReports)[0],
@@ -323,6 +313,16 @@ export default function MoSummariesForm(props: Props) {
     cellClass: string,
   ) => {
     const headerColSpan = cols.length + 4;
+    const shouldShowNoData =
+      g.key === "5" &&
+      !g.items.some((item) =>
+        cols.some((c) => {
+          const report = sectorReports.find(
+            (r) => r.division_name === c.division_name,
+          );
+          return report ? getVal(report, item.key) > 0 : false;
+        }),
+      );
 
     return (
       <div className={styles["mo-table-wrapper"]} key={g.key}>
@@ -375,7 +375,23 @@ export default function MoSummariesForm(props: Props) {
             </tr>
 
             {/* Data rows */}
-            {g.items.map((item, itemIdx) => {
+            {shouldShowNoData ? (
+              <tr>
+                <td
+                  colSpan={headerColSpan}
+                  style={{
+                    textAlign: "center",
+                    color: "#000000",
+                    padding: "6px",
+                    fontSize: "12px",
+                    border: "0.8px solid #ccc",
+                  }}
+                >
+                  ไม่มีข้อมูลวินัยและการลงโทษ
+                </td>
+              </tr>
+            ) : (
+              g.items.map((item, itemIdx) => {
               const isProject = item.key.startsWith("proj_");
               const projId = isProject ? item.key.replace("proj_", "") : "";
 
@@ -429,7 +445,7 @@ export default function MoSummariesForm(props: Props) {
                   </td>
                 </tr>
               );
-            })}
+            }))}
           </tbody>
         </table>
       </div>
@@ -443,24 +459,24 @@ export default function MoSummariesForm(props: Props) {
     cellClass: string,
   ) => {
     const headerColSpan = cols.length + 4;
+    const employerRows = [
+      {
+        key: "employer_number_count",
+        label: "เข้าพบผู้ว่าจ้าง",
+        unit: "หน่วยงาน",
+      },
+      {
+        key: "employer_problem_count",
+        label: "พบปัญหา",
+        unit: "หน่วยงาน",
+      },
+    ];
 
     // ── Status helpers ─────────────────────────────────────────────────
-    const statusClass = (s: string): string => {
-      if (s === "warning") return styles["status-warning"];
-      if (s === "danger") return styles["status-danger"];
-      return styles["status-warning"];
-    };
-
     const statusLabel = (s: string): string => {
       if (s === "warning") return "ผิดปกติ";
       if (s === "danger") return "ฉุกเฉิน";
       return "ผิดปกติ";
-    };
-
-    const statusTextColor = (s: string): string => {
-      if (s === "warning") return "#ff9800";
-      if (s === "danger") return "#b71c1c";
-      return "#ff9800";
     };
 
     // Collect all unique status types from all projects across all reports
@@ -470,10 +486,7 @@ export default function MoSummariesForm(props: Props) {
         allStatuses.add(p.status === "normal" ? "warning" : p.status || "warning");
       });
     });
-    const statusTypes =
-      allStatuses.size > 0
-        ? Array.from(allStatuses)
-        : ["warning", "danger"];
+    const statusTypes = Array.from(allStatuses);
 
     // For each division_name, count projects by status
     const perLocCounts: Record<string, number>[] = cols.map((c) => {
@@ -554,44 +567,86 @@ export default function MoSummariesForm(props: Props) {
               <td className={styles["fourth-column-header-cell"]} />
             </tr>
 
-            {/* Data rows — one row per status type */}
-            {statusTypes.map((status, idx) => (
-              <tr key={status}>
-                <td className={styles["first-column-cell"]}>
-                  {groupIdx + 1}.{idx + 1}
-                </td>
-                <td
-                  className={`${styles["second-column-cell"]} ${statusClass(
-                    status,
-                  )}`}
-                >
-                  {statusLabel(status)}
-                </td>
+            {employerRows.map((item, idx) => {
+              const perLocVals = cols.map((c) => {
+                const report = sectorReports.find(
+                  (r) => r.division_name === c.division_name,
+                );
+                return Number((report as any)?.[item.key]) || 0;
+              });
+              const total = perLocVals.reduce((acc, val) => acc + val, 0);
 
-                {perLocCounts.map((counts, i) => (
-                  <td key={i} className={styles["group3-third-column-cell"]}>
-                    <span
-                      style={{
-                        color: statusTextColor(status),
-                        fontWeight: 800,
-                      }}
-                    >
-                      {counts[status]}
-                    </span>
+              return (
+                <tr key={item.key}>
+                  <td className={styles["first-column-cell"]}>
+                    {groupIdx + 1}.{idx + 1}
                   </td>
-                ))}
+                  <td className={styles["second-column-cell"]}>
+                    {fieldLabel(item.label)}
+                  </td>
+                  {perLocVals.map((val, i) => (
+                    <td key={i} className={styles["group3-third-column-cell"]}>
+                      <span>{val}</span>
+                    </td>
+                  ))}
+                  <td className={styles["third-column-cell"]}>
+                    <div className={styles["third-column-text"]}>{total}</div>
+                  </td>
+                  <td className={`${styles["fourth-column-cell"]} ${cellClass}`}>
+                    {item.unit}
+                  </td>
+                </tr>
+              );
+            })}
 
-                <td className={styles["third-column-cell"]}>
-                  <div className={styles["third-column-text"]}>
-                    {totalCounts[status] || 0}
-                  </div>
-                </td>
-
-                <td className={`${styles["fourth-column-cell"]} ${cellClass}`}>
-                  หน่วยงาน
+            {/* Data rows — one row per status type */}
+            {statusTypes.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={headerColSpan}
+                  style={{
+                    textAlign: "center",
+                    color: "#000000",
+                    padding: "6px",
+                    fontSize: "12px",
+                    border: "0.8px solid #ccc",
+                  }}
+                >
+                  ไม่มีข้อมูลโครงการ
                 </td>
               </tr>
-            ))}
+            ) : (
+              statusTypes.map((status, idx) => (
+                <tr key={status}>
+                  <td className={styles["first-column-cell"]}>
+                    {groupIdx + 1}.{idx + employerRows.length + 1}
+                  </td>
+                  <td className={styles["second-column-cell"]}>
+                    <span
+                      className={`${styles["status-badge"]} ${styles[`status-${status}`]}`}
+                    >
+                      {statusLabel(status)}
+                    </span>
+                  </td>
+
+                  {perLocCounts.map((counts, i) => (
+                    <td key={i} className={styles["group3-third-column-cell"]}>
+                      <span>{counts[status]}</span>
+                    </td>
+                  ))}
+
+                  <td className={styles["third-column-cell"]}>
+                    <div className={styles["third-column-text"]}>
+                      {totalCounts[status] || 0}
+                    </div>
+                  </td>
+
+                  <td className={`${styles["fourth-column-cell"]} ${cellClass}`}>
+                    หน่วยงาน
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -620,10 +675,7 @@ export default function MoSummariesForm(props: Props) {
         allStatuses.add(m.status || "normal");
       });
     });
-    const statusTypes =
-      allStatuses.size > 0
-        ? Array.from(allStatuses)
-        : ["normal", "warning", "danger"];
+    const statusTypes = Array.from(allStatuses);
 
     // For each division_name, count guard post movements by status
     const perLocCounts: Record<string, number>[] = cols.map((c) => {
@@ -705,34 +757,51 @@ export default function MoSummariesForm(props: Props) {
             </tr>
 
             {/* Data rows — one row per status type */}
-            {statusTypes.map((status, idx) => (
-              <tr key={status}>
-                <td className={styles["first-column-cell"]}>
-                  {groupIdx + 1}.{idx + 1}
-                </td>
-                <td className={styles["second-column-cell"]}>
-                  {statusLabel(status)}
-                </td>
-
-                {perLocCounts.map((counts, i) => (
-                  <td key={i} className={styles["group3-third-column-cell"]}>
-                    <span className={styles["guard-post-count"]}>
-                      {counts[status]}
-                    </span>
-                  </td>
-                ))}
-
-                <td className={styles["third-column-cell"]}>
-                  <div className={styles["third-column-text"]}>
-                    {totalCounts[status] || 0}
-                  </div>
-                </td>
-
-                <td className={`${styles["fourth-column-cell"]} ${cellClass}`}>
-                  หน่วยงาน
+            {statusTypes.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={headerColSpan}
+                  style={{
+                    textAlign: "center",
+                    color: "#000000",
+                    padding: "6px",
+                    fontSize: "12px",
+                    border: "0.8px solid #ccc",
+                  }}
+                >
+                  ไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์
                 </td>
               </tr>
-            ))}
+            ) : (
+              statusTypes.map((status, idx) => (
+                <tr key={status}>
+                  <td className={styles["first-column-cell"]}>
+                    {groupIdx + 1}.{idx + 1}
+                  </td>
+                  <td className={styles["second-column-cell"]}>
+                    {statusLabel(status)}
+                  </td>
+
+                  {perLocCounts.map((counts, i) => (
+                    <td key={i} className={styles["group3-third-column-cell"]}>
+                      <span className={styles["guard-post-count"]}>
+                        {counts[status]}
+                      </span>
+                    </td>
+                  ))}
+
+                  <td className={styles["third-column-cell"]}>
+                    <div className={styles["third-column-text"]}>
+                      {totalCounts[status] || 0}
+                    </div>
+                  </td>
+
+                  <td className={`${styles["fourth-column-cell"]} ${cellClass}`}>
+                    หน่วยงาน
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -776,12 +845,11 @@ export default function MoSummariesForm(props: Props) {
         )}
 
         {/* Group 4 — การเปลี่ยนแปลงจุดรักษาการณ์ */}
-        {hasGuardPostMovements &&
-          renderGuardPostTable(
-            group1.length + group2.length + group3.length,
-            styles["mo-table-header-green"],
-            styles["fourth-column-cell-success"],
-          )}
+        {renderGuardPostTable(
+          group1.length + group2.length + group3.length,
+          styles["mo-table-header-green"],
+          styles["fourth-column-cell-success"],
+        )}
 
         {/* Notes — read-only from last matching report */}
         {(() => {

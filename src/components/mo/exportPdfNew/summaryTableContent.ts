@@ -175,9 +175,16 @@ export async function renderSummaryTable(
     },
   });
 
-  // Body rows
-  const bodyRows: Record<string, unknown>[][] = group.items.map((r, i) => {
-    const itemNum = itemOffset + i + 1;
+  const noDataText =
+    group.key === "discipline"
+      ? "ไม่มีข้อมูลวินัยและการลงโทษ"
+      : isGroup3
+        ? "ไม่มีข้อมูลโครงการ"
+        : group.key === "guard_movements"
+          ? "ไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์"
+          : "ไม่มีข้อมูล";
+
+  const rowData = group.items.map((r, i) => {
     const perLocVals = cols.map((c) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const report = (c as any).report;
@@ -185,12 +192,41 @@ export async function renderSummaryTable(
       if (group.key === "guard_movements") {
         return String(guardMovementStatusCount(report, r.status || r.key));
       }
-      if (isGroup3) {
+      if (isGroup3 && r.status) {
         return String(projectStatusCount(report, r.status || r.key));
       }
       return String(itemValueFn(report, group.key, r.key));
     });
     const total = perLocVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
+    return { r, originalIndex: i, perLocVals, total };
+  });
+  const displayRows =
+    isGroup3
+      ? rowData.filter((row) => !row.r.status || row.total > 0)
+      : group.key === "guard_movements"
+        ? rowData.filter((row) => row.total > 0)
+      : rowData;
+  const shouldShowNoData =
+    displayRows.length === 0 ||
+    (group.key === "discipline" && rowData.every((row) => row.total <= 0));
+
+  // Body rows
+  const bodyRows: Record<string, unknown>[][] = shouldShowNoData
+    ? [
+        [
+          {
+            content: noDataText,
+            colSpan: cols.length + 4,
+            styles: {
+              fontSize: FONT_SIZE_TABLE_CELL,
+              halign: "center",
+              textColor: COLOR_TEXT,
+            },
+          },
+        ],
+      ]
+    : displayRows.map(({ r, originalIndex, perLocVals, total }) => {
+    const itemNum = itemOffset + originalIndex + 1;
 
     const row: Record<string, unknown>[] = [
       {
@@ -202,7 +238,7 @@ export async function renderSummaryTable(
         styles: {
           fontSize: FONT_SIZE_TABLE_CELL,
           halign: "left",
-          ...(isGroup3 ? { textColor: STATUS_COLORS[r.status || "warning"] || COLOR_TEXT } : {}),
+          ...(isGroup3 && r.status ? { textColor: STATUS_COLORS[r.status || "warning"] || COLOR_TEXT } : {}),
         },
       },
     ];

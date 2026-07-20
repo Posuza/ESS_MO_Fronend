@@ -453,7 +453,17 @@ async function renderGroupTable(
     fillColor: [255, 255, 255],
   };
 
-  if (group.items.length === 0) {
+  const shouldShowNoData =
+    group.items.length === 0 ||
+    (isDiscipline &&
+      group.items.every((item) => Number(item.value ?? 0) <= 0));
+  const emptyText = isDiscipline
+    ? "ไม่มีข้อมูลวินัยและการลงโทษ"
+    : isGroup3 || group.key === "guard_movements"
+      ? "ไม่มีข้อมูล"
+      : "-";
+
+  if (shouldShowNoData) {
     const startPages = doc.getNumberOfPages();
     autoTable(doc, {
       startY,
@@ -476,8 +486,7 @@ async function renderGroupTable(
       body: [
         [
           {
-            content:
-              isGroup3 || group.key === "guard_movements" ? "ไม่มีข้อมูล" : "-",
+            content: emptyText,
             colSpan: 4,
             styles: {
               halign: "center",
@@ -1241,9 +1250,15 @@ async function renderSummaryTable(
     },
   });
 
-  // Build body rows with object syntax for cell styles
-  const bodyRows: any[] = g.items.map((r, i) => {
-    const itemNum = itemOffset + i + 1;
+  const noDataText =
+    g.key === "discipline"
+      ? "ไม่มีข้อมูลวินัยและการลงโทษ"
+      : isGroup3
+        ? "ไม่มีข้อมูลโครงการ"
+        : g.key === "guard_movements"
+          ? "ไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์"
+          : "ไม่มีข้อมูล";
+  const rowData = g.items.map((r, i) => {
     const perLocVals = cols.map((c) => {
       if (g.key === "guard_movements")
         return String(guardMovementStatusCount(c.report, r.status || r.key));
@@ -1252,6 +1267,33 @@ async function renderSummaryTable(
       return String(itemValueFn(c.report, g.key, r.key));
     });
     const total = perLocVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
+    return { r, originalIndex: i, perLocVals, total };
+  });
+  const displayRows =
+    isGroup3 || g.key === "guard_movements"
+      ? rowData.filter((row) => row.total > 0)
+      : rowData;
+  const shouldShowNoData =
+    displayRows.length === 0 ||
+    (g.key === "discipline" && rowData.every((row) => row.total <= 0));
+
+  // Build body rows with object syntax for cell styles
+  const bodyRows: any[] = shouldShowNoData
+    ? [
+        [
+          {
+            content: noDataText,
+            colSpan: cols.length + 4,
+            styles: {
+              fontSize: FONT_SIZE_TABLE_CELL,
+              halign: "center",
+              textColor: COLOR_TEXT,
+            },
+          },
+        ],
+      ]
+    : displayRows.map(({ r, originalIndex, perLocVals, total }) => {
+    const itemNum = itemOffset + originalIndex + 1;
 
     const row: any[] = [
       {

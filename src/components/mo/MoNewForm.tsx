@@ -57,12 +57,6 @@ const group1: Array<{
     title: "หน่วยงานที่รับผิดชอบ",
     items: [
       {
-        key: "dept_recruitment_count",
-        label: "รับ รปภ. ใหม่",
-        unit: "คน",
-        value: "0",
-      },
-      {
         key: "dept_guard_post_count",
         label: "จุดรักษาการณ์",
         unit: "หน่วยงาน",
@@ -83,6 +77,12 @@ const group1: Array<{
       {
         key: "dept_missing_personnel_count",
         label: "ขาดกำลังพล",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
         unit: "คน",
         value: "0",
       },
@@ -243,6 +243,29 @@ const group2DefaultItems = [
   },
 ];
 
+const group3A = [
+  {
+    key: "employer",
+    title: "เข้าพบผู้ว่าจ้าง",
+    items: [
+      {
+        key: "employer_number_count",
+        label: "เข้าพบผู้ว่าจ้าง",
+        unit: "หน่วยงาน",
+        value: "0",
+        isActive: false,
+      },
+      {
+        key: "employer_problem_count",
+        label: "พบปัญหา",
+        unit: "หน่วยงาน",
+        value: "0",
+        isActive: false,
+      },
+    ]
+  },
+];
+
 const fieldLabel = (label: string) => `${label} :`;
 
 /** Template for Group 3 (meeting records) */
@@ -360,7 +383,7 @@ export default function MoNewForm(props: Props) {
 
   const [counts, setCounts] = useState<Record<string, string>>(() => {
     const initialCounts: Record<string, string> = {};
-    [...group1, ...dynamicGroup2].forEach((g) =>
+    [...group1, ...group3A, ...dynamicGroup2].forEach((g) =>
       g.items.forEach((it) => {
         initialCounts[it.key] = (it as any).value ?? "0";
       }),
@@ -369,7 +392,7 @@ export default function MoNewForm(props: Props) {
   });
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    [...group1, ...dynamicGroup2, ...group3, ...group4].reduce(
+    [...group1, ...dynamicGroup2, ...group3A, ...group3, ...group4].reduce(
       (acc, g, i) => {
         acc[g.key] = i === 0;
         return acc;
@@ -483,11 +506,11 @@ export default function MoNewForm(props: Props) {
     setDynamicGroup4(group4);
   }, []);
 
-  // -- Ensure counts contains entries for all dynamicGroup2 keys --
+  // -- Ensure counts contains entries for all dynamic count group keys --
   useEffect(() => {
     setCounts((prev) => {
       const next = { ...prev };
-      dynamicGroup2.forEach((g) => {
+      [...group3A, ...dynamicGroup2].forEach((g) => {
         g.items.forEach((it) => {
           if (!(it.key in next)) next[it.key] = "0";
         });
@@ -1932,125 +1955,187 @@ export default function MoNewForm(props: Props) {
           )}
 
           {/* ---- Section 6: Meeting Records (Dynamic Group 3) ---- */}
-          {dynamicGroup3.map((g) => (
-            <div
-              key={g.key}
-              ref={wrapperRef}
-              className={styles["mo-table-wrapper"]}
-            >
-              <table className={styles["mo-table"]}>
-                <thead>
-                  <tr>
-                    <th
-                      colSpan={1}
-                      className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
-                    >
-                      6.
-                    </th>
-                    <th
-                      colSpan={5}
-                      className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
-                    >
-                      <div
-                        className={`${styles["mo-header"]}`}
-                        onClick={() =>
-                          setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
-                        }
-                        style={{ cursor: "pointer" }}
+          {dynamicGroup3.map((g) => {
+            const group3AGroup = group3A[0];
+            const group3AOffset = group3AGroup.items.length;
+
+            return (
+              <div
+                key={g.key}
+                ref={wrapperRef}
+                className={styles["mo-table-wrapper"]}
+              >
+                <table className={styles["mo-table"]}>
+                  <thead>
+                    <tr>
+                      <th
+                        colSpan={1}
+                        className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
                       >
-                        <p className={styles["mo-header-red-text"]}>
-                          {g.title}
-                        </p>
-                        <div>
-                          {openGroups[g.key] ? (
-                            <ChevronDown size={18} />
-                          ) : (
-                            <ChevronRight size={18} />
-                          )}
+                        6.
+                      </th>
+                      <th
+                        colSpan={5}
+                        className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                      >
+                        <div
+                          className={`${styles["mo-header"]}`}
+                          onClick={() =>
+                            setOpenGroups((s) => ({
+                              ...s,
+                              [g.key]: !s[g.key],
+                            }))
+                          }
+                          style={{ cursor: "pointer" }}
+                        >
+                          <p className={styles["mo-header-red-text"]}>
+                            {g.title}
+                          </p>
+                          <div>
+                            {openGroups[g.key] ? (
+                              <ChevronDown size={18} />
+                            ) : (
+                              <ChevronRight size={18} />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                {openGroups[g.key] && (
-                  <tbody>
-                    {g.items.map((r, itemIdx) => (
-                      <tr key={itemIdx}>
-                        <td className={styles["first-column-cell"]}>
-                          6.{itemIdx + 1}
-                        </td>
-                        <td className={styles["group3-second-column-cell"]}>
-                          {r.label}
-                        </td>
-                        <td
-                          className={`${styles["group3-third-column-cell"]} ${styles[`status-${r.status ?? statusOptions[rowStatus[String(itemIdx)] ?? 0].key}`]} `}
-                        >
-                          {(() => {
-                            const key =
-                              r.status ??
-                              statusOptions[rowStatus[String(itemIdx)] ?? 0]
-                                .key;
-                            const opt =
-                              statusOptions.find((s) => s.key === key) ??
-                              statusOptions[0];
-                            return opt.label;
-                          })()}
-                        </td>
-                        <td
-                          className={`${styles["group3-fourth-column-cell"]} `}
-                        >
-                          <button
-                            type="button"
-                            className={styles["action-link"]}
-                            onClick={() => handleOpenRow(itemIdx)}
+                      </th>
+                    </tr>
+                  </thead>
+                  {openGroups[g.key] && (
+                    <tbody>
+                      {group3AGroup.items.map((r, itemIdx) => (
+                        <tr key={r.key}>
+                          <td className={styles["first-column-cell"]}>
+                            6.{itemIdx + 1}
+                          </td>
+                          <td
+                            className={`${styles["second-column-cell"]}`}
                           >
-                            คลิกดู
-                          </button>
-                        </td>
-                        <td
-                          className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
-                          onClick={() => handleRemoveGroup3Item(g.key, itemIdx)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              handleRemoveGroup3Item(g.key, itemIdx);
+                            {fieldLabel(r.label)}
+                          </td>
+                          <td
+                            className={`${styles["third-column-cell"]} ${counts[r.key].toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
+                          >
+                            <textarea
+                              ref={(el) => {
+                                inputRef.current = el;
+                              }}
+                              className={`${styles["third-column-textarea"]}`}
+                              value={
+                                editingKey === r.key
+                                  ? editingRaw
+                                  : getDisplayValue(r.key)
+                              }
+                              rows={1}
+                              style={{
+                                fontStyle:
+                                  (editingKey === r.key
+                                    ? editingRaw
+                                    : getDisplayValue(r.key)) === "0"
+                                    ? "italic"
+                                    : "normal",
+                              }}
+                              onChange={(e) => handleTextareaChange(r.key, e)}
+                              onPaste={(e) => handleTextareaPaste(r.key, e)}
+                              onFocus={(e) => handleTextareaFocus(r.key, e)}
+                              onKeyDown={(e) =>
+                                handleTextareaKeyDown(r.key, e)
+                              }
+                              onBlur={() => handleTextareaBlur(r.key)}
+                            />
+                          </td>
+                          <td
+                            colSpan={2}
+                            className={`${styles["fourth-column-cell"]}`}>
+                            {r.unit}
+                          </td>
+                        </tr>
+                      ))}
+                      {g.items.map((r, itemIdx) => (
+                        <tr key={itemIdx}>
+                          <td className={styles["first-column-cell"]}>
+                            6.{itemIdx + group3AOffset + 1}
+                          </td>
+                          <td className={styles["group3-second-column-cell"]}>
+                            {r.label}
+                          </td>
+                          <td className={styles["group3-third-column-cell"]}>
+                            {(() => {
+                              const key =
+                                r.status ??
+                                statusOptions[rowStatus[String(itemIdx)] ?? 0]
+                                  .key;
+                              const opt =
+                                statusOptions.find((s) => s.key === key) ??
+                                statusOptions[0];
+                              return (
+                                <span
+                                  className={`${styles["status-badge"]} ${styles[`status-${key}`]}`}
+                                >
+                                  {opt.label}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                          <td
+                            className={`${styles["group3-fourth-column-cell"]} `}
+                          >
+                            <button
+                              type="button"
+                              className={styles["action-link"]}
+                              onClick={() => handleOpenRow(itemIdx)}
+                            >
+                              คลิกดู
+                            </button>
+                          </td>
+                          <td
+                            className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
+                            onClick={() =>
+                              handleRemoveGroup3Item(g.key, itemIdx)
                             }
-                          }}
-                        >
-                          ลบ
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleRemoveGroup3Item(g.key, itemIdx);
+                              }
+                            }}
+                          >
+                            ลบ
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Add meeting row */}
+                      <tr
+                        style={{ cursor: "pointer" }}
+                        onClick={openAddGroup3}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openAddGroup3();
+                          }
+                        }}
+                      >
+                        <td className={styles["first-column-cell"]}>
+                          6.{g.items.length + group3AOffset + 1}
+                        </td>
+                        <td colSpan={4} className={styles["add-row-cell"]}>
+                          <div className={styles["add-row-centered"]}>
+                            <PlusIcon className={styles["pin-icon"]} />
+                            เพิ่มข้อมูลเข้าพบผู้ว่าจ้าง
+                          </div>
                         </td>
                       </tr>
-                    ))}
-                    {/* Add meeting row */}
-                    <tr
-                      style={{ cursor: "pointer" }}
-                      onClick={openAddGroup3}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          openAddGroup3();
-                        }
-                      }}
-                    >
-                      <td className={styles["first-column-cell"]}>
-                        6.{g.items.length + 1}
-                      </td>
-                      <td colSpan={4} className={styles["add-row-cell"]}>
-                        <div className={styles["add-row-centered"]}>
-                          <PlusIcon className={styles["pin-icon"]} />
-                          เพิ่มข้อมูลเข้าพบผู้ว่าจ้าง
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                )}
-              </table>
-            </div>
-          ))}
+                    </tbody>
+                  )}
+                </table>
+              </div>
+            );
+          })}
 
           {/* ---- Group 4 Add/Edit Modal (guard post Movement) ---- */}
           {showAddGroup4 && (

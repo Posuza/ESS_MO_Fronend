@@ -45,13 +45,13 @@ export const groupDefs: LocalPdfGroup[] = [
       },
       { key: "dept_missing_personnel_count", label: "ขาดกำลังพล", unit: "คน" },
       {
-        key: "dept_supplement_count",
-        label: "จัดกำลังพลเสริมพิเศษ",
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
         unit: "คน",
       },
       {
-        key: "dept_recruitment_count",
-        label: "รับ รปภ. ใหม่",
+        key: "dept_supplement_count",
+        label: "จัดกำลังพลเสริมพิเศษ",
         unit: "คน",
       },
       {
@@ -135,19 +135,33 @@ export function buildGroup2Disciplines(data: any): LocalPdfGroup[] {
 
 // ─── Group 3 — Projects (dynamic from report.projects) ───────
 export function buildGroup3Projects(data: any): LocalPdfGroup[] {
-  const raw = (data as any).projects ?? [];
-  if (!Array.isArray(raw)) return [];
+  const raw = Array.isArray((data as any).projects) ? (data as any).projects : [];
+  const employerItems = [
+    {
+      key: "employer_number_count",
+      label: "เข้าพบผู้ว่าจ้าง",
+      unit: "หน่วยงาน",
+    },
+    {
+      key: "employer_problem_count",
+      label: "พบปัญหา",
+      unit: "หน่วยงาน",
+    },
+  ];
   return [
     {
       key: "meeting",
       title: "เข้าพบผู้ว่าจ้าง",
-      items: raw.map((p: any) => ({
-        key: p.id ?? p.name,
-        label: p.project_name ?? p.name ?? "-",
-        detail: p.detail ?? "",
-        status: p.status ?? "warning",
-        note: p.note ?? "",
-      })),
+      items: [
+        ...employerItems,
+        ...raw.map((p: any) => ({
+          key: p.id ?? p.name,
+          label: p.project_name ?? p.name ?? "-",
+          detail: p.detail ?? "",
+          status: p.status ?? "warning",
+          note: p.note ?? "",
+        })),
+      ],
     },
   ];
 }

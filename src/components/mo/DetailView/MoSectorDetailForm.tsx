@@ -65,13 +65,13 @@ export default function MoSectorDetailForm(props: Props) {
           unit: "คน",
         },
         {
-          key: "dept_supplement_count",
-          label: "จัดกำลังพลเสริมพิเศษ",
+          key: "dept_recruitment_count",
+          label: "รับ รปภ. ใหม่",
           unit: "คน",
         },
         {
-          key: "dept_recruitment_count",
-          label: "รับ รปภ. ใหม่",
+          key: "dept_supplement_count",
+          label: "จัดกำลังพลเสริมพิเศษ",
           unit: "คน",
         },
         {
@@ -253,6 +253,18 @@ export default function MoSectorDetailForm(props: Props) {
   ) => {
     if (!rd) return null;
     const projects = (rd.projects as any[]) || [];
+    const employerRows = [
+      {
+        key: "employer_number_count",
+        label: "เข้าพบผู้ว่าจ้าง",
+        unit: "หน่วยงาน",
+      },
+      {
+        key: "employer_problem_count",
+        label: "พบปัญหา",
+        unit: "หน่วยงาน",
+      },
+    ];
 
     const statusLabel = (s: string) => {
       if (s === "warning") return "ผิดปกติ";
@@ -282,6 +294,26 @@ export default function MoSectorDetailForm(props: Props) {
             </tr>
           </thead>
           <tbody>
+            {employerRows.map((item, idx) => (
+              <tr key={item.key}>
+                <td className={styles["first-column-cell"]}>
+                  {groupIdx + 1}.{idx + 1}
+                </td>
+                <td className={styles["second-column-cell"]}>
+                  {fieldLabel(item.label)}
+                </td>
+                <td className={styles["third-column-cell"]}>
+                  <div className={styles["third-column-text"]}>
+                    {getVal(item.key)}
+                  </div>
+                </td>
+                <td
+                  className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-success"]}`}
+                >
+                  {item.unit}
+                </td>
+              </tr>
+            ))}
             {projects.length === 0 ? (
               <tr>
                 <td
@@ -302,15 +334,25 @@ export default function MoSectorDetailForm(props: Props) {
               projects.map((p: any, idx: number) => (
                 <tr key={p.id}>
                   <td className={styles["first-column-cell"]}>
-                    {groupIdx + 1}.{idx + 1}
+                    {groupIdx + 1}.{idx + employerRows.length + 1}
                   </td>
                   <td className={styles["second-column-cell"]}>
                     {p.project_name ?? p.name ?? "-"}
                   </td>
                   <td
-                    className={`${styles["group3-third-column-cell"]} ${styles[`status-${p.status === "normal" ? "warning" : p.status || "warning"}`]}`}
+                    className={styles["group3-third-column-cell"]}
                   >
-                    {statusLabel(p.status === "normal" ? "warning" : p.status || "warning")}
+                    {(() => {
+                      const key =
+                        p.status === "normal" ? "warning" : p.status || "warning";
+                      return (
+                        <span
+                          className={`${styles["status-badge"]} ${styles[`status-${key}`]}`}
+                        >
+                          {statusLabel(key)}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td
                     className={`${styles["fourth-column-cell"]} ${styles["fourth-column-cell-success"]}`}

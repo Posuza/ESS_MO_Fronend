@@ -630,6 +630,18 @@
     cursor: pointer;
 }
 
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .status-normal {
     background: #4caf50 !important; /* green */
     border-color: #3a8a3a !important;

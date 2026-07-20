@@ -116,6 +116,15 @@ export default function SectorTableContent({ item, groups }: Props) {
         const isDiscipline = group2Disciplines.some((x) => x.key === g.key);
         const isGroup3 = g.key === "meeting";
         const isGroup4 = g.key === "guard_movements";
+        const shouldShowNoData =
+          g.items.length === 0 ||
+          (isDiscipline &&
+            g.items.every((item: any) => Number(item.value ?? 0) <= 0));
+        const emptyText = isDiscipline
+          ? "ไม่มีข้อมูลวินัยและการลงโทษ"
+          : isGroup3 || isGroup4
+            ? "ไม่มีข้อมูล"
+            : "-";
         const headerBg = "#d9d9d9";
         const headerColor = "#000000";
 
@@ -141,7 +150,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                 <col style={{ width: 22 }} />
                 <col />
                 <col style={{ width: 24 }} />
-                <col style={{ width: isGroup3 ? 44 : 22 }} />
+                <col style={{ width: 22 }} />
               </colgroup>
               <thead>
                 <tr>
@@ -177,7 +186,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {g.items.length === 0 ? (
+                {shouldShowNoData ? (
                   <tr>
                     <td
                       colSpan={4}
@@ -189,7 +198,7 @@ export default function SectorTableContent({ item, groups }: Props) {
                         fontWeight: 500,
                       }}
                     >
-                      {isGroup3 || isGroup4 ? "ไม่มีข้อมูล" : "-"}
+                      {emptyText}
                     </td>
                   </tr>
                 ) : isGroup4 ? (
@@ -255,6 +264,8 @@ export default function SectorTableContent({ item, groups }: Props) {
                 ) : isGroup3 ? (
                   g.items.map((it: any, i: number) => {
                     const itemNum = (g._itemOffset || 0) + i + 1;
+                    const hasStatus = Boolean(it.status);
+                    const value = String((data as any)[it.key] ?? 0);
                     return (
                       <tr key={it.key || i}>
                         <td
@@ -272,7 +283,6 @@ export default function SectorTableContent({ item, groups }: Props) {
                           {idx + 1}.{itemNum}
                         </td>
                         <td
-                          colSpan={2}
                           style={{
                             fontSize: 7,
                             padding: "3px 4px",
@@ -285,8 +295,9 @@ export default function SectorTableContent({ item, groups }: Props) {
                           {it.label}
                         </td>
                         <td
+                          colSpan={hasStatus ? 2 : undefined}
                           style={{
-                            color: statusBg(it.status),
+                            color: hasStatus ? statusBg(it.status) : "#000000",
                             textAlign: "center",
                             padding: "3px 2px",
                             fontSize: 7,
@@ -295,8 +306,23 @@ export default function SectorTableContent({ item, groups }: Props) {
                             maxWidth: 44,
                           }}
                         >
-                          {statusLabel(it.status)}
+                          {hasStatus ? statusLabel(it.status) : value}
                         </td>
+                        {!hasStatus && (
+                          <td
+                            style={{
+                              textAlign: "center",
+                              padding: "3px 2px",
+                              fontSize: 7,
+                              width: 44,
+                              minWidth: 44,
+                              maxWidth: 44,
+                              color: "#000000",
+                            }}
+                          >
+                            {it.unit ?? ""}
+                          </td>
+                        )}
                       </tr>
                     );
                   })

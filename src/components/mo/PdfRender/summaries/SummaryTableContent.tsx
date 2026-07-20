@@ -47,6 +47,35 @@ export function renderSingleGroup(
 ): JSX.Element {
   // headerColSpan = index col(1) + label col(1) + per-loc cols + total col(1) + unit col(1)
   const headerColSpan = cols.length + 3;
+  const noDataText =
+    g.key === "discipline"
+      ? "ไม่มีข้อมูลวินัยและการลงโทษ"
+      : isGroup3
+        ? "ไม่มีข้อมูลโครงการ"
+        : g.key === "guard_movements"
+          ? "ไม่มีข้อมูลการเปลี่ยนแปลงจุดรักษาการณ์"
+          : "ไม่มีข้อมูล";
+  const rowData = g.items.map((r, i) => {
+    const perLocVals = cols.map((c) => {
+      if (isGroup3 && r.status)
+        return String(projectStatusCountFn(c.report, r.status || r.key));
+      if (g.key === "guard_movements" && guardMovementStatusCountFn)
+        return String(guardMovementStatusCountFn(c.report, r.status || r.key));
+      return String(itemValue(c.report, g.key, r.key));
+    });
+    const total = perLocVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
+    return { r, originalIndex: i, perLocVals, total };
+  });
+  const displayRows =
+    isGroup3
+      ? rowData.filter((row) => !row.r.status || row.total > 0)
+      : g.key === "guard_movements"
+        ? rowData.filter((row) => row.total > 0)
+      : rowData;
+  const shouldShowNoData =
+    displayRows.length === 0 ||
+    (g.key === "discipline" && rowData.every((row) => row.total <= 0));
+
   return (
     <div
       key={`${g.key}-chunk-${itemOffset}`}
@@ -122,24 +151,24 @@ export function renderSingleGroup(
             <td className={formStyles["fourth-column-header-cell"]} />
           </tr>
 
-          {g.items.map((r, i) => {
-            const perLocVals = cols.map((c) => {
-              if (isGroup3)
-                return String(
-                  projectStatusCountFn(c.report, r.status || r.key),
-                );
-              if (g.key === "guard_movements" && guardMovementStatusCountFn)
-                return String(
-                  guardMovementStatusCountFn(c.report, r.status || r.key),
-                );
-              return String(itemValue(c.report, g.key, r.key));
-            });
-            const total = perLocVals.reduce(
-              (acc, v) => acc + (Number(v) || 0),
-              0,
-            );
+          {shouldShowNoData ? (
+            <tr>
+              <td
+                colSpan={headerColSpan + 1}
+                style={{
+                  textAlign: "center",
+                  color: "#000000",
+                  padding: "6px",
+                  border: "0.8px solid #ccc",
+                }}
+              >
+                {noDataText}
+              </td>
+            </tr>
+          ) : (
+            displayRows.map(({ r, originalIndex, perLocVals, total }, i) => {
             const zebraClass = i % 2 !== 0 ? formStyles["row-zebra"] : "";
-            const itemNumber = itemOffset + i + 1;
+            const itemNumber = itemOffset + originalIndex + 1;
             return (
               <tr key={`${r.key}-${itemNumber}`} className={zebraClass}>
                 <td
@@ -147,7 +176,7 @@ export function renderSingleGroup(
                 >{`${groupIndex}.${itemNumber}`}</td>
                 <td
                   className={
-                    isGroup3
+                    isGroup3 && r.status
                       ? `${formStyles["group3-second-column-cell"]} ${formStyles[`status-${r.status || "warning"}`]} ${zebraClass}`
                       : `${formStyles["second-column-cell"]} ${zebraClass}`
                   }
@@ -176,7 +205,7 @@ export function renderSingleGroup(
                 </td>
               </tr>
             );
-          })}
+          }))}
         </tbody>
       </table>
     </div>

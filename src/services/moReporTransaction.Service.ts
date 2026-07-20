@@ -40,8 +40,8 @@ export interface SectorReport {
   dept_current_personnel_count: number;
   dept_missing_regular_count: number;
   dept_missing_personnel_count: number;
-  dept_supplement_count: number;
   dept_recruitment_count: number;
+  dept_supplement_count: number;
   dept_reserve_units_count: number;
   dept_reserve_personnel_count: number;
 
@@ -64,6 +64,10 @@ export interface SectorReport {
   training_planned_count: number;
   training_supervise_onsite_count: number;
   training_supervise_virtual_simulation_count: number;
+
+  // Group 6A — เข้าพบผู้ว่าจ้าง summary
+  employer_number_count: number;
+  employer_problem_count: number;
 
   // Group 5 — วินัยและการลงโทษ (dynamic array)
   disciplines: SectorReportDiscipline[];

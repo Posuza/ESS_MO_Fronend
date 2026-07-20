@@ -438,6 +438,10 @@
     padding: 6px 12px;
 }
 
+.mo-table td.group3a-second-column-cell {
+    text-align: left !important;
+}
+
 .mo-table td.group3-second-column-cell {
     text-align: left !important;
     background-color: transparent;
@@ -1114,6 +1118,18 @@
 }
 
 /* ── status colors for group3 dynamic items ── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .status-normal {
     background: #4caf50 !important;
     border-color: #3a8a3a !important;

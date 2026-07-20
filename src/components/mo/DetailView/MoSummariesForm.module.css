@@ -704,20 +704,19 @@
     cursor: pointer;
 }
 
+.status-badge {
+    font-weight: 700;
+    line-height: 1;
+}
+
 .status-normal {
-    background: #4caf50 !important;
-    color: white !important; /* green */
-    border-color: #3a8a3a !important;
+    color: #4caf50 !important;
 }
 .status-warning {
-    background: #ff9800 !important; /* orange */
-    color: white !important;
-    border-color: #e07a00 !important;
+    color: #ff9800 !important;
 }
 .status-danger {
-    background: #b71c1c !important; /* red */
-    color: white !important;
-    border-color: #7f0f0f !important;
+    color: #b71c1c !important;
 }
 
 /* Overlay/portal styles */

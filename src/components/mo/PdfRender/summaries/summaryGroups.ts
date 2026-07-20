@@ -37,13 +37,13 @@ export const group1: PdfGroup[] = [
       },
       { key: "dept_missing_personnel_count", label: "ขาดกำลังพล", unit: "คน" },
       {
-        key: "dept_supplement_count",
-        label: "จัดกำลังพลเสริมพิเศษ",
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
         unit: "คน",
       },
       {
-        key: "dept_recruitment_count",
-        label: "รับ รปภ. ใหม่",
+        key: "dept_supplement_count",
+        label: "จัดกำลังพลเสริมพิเศษ",
         unit: "คน",
       },
       {
@@ -141,6 +141,16 @@ export const group3Static: PdfGroup[] = [
     key: "meeting",
     title: "เข้าพบผู้ว่าจ้าง",
     items: [
+      {
+        key: "employer_number_count",
+        label: "เข้าพบผู้ว่าจ้าง",
+        unit: "หน่วยงาน",
+      },
+      {
+        key: "employer_problem_count",
+        label: "พบปัญหา",
+        unit: "หน่วยงาน",
+      },
       // { key: "normal", label: "ปกติ", status: "normal", unit: "หน่วยงาน" }, // temporarily disabled
       { key: "warning", label: "ผิดปกติ", status: "warning", unit: "หน่วยงาน" },
       { key: "danger", label: "ฉุกเฉิน", status: "danger", unit: "หน่วยงาน" },
@@ -164,21 +174,12 @@ export function buildGroup4ForSummary(reports: any[]): PdfGroup {
   return {
     key: "guard_movements",
     title: "การเปลี่ยนแปลงจุดรักษาการณ์",
-    items:
-      statuses.length > 0
-        ? statuses.map((s) => ({
-            key: s,
-            label: s,
-            status: s,
-            unit: "หน่วยงาน",
-          }))
-        : [
-            {
-              key: "no_data",
-              label: "ไม่มีข้อมูล",
-              unit: "",
-            },
-          ],
+    items: statuses.map((s) => ({
+      key: s,
+      label: s,
+      status: s,
+      unit: "หน่วยงาน",
+    })),
   };
 }
 

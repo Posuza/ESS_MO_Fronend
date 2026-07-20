@@ -107,12 +107,6 @@ const group1: Array<{
     title: "หน่วยงานที่รับผิดชอบ",
     items: [
       {
-        key: "dept_recruitment_count",
-        label: "รับ รปภ. ใหม่",
-        unit: "คน",
-        value: "0",
-      },
-      {
         key: "dept_guard_post_count",
         label: "จุดรักษาการณ์",
         unit: "หน่วยงาน",
@@ -133,6 +127,12 @@ const group1: Array<{
       {
         key: "dept_missing_personnel_count",
         label: "ขาดกำลังพล",
+        unit: "คน",
+        value: "0",
+      },
+      {
+        key: "dept_recruitment_count",
+        label: "รับ รปภ. ใหม่",
         unit: "คน",
         value: "0",
       },
@@ -329,6 +329,27 @@ const group2 = [
   },
 ];
 
+const group3A = [
+  {
+    key: "employer",
+    title: "เข้าพบผู้ว่าจ้าง",
+    items: [
+      {
+        key: "employer_number_count",
+        label: "เข้าพบผู้ว่าจ้าง",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+      {
+        key: "employer_problem_count",
+        label: "พบปัญหา",
+        unit: "หน่วยงาน",
+        value: "0",
+      },
+    ],
+  },
+];
+
 const fieldLabel = (label: string) => `${label} :`;
 
 /** Template for Group 3 (meeting records) */
@@ -438,7 +459,7 @@ export default function MoUpdateForm(props: Props) {
         acc[it.key] = rdVal !== undefined ? String(rdVal) : (it.value ?? "0");
       }),
     );
-    group2.forEach((g) =>
+    [...group3A, ...group2].forEach((g) =>
       g.items.forEach((it) => {
         const rdVal = props.reportData?.[it.key];
         acc[it.key] = rdVal !== undefined ? String(rdVal) : (it.value ?? "0");
@@ -454,7 +475,7 @@ export default function MoUpdateForm(props: Props) {
   } | null>(null);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    [...group1, ...group2, ...group3, ...group4].reduce(
+    [...group1, ...group2, ...group3A, ...group3, ...group4].reduce(
       (acc, g, i) => {
         acc[g.key] = i === 0;
         return acc;
@@ -600,11 +621,11 @@ export default function MoUpdateForm(props: Props) {
     setApprovalRemark((props.reportData?.approved_remark as string) || "");
   }, [props.reportData]);
 
-  // -- Ensure counts contains entries for all dynamicGroup2/3 keys --
+  // -- Ensure counts contains entries for all dynamic count keys --
   useEffect(() => {
     setCounts((prev) => {
       const next = { ...prev };
-      dynamicGroup2.forEach((g) => {
+      [...group3A, ...dynamicGroup2].forEach((g) => {
         g.items.forEach((it: any) => {
           if (!(it.key in next)) next[it.key] = "0";
         });
@@ -655,6 +676,13 @@ export default function MoUpdateForm(props: Props) {
     setCounts((prev) => {
       const next = { ...prev };
       group1.forEach((g) =>
+        g.items.forEach((it) => {
+          const rdVal = props.reportData![it.key];
+          if (rdVal !== undefined && rdVal !== null)
+            next[it.key] = String(rdVal);
+        }),
+      );
+      group3A.forEach((g) =>
         g.items.forEach((it) => {
           const rdVal = props.reportData![it.key];
           if (rdVal !== undefined && rdVal !== null)
@@ -728,7 +756,7 @@ export default function MoUpdateForm(props: Props) {
             : (it.value ?? "0");
       }),
     );
-    group2.forEach((g) =>
+    [...group3A, ...group2].forEach((g) =>
       g.items.forEach((it) => {
         const rdVal = props.reportData![it.key];
         snapCounts[it.key] =
@@ -1495,6 +1523,11 @@ export default function MoUpdateForm(props: Props) {
         payload[item.key] = Number(counts[item.key]) || 0;
       }
     }
+    for (const g of group3A) {
+      for (const item of g.items) {
+        payload[item.key] = Number(counts[item.key]) || 0;
+      }
+    }
     const disciplines: Array<{ key: string; label: string; value: number }> =
       [];
     for (const g of dynamicGroup2) {
@@ -1744,9 +1777,9 @@ export default function MoUpdateForm(props: Props) {
                       <td className={styles["first-column-cell"]}>
                         {idx + 1}.{itemIdx + 1}
                       </td>
-                      <td className={styles["group3-second-column-cell"]}>
-                        {fieldLabel(r.label)}
-                      </td>
+                          <td className={`${styles["second-column-cell"]}`}>
+                            {fieldLabel(r.label)}
+                          </td>
                       <td
                         className={`${styles["third-column-cell"]} ${counts[r.key]?.toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
                       >
@@ -2401,151 +2434,201 @@ export default function MoUpdateForm(props: Props) {
         )}
 
         {/* group3 */}
-        {dynamicGroup3.map((g: any) => (
-          <div
-            key={g.key}
-            ref={wrapperRef}
-            className={styles["mo-table-wrapper"]}
-          >
-            <table className={styles["mo-table"]}>
-              <thead>
-                <tr>
-                  <th
-                    colSpan={1}
-                    className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
-                  >
-                    6.
-                  </th>
-                  <th
-                    colSpan={props.isEditing ? 5 : 4}
-                    className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
-                  >
-                    <div
-                      className={`${styles["mo-header"]}`}
-                      onClick={() =>
-                        setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
-                      }
-                      style={{ cursor: "pointer" }}
-                    >
-                      <p className={styles["mo-header-red-text"]}>{g.title}</p>
-                      <div>
-                        {openGroups[g.key] ? (
-                          <ChevronDown size={18} />
-                        ) : (
-                          <ChevronRight size={18} />
-                        )}
-                      </div>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              {openGroups[g.key] && (
-                <tbody>
-                  {(() => {
-                    if (g.items.length === 0 && !props.isEditing) {
-                      return (
-                        <tr>
-                          <td
-                            colSpan={props.isEditing ? 5 : 4}
-                            style={{
-                              textAlign: "center",
-                              verticalAlign: "middle",
-                              color: "#9ca3af",
-                              fontStyle: "italic",
-                              padding: "10px",
-                              border: "0.8px solid #ccc",
-                            }}
-                          >
-                            ไม่มีข้อมูลโครงการ
-                          </td>
-                        </tr>
-                      );
-                    }
+        {dynamicGroup3.map((g: any) => {
+          const group3AGroup = group3A[0];
+          const group3AOffset = group3AGroup.items.length;
 
-                    return g.items.map((r: any, itemIdx: number) => (
-                      <tr key={itemIdx}>
+          return (
+            <div
+              key={g.key}
+              ref={wrapperRef}
+              className={styles["mo-table-wrapper"]}
+            >
+              <table className={styles["mo-table"]}>
+                <thead>
+                  <tr>
+                    <th
+                      colSpan={1}
+                      className={`${styles["first-column-cell"]} ${styles["no-border"]}`}
+                    >
+                      6.
+                    </th>
+                    <th
+                      colSpan={props.isEditing ? 5 : 4}
+                      className={`${styles["mo-table-header"]} ${styles["no-border"]}`}
+                    >
+                      <div
+                        className={`${styles["mo-header"]}`}
+                        onClick={() =>
+                          setOpenGroups((s) => ({ ...s, [g.key]: !s[g.key] }))
+                        }
+                        style={{ cursor: "pointer" }}
+                      >
+                        <p className={styles["mo-header-red-text"]}>{g.title}</p>
+                        <div>
+                          {openGroups[g.key] ? (
+                            <ChevronDown size={18} />
+                          ) : (
+                            <ChevronRight size={18} />
+                          )}
+                        </div>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                {openGroups[g.key] && (
+                  <tbody>
+                    {group3AGroup.items.map((r, itemIdx) => (
+                      <tr key={r.key}>
                         <td className={styles["first-column-cell"]}>
                           6.{itemIdx + 1}
                         </td>
                         <td className={styles["group3-second-column-cell"]}>
-                          <div
-                            onClick={() =>
-                              props.isEditing
-                                ? handleOpenRow(itemIdx)
-                                : undefined
-                            }
-                            style={{
-                              cursor: props.isEditing ? "pointer" : "default",
-                            }}
-                          >
-                            {r.label}
-                          </div>
+                          {fieldLabel(r.label)}
                         </td>
                         <td
-                          className={`${styles["group3-third-column-cell"]} ${styles[`status-${r.status ?? statusOptions[rowStatus[String(itemIdx)] ?? 0].key}`]} `}
-                          onClick={() => {
-                            if (props.isEditing) {
-                              handleOpenRow(itemIdx);
-                            } else {
-                              cycleStatus(itemIdx);
+                          className={`${styles["third-column-cell"]} ${counts[r.key]?.toString().length > 4 ? styles["third-column-wrap-cell"] : ""}`}
+                        >
+                          <textarea
+                            ref={inputRef as any}
+                            className={`${styles["third-column-textarea"]}`}
+                            value={
+                              editingKey === r.key
+                                ? editingRaw
+                                : getDisplayValue(r.key)
                             }
+                            rows={1}
+                            disabled={!props.isEditing}
+                            style={{
+                              fontStyle:
+                                (editingKey === r.key
+                                  ? editingRaw
+                                  : getDisplayValue(r.key)) === "0"
+                                  ? "italic"
+                                  : "normal",
+                            }}
+                            onChange={(e) => handleTextareaChange(r.key, e)}
+                            onPaste={(e) => handleTextareaPaste(r.key, e)}
+                            onFocus={(e) => handleTextareaFocus(r.key, e)}
+                            onKeyDown={(e) => handleTextareaKeyDown(r.key, e)}
+                            onBlur={() => handleTextareaBlur(r.key)}
+                          />
+                        </td>
+                        <td
+                          colSpan={props.isEditing ? 2 : 1}
+                          className={`${styles["fourth-column-cell"]}`}
+                        >
+                          {r.unit}
+                        </td>
+                      </tr>
+                    ))}
+                    {g.items.length === 0 && !props.isEditing ? (
+                      <tr>
+                        <td
+                          colSpan={props.isEditing ? 5 : 4}
+                          style={{
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                            color: "#9ca3af",
+                            fontStyle: "italic",
+                            padding: "10px",
+                            border: "0.8px solid #ccc",
                           }}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
+                        >
+                          ไม่มีข้อมูลโครงการ
+                        </td>
+                      </tr>
+                    ) : (
+                      g.items.map((r: any, itemIdx: number) => (
+                        <tr key={itemIdx}>
+                          <td className={styles["first-column-cell"]}>
+                            6.{itemIdx + group3AOffset + 1}
+                          </td>
+                          <td className={styles["group3-second-column-cell"]}>
+                            <div
+                              onClick={() =>
+                                props.isEditing
+                                  ? handleOpenRow(itemIdx)
+                                  : undefined
+                              }
+                              style={{
+                                cursor: props.isEditing ? "pointer" : "default",
+                              }}
+                            >
+                              {r.label}
+                            </div>
+                          </td>
+                          <td
+                            className={styles["group3-third-column-cell"]}
+                            onClick={() => {
                               if (props.isEditing) {
                                 handleOpenRow(itemIdx);
                               } else {
                                 cycleStatus(itemIdx);
                               }
-                            }
-                          }}
-                        >
-                          {(() => {
-                            const key =
-                              r.status ??
-                              statusOptions[rowStatus[String(itemIdx)] ?? 0]
-                                .key;
-                            const opt =
-                              statusOptions.find((s) => s.key === key) ??
-                              statusOptions[0];
-                            return opt.label;
-                          })()}
-                        </td>
-                        <td
-                          className={`${styles["group3-fourth-column-cell"]} `}
-                        >
-                          <button
-                            type="button"
-                            className={styles["action-link"]}
-                            onClick={() => handleOpenRow(itemIdx)}
-                          >
-                            คลิกดู
-                          </button>
-                        </td>
-                        {props.isEditing && (
-                          <td
-                            className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
-                            onClick={() =>
-                              handleRemoveGroup3Item(g.key, itemIdx)
-                            }
+                            }}
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
                                 e.preventDefault();
-                                handleRemoveGroup3Item(g.key, itemIdx);
+                                if (props.isEditing) {
+                                  handleOpenRow(itemIdx);
+                                } else {
+                                  cycleStatus(itemIdx);
+                                }
                               }
                             }}
                           >
-                            ลบ
+                            {(() => {
+                              const key =
+                                r.status ??
+                                statusOptions[rowStatus[String(itemIdx)] ?? 0]
+                                  .key;
+                              const opt =
+                                statusOptions.find((s) => s.key === key) ??
+                                statusOptions[0];
+                              return (
+                                <span
+                                  className={`${styles["status-badge"]} ${styles[`status-${key}`]}`}
+                                >
+                                  {opt.label}
+                                </span>
+                              );
+                            })()}
                           </td>
-                        )}
-                      </tr>
-                    ));
-                  })()}
+                          <td
+                            className={`${styles["group3-fourth-column-cell"]} `}
+                          >
+                            <button
+                              type="button"
+                              className={styles["action-link"]}
+                              onClick={() => handleOpenRow(itemIdx)}
+                            >
+                              คลิกดู
+                            </button>
+                          </td>
+                          {props.isEditing && (
+                            <td
+                              className={`${styles["five-column-cell"]} ${styles["five-column-cell-danger"]} ${styles["cursor-pointer"]}`}
+                              onClick={() =>
+                                handleRemoveGroup3Item(g.key, itemIdx)
+                              }
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  handleRemoveGroup3Item(g.key, itemIdx);
+                                }
+                              }}
+                            >
+                              ลบ
+                            </td>
+                          )}
+                        </tr>
+                      ))
+                    )}
                   {props.isEditing && (
                     <tr
                       style={{ cursor: "pointer" }}
@@ -2560,7 +2643,7 @@ export default function MoUpdateForm(props: Props) {
                       }}
                     >
                       <td className={styles["first-column-cell"]}>
-                        6.{g.items.length + 1}
+                        6.{g.items.length + group3AOffset + 1}
                       </td>
                       <td
                         colSpan={props.isEditing ? 4 : 3}
@@ -2573,11 +2656,12 @@ export default function MoUpdateForm(props: Props) {
                       </td>
                     </tr>
                   )}
-                </tbody>
-              )}
-            </table>
-          </div>
-        ))}
+                  </tbody>
+                )}
+              </table>
+            </div>
+          );
+        })}
 
         {/* ---- Group 4 Add/Edit Modal (guard post Movement) ---- */}
         {showAddGroup4 && (
