@@ -173,13 +173,13 @@ function drawPageHeaderSync(
 ): void {
   const pageW = doc.internal.pageSize.getWidth();
 
-  // Logo — centered at top (60px ≈ 18mm height)
+  // Logo — centered at top
   if (logoData) {
-    const logoH = 18;
+    const logoH = 16;
     const logoW = (logoH * 2340) / 1190; // preserve aspect ratio
     const logoX = (pageW - logoW) / 2;
     try {
-      doc.addImage(logoData, "PNG", logoX, 3, logoW, logoH);
+      doc.addImage(logoData, "PNG", logoX, 2, logoW, logoH);
     } catch {
       // Logo loading failed — skip silently
     }
@@ -189,7 +189,7 @@ function drawPageHeaderSync(
   doc.setFont(FONT_NAME, "bold");
   doc.setFontSize(FONT_SIZE_TITLE);
   doc.setTextColor(0, 0, 0);
-  doc.text(title, pageW / 2, 25, { align: "center" });
+  doc.text(title, pageW / 2, 22, { align: "center" });
 
   // Meta row: sector name centered, date right-aligned
   doc.setFont(FONT_NAME, "normal");
@@ -201,11 +201,11 @@ function drawPageHeaderSync(
   );
   let metaText = formattedSector;
   if (division) metaText += ` | ${division}`;
-  doc.text(metaText, pageW / 2, 30, { align: "center" });
+  doc.text(metaText, pageW / 2, 27, { align: "center" });
 
   // Date — right-aligned on same line
   doc.setFontSize(FONT_SIZE_PAGE_NUM);
-  doc.text(formatDate(), pageW - MARGIN_MM, 30, { align: "right" });
+  doc.text(formatDate(), pageW - MARGIN_MM, 27, { align: "right" });
 }
 
 /** Draw page header asynchronously (loads logo if needed) */

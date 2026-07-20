@@ -16,7 +16,7 @@ const FONT_SEMIBOLD_FILE = "Sarabun-SemiBold.ttf";
 
 // ── Layout ──────────────────────────────────────────────────
 const MARGIN_MM = 10;
-const HEADER_HEIGHT_MM = 33;
+const HEADER_HEIGHT_MM = 30;
 const GAP_MM = 2;
 const TABLES_PER_ROW = 3;
 const BODY_WIDTH_MM = 190; // 210 - 10*2
