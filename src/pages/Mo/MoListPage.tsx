@@ -652,7 +652,7 @@ export default function MoListPage({
 
               {(() => {
                 const groupMap: Record<string, any[]> = {};
-                filteredData.slice(0, 4).forEach((r: any) => {
+                displayRecords.forEach((r: any) => {
                   const deptName =
                     r.departmentName ??
                     getDepartmentName(Number(r.department_id));
@@ -667,7 +667,6 @@ export default function MoListPage({
 
                 return entries.map(([deptName, items], deptIdx) => {
                   const deptId = Number(items[0]?.department_id);
-                  const totalItems = items.length;
                   const approvedCnt = items.filter(
                     (it) => it.approved_status?.toLowerCase() === "approved",
                   ).length;
@@ -789,7 +788,7 @@ export default function MoListPage({
                 <MapPin size={16} className={styles["section-icon"]} />
                 <span>เขตบันทึก</span>
                 <span className={styles["section-count"]}>
-                  {Math.min(5, filteredData.length)} รายการ
+                  {displayRecords.length} รายการ
                 </span>
               </div>
               {selectedDate && (

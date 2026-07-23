@@ -1,0 +1,143 @@
+import { Fragment } from "react";
+import type { GroupItem } from "../constant/SummaryGroups";
+import { statusLabel, statusTextColor } from "./SummaryValue";
+
+type RenderDetailTableProps = {
+  groupIndex: number;
+  title: string;
+  items: GroupItem[];
+  emptyText?: string;
+  itemOffset?: number;
+};
+
+export function RenderDetailTable({
+  groupIndex,
+  title,
+  items,
+  emptyText = "<ไม่มีข้อมูล>",
+  itemOffset = 0,
+}: RenderDetailTableProps) {
+  const cellStyle: React.CSSProperties = {
+    border: "1px solid #d0d0d0",
+    height: 16,
+    padding: "1px 3px",
+    fontSize: 6,
+    lineHeight: "14px",
+    verticalAlign: "middle",
+  };
+  const headerCellStyle: React.CSSProperties = {
+    ...cellStyle,
+    background: "#d9d9d9",
+    fontWeight: 700,
+    fontSize: 7,
+  };
+
+  return (
+    <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
+      <colgroup>
+        <col style={{ width: 52 }} />
+        <col />
+        <col />
+        <col />
+        <col />
+        <col />
+      </colgroup>
+      <thead>
+        <tr>
+          <th style={headerCellStyle}>
+            {groupIndex}
+          </th>
+          <th
+            colSpan={5}
+            style={{
+              ...headerCellStyle,
+              textAlign: "left",
+            }}
+          >
+            {title}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.length === 0 ? (
+          <tr>
+            <td
+              colSpan={6}
+              style={{
+                ...cellStyle,
+                textAlign: "center",
+                verticalAlign: "middle",
+              }}
+            >
+              {emptyText}
+            </td>
+          </tr>
+        ) : (
+          items.map((item, index) => (
+            <Fragment key={item.key}>
+              <tr>
+                <td style={cellStyle}>
+                  {groupIndex}.{itemOffset + index + 1}
+                </td>
+                <td
+                  colSpan={5}
+                  style={cellStyle}
+                >
+                  {item.label}
+                </td>
+              </tr>
+              <tr>
+                <td style={cellStyle}>
+                  รายละเอียด
+                </td>
+                <td
+                  colSpan={5}
+                  style={cellStyle}
+                >
+                  {item.detail || "-"}
+                </td>
+              </tr>
+              <tr>
+                <td style={cellStyle}>
+                  สถานะ
+                </td>
+                <td
+                  colSpan={5}
+                  style={{
+                    ...cellStyle,
+                    color: statusTextColor(item.status),
+                  }}
+                >
+                  {statusLabel(item.status)}
+                </td>
+              </tr>
+              <tr>
+                <td style={cellStyle}>
+                  หมายเหตุ
+                </td>
+                <td
+                  colSpan={5}
+                  style={cellStyle}
+                >
+                  {item.note || "-"}
+                </td>
+              </tr>
+              {index < items.length - 1 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    style={{
+                      height: 4,
+                      padding: 0,
+                      border: "none",
+                    }}
+                  />
+                </tr>
+              )}
+            </Fragment>
+          ))
+        )}
+      </tbody>
+    </table>
+  );
+}

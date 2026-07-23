@@ -38,6 +38,35 @@ interface StatusOption {
 const fieldLabel = (label: string) => `${label} :`;
 const shouldFormatFieldLabel = (groupKey: string) =>
   ["dept", "leave", "shift", "training", "discipline"].includes(groupKey);
+const splitVisibleChars = (value: string) => {
+  const chars: string[] = [];
+  for (const ch of Array.from(value)) {
+    if (/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/.test(ch) && chars.length > 0) {
+      chars[chars.length - 1] += ch;
+    } else {
+      chars.push(ch);
+    }
+  }
+  return chars;
+};
+const divisionHeaderLabel = (division: string | undefined) => {
+  const name = String(division ?? "").trim();
+  const m = name.match(/เขต\s+[\d.]+/);
+  if (m) return m[0];
+
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return words
+      .slice(0, 2)
+      .map((w) => splitVisibleChars(w)[0] ?? "")
+      .join("");
+  }
+
+  const chars = splitVisibleChars(name);
+  return chars.length > 6
+    ? `${chars.slice(0, 2).join("")}..${chars.slice(-2).join("")}`
+    : name;
+};
 
 export default function MoSummariesForm(props: Props) {
   const { authEmployee, fetchReports, reports, isLoading } = useStore();
@@ -194,17 +223,22 @@ export default function MoSummariesForm(props: Props) {
   // ── Filter reports matching selected sector + date ───────────────────────
   // Each report = one division_name's submission for that day
   const sectorReports = useMemo(() => {
-    return (reports || []).filter((r) => {
-      const deptMatch = Number(r.department_id) === Number(selectedSector);
-      const dateMatch = props.selectedDate
-        ? r.report_date === props.selectedDate ||
-          (r.created_at &&
-            new Date(r.created_at).toISOString().slice(0, 10) ===
-              props.selectedDate)
-        : true;
-      const approvalMatch = r.approved_status === "APPROVED";
-      return deptMatch && dateMatch && approvalMatch;
-    });
+    return (reports || [])
+      .filter((r) => {
+        const deptMatch = Number(r.department_id) === Number(selectedSector);
+        const dateMatch = props.selectedDate
+          ? r.report_date === props.selectedDate ||
+            (r.created_at &&
+              new Date(r.created_at).toISOString().slice(0, 10) ===
+                props.selectedDate)
+          : true;
+        const approvalMatch = r.approved_status === "APPROVED";
+        return deptMatch && dateMatch && approvalMatch;
+      })
+      .map((r) => ({
+        ...r,
+        division_name: String(r.division_name ?? "").trim(),
+      }));
   }, [reports, selectedSector, props.selectedDate]);
 
   // ── Column list: one column per division_name report ─────────────────────
@@ -212,8 +246,9 @@ export default function MoSummariesForm(props: Props) {
     // deduplicate by division_name, keeping first occurrence
     const seen = new Set<string>();
     return sectorReports.filter((r) => {
-      if (seen.has(r.division_name)) return false;
-      seen.add(r.division_name);
+      const divisionName = String(r.division_name ?? "").trim();
+      if (seen.has(divisionName)) return false;
+      seen.add(divisionName);
       return true;
     });
   }, [sectorReports]);
@@ -356,18 +391,7 @@ export default function MoSummariesForm(props: Props) {
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  {(() => {
-                    const name = String(c.division_name ?? "");
-                    const m = name.match(/เขต\s+[\d.]+/);
-                    if (m) return m[0];
-                    const words = name.trim().split(/\s+/);
-                    return words.length >= 2
-                      ? words
-                          .slice(0, 2)
-                          .map((w) => w.charAt(0))
-                          .join("")
-                      : name;
-                  })()}
+                  {divisionHeaderLabel(c.division_name)}
                 </td>
               ))}
               <td className={styles["third-column-header2-cell"]}>รวม</td>
@@ -547,20 +571,7 @@ export default function MoSummariesForm(props: Props) {
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  <strong>
-                    {(() => {
-                      const name = String(c.division_name ?? "");
-                      const m = name.match(/เขต\s+[\d.]+/);
-                      if (m) return m[0];
-                      const words = name.trim().split(/\s+/);
-                      return words.length >= 2
-                        ? words
-                            .slice(0, 2)
-                            .map((w) => w.charAt(0))
-                            .join("")
-                        : name;
-                    })()}
-                  </strong>
+                  <strong>{divisionHeaderLabel(c.division_name)}</strong>
                 </td>
               ))}
               <td className={styles["third-column-header2-cell"]}>รวม</td>
@@ -736,20 +747,7 @@ export default function MoSummariesForm(props: Props) {
                   key={c.division_name}
                   className={styles["third-column-header1-cell"]}
                 >
-                  <strong>
-                    {(() => {
-                      const name = String(c.division_name ?? "");
-                      const m = name.match(/เขต\s+[\d.]+/);
-                      if (m) return m[0];
-                      const words = name.trim().split(/\s+/);
-                      return words.length >= 2
-                        ? words
-                            .slice(0, 2)
-                            .map((w) => w.charAt(0))
-                            .join("")
-                        : name;
-                    })()}
-                  </strong>
+                  <strong>{divisionHeaderLabel(c.division_name)}</strong>
                 </td>
               ))}
               <td className={styles["third-column-header2-cell"]}>รวม</td>

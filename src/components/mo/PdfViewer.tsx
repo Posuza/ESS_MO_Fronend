@@ -15,18 +15,16 @@ import {
   useEffect,
 } from "react";
 import { useStore } from "../../store/store";
-// ── Old import (backup) ──────────────────────────────
-// import {
-//   buildSectorPdf as buildSectorPdfOld,
-//   buildSummariesPdf as buildSummariesPdfOld,
-//   exportSectorPdf as exportSectorPdfOld,
-//   exportSummariesPdf as exportSummariesPdfOld,
-// } from "./PdfRender/shared/exportPdf";
-// ── New import (active) ──────────────────────────────
-import { buildDivisionPdf, exportDivisionPdf } from "./exportPdfNew/exportDivisionPdf";
-import { buildSummariesPdf, exportSummariesPdf } from "./exportPdfNew/exportSummarPdf";
-import DivisionPdf from "./PdfRender/division/DivisionPdf";
-import SummeriesPdf from "./PdfRender/summaries/SummeriesPdf";
+import {
+  buildDivisionExport,
+  exportDivisionPdf,
+} from "./pdf/export/DivisionExport";
+import {
+  buildSummariesExport,
+  exportSummariesPdf,
+} from "./pdf/export/SummariesExport";
+import { DivisionRender } from "./pdf/render/DivisionRender";
+import { SummariesRender } from "./pdf/render/SummariesRender";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import MoLoadingPopup from "./popup/MoLoadingPopup";
 import "./PdfViewer.css";
@@ -162,9 +160,8 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
   // ─── Share (open in new tab) ────────────────────────────
   const handleSharePdf = async () => {
     const doc = isSector
-      // Old: ? await buildSectorPdfOld(item, sectorName)
-      ? await buildDivisionPdf(item, sectorName)
-      : await buildSummariesPdf(item, sectorName, reports);
+      ? await buildDivisionExport(item, sectorName)
+      : await buildSummariesExport(item, sectorName, reports);
     const dataUri = doc.output("datauristring");
     window.open(dataUri, "_blank");
   };
@@ -172,9 +169,8 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
   // ─── Print ──────────────────────────────────────────────
   const handlePrintPdf = async () => {
     const doc = isSector
-      // Old: ? await buildSectorPdfOld(item, sectorName)
-      ? await buildDivisionPdf(item, sectorName)
-      : await buildSummariesPdf(item, sectorName, reports);
+      ? await buildDivisionExport(item, sectorName)
+      : await buildSummariesExport(item, sectorName, reports);
     try {
       (doc as any).autoPrint();
     } catch {
@@ -195,10 +191,10 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
   // Export/share/print still use jsPDF. Preview stays React-based for speed.
   const previewContent = useMemo(() => {
     if (isSector) {
-      return <DivisionPdf item={item} sectorName={sectorName} />;
+      return <DivisionRender item={item} sectorName={sectorName} />;
     }
     return (
-      <SummeriesPdf item={item} sectorName={sectorName} reports={reports} />
+      <SummariesRender item={item} sectorName={sectorName} reports={reports} />
     );
   }, [isSector, item, sectorName, reports]);
 
