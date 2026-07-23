@@ -93,9 +93,10 @@ export const SummaryTableCalculator = {
       Math.max(columnCount, 0) * valueWidth -
       totalWidth -
       unitWidth;
-    const headerHeight = config.table.rowHeight * 2;
+    const hasItems = group.items.length > 0;
+    const headerHeight = config.table.rowHeight * (hasItems ? 2 : 1);
     const rows =
-      group.items.length > 0
+      hasItems
         ? group.items.map((item) =>
             Math.max(
               config.table.rowHeight,

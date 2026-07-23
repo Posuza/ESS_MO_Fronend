@@ -59,6 +59,20 @@ function getSummaryColumnReports(item: any, reports: any[] = []): any[] {
   return approvedReports.length > 0 ? approvedReports : [item];
 }
 
+function withDivisionValues(group: Group, report: any): Group {
+  return {
+    ...group,
+    items: group.items.map((item) =>
+      item.status || item.value !== undefined
+        ? item
+        : {
+            ...item,
+            value: report?.[item.key] ?? 0,
+          },
+    ),
+  };
+}
+
 export function buildDivisionTableContentSection(
   mode: LayoutMode,
   item: any,
@@ -68,7 +82,7 @@ export function buildDivisionTableContentSection(
     ...buildGroup2Disciplines(item),
     ...buildGroup3Projects(item),
     ...buildGroup4GuardMovements(item),
-  ];
+  ].map((group) => withDivisionValues(group, item));
   const layout = buildBodyContentLayout({
     mode,
     tableKind: "division",
@@ -103,24 +117,25 @@ export function buildDetailContentSection(
   item: any,
   divisionName?: string,
 ): ContentSection {
+  const detailSections = [
+    {
+      groupIndex: 6,
+      title: "เข้าพบผู้ว่าจ้าง",
+      items: toProjectItems(item),
+      emptyText: "<ไม่มีข้อมูล>",
+    },
+    {
+      groupIndex: 7,
+      title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+      items: toGuardMovementItems(item),
+      emptyText: "<ไม่มีข้อมูล>",
+    },
+  ].filter((section) => section.items.length > 0);
   const layout = buildBodyContentLayout({
     mode,
     tableKind: "detail",
     tablesPerRow: 1,
-    detailSections: [
-      {
-        groupIndex: 6,
-        title: "เข้าพบผู้ว่าจ้าง",
-        items: toProjectItems(item),
-        emptyText: "<ไม่มีข้อมูล>",
-      },
-      {
-        groupIndex: 7,
-        title: "การเปลี่ยนแปลงจุดรักษาการณ์",
-        items: toGuardMovementItems(item),
-        emptyText: "<ไม่มีข้อมูล>",
-      },
-    ],
+    detailSections,
   });
 
   return {

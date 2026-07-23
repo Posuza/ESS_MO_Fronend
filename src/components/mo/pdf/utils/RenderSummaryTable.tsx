@@ -93,16 +93,18 @@ export function RenderSummaryTable({
             {group.title}
           </th>
         </tr>
-        <tr>
-          <th colSpan={2} style={whiteHeaderCellStyle}>หัวข้อ</th>
-          {columns.map((column) => (
-            <th key={String(column.id)} style={divisionHeaderCellStyle}>
-              {divisionHeaderLabel(column.division)}
-            </th>
-          ))}
-          <th style={whiteHeaderCellStyle}>รวม</th>
-          <th style={whiteHeaderCellStyle} />
-        </tr>
+        {!showNoData && (
+          <tr>
+            <th colSpan={2} style={whiteHeaderCellStyle}>หัวข้อ</th>
+            {columns.map((column) => (
+              <th key={String(column.id)} style={divisionHeaderCellStyle}>
+                {divisionHeaderLabel(column.division)}
+              </th>
+            ))}
+            <th style={whiteHeaderCellStyle}>รวม</th>
+            <th style={whiteHeaderCellStyle} />
+          </tr>
+        )}
       </thead>
       <tbody>
         {showNoData ? (

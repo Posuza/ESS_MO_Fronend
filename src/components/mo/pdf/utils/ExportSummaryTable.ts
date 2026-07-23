@@ -89,23 +89,34 @@ export function drawExportSummaryTable(
         displayTableValue(total),
         item.unit ?? "",
       ]);
+  const head = [
+    [
+      {
+        content: String(input.groupIndex),
+        styles: { halign: "center" as const, valign: "middle" as const },
+      },
+      { content: input.group.title, colSpan: input.columns.length + 3 },
+    ],
+    ...(
+      showNoData
+        ? []
+        : [[
+            { content: "หัวข้อ", colSpan: 2, styles: whiteHeaderStyles },
+            ...input.columns.map((column) => ({
+              content: divisionHeaderLabel(column.division),
+              styles: whiteHeaderStyles,
+            })),
+            { content: "รวม", styles: whiteHeaderStyles },
+            { content: "", styles: whiteHeaderStyles },
+          ]]
+    ),
+  ];
 
   autoTable(doc, {
     startY: input.y,
     margin: { left: input.x, right: PDF_EXPORT.page.paddingLeftRight },
     tableWidth: input.width,
-    head: [
-      [String(input.groupIndex), { content: input.group.title, colSpan: input.columns.length + 3 }],
-      [
-        { content: "หัวข้อ", colSpan: 2, styles: whiteHeaderStyles },
-        ...input.columns.map((column) => ({
-          content: divisionHeaderLabel(column.division),
-          styles: whiteHeaderStyles,
-        })),
-        { content: "รวม", styles: whiteHeaderStyles },
-        { content: "", styles: whiteHeaderStyles },
-      ],
-    ],
+    head,
     body,
     styles: {
       font: PDF_EXPORT.font.family,

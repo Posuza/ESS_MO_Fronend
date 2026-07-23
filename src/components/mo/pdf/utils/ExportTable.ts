@@ -87,7 +87,13 @@ export function drawExportTable(
     startY: position.y,
     margin: { left: position.x, right: PDF_EXPORT.page.paddingLeftRight },
     tableWidth,
-    head: [[String(groupIndex), { content: group.title, colSpan: 3 }]],
+    head: [[
+      {
+        content: String(groupIndex),
+        styles: { halign: "center" as const, valign: "middle" as const },
+      },
+      { content: group.title, colSpan: 3 },
+    ]],
     body,
     styles: {
       font: PDF_EXPORT.font.family,

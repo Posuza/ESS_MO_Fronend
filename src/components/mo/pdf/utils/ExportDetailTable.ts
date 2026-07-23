@@ -67,7 +67,13 @@ export function drawExportDetailTable(
     startY: input.y,
     margin: { left: input.x, right: PDF_EXPORT.page.paddingLeftRight },
     tableWidth: input.width,
-    head: [[String(input.groupIndex), { content: input.title, colSpan: 5 }]],
+    head: [[
+      {
+        content: String(input.groupIndex),
+        styles: { halign: "center" as const, valign: "middle" as const },
+      },
+      { content: input.title, colSpan: 5 },
+    ]],
     body,
     styles: {
       font: PDF_EXPORT.font.family,
@@ -95,7 +101,7 @@ export function drawExportDetailTable(
       fillColor: [255, 255, 255],
     },
     columnStyles: {
-      0: { cellWidth: Math.min(18, input.width * 0.18) },
+      0: { cellWidth: Math.min(18, input.width * 0.18), halign: "center" },
     },
   });
 

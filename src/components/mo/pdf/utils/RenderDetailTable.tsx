@@ -44,7 +44,7 @@ export function RenderDetailTable({
       </colgroup>
       <thead>
         <tr>
-          <th style={headerCellStyle}>
+          <th style={{ ...headerCellStyle, textAlign: "center" }}>
             {groupIndex}
           </th>
           <th
@@ -76,7 +76,7 @@ export function RenderDetailTable({
           items.map((item, index) => (
             <Fragment key={item.key}>
               <tr>
-                <td style={cellStyle}>
+                <td style={{ ...cellStyle, textAlign: "center" }}>
                   {groupIndex}.{itemOffset + index + 1}
                 </td>
                 <td
@@ -87,7 +87,7 @@ export function RenderDetailTable({
                 </td>
               </tr>
               <tr>
-                <td style={cellStyle}>
+                <td style={{ ...cellStyle, textAlign: "center" }}>
                   รายละเอียด
                 </td>
                 <td
@@ -98,7 +98,7 @@ export function RenderDetailTable({
                 </td>
               </tr>
               <tr>
-                <td style={cellStyle}>
+                <td style={{ ...cellStyle, textAlign: "center" }}>
                   สถานะ
                 </td>
                 <td
@@ -112,7 +112,7 @@ export function RenderDetailTable({
                 </td>
               </tr>
               <tr>
-                <td style={cellStyle}>
+                <td style={{ ...cellStyle, textAlign: "center" }}>
                   หมายเหตุ
                 </td>
                 <td
