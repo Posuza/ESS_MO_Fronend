@@ -5,6 +5,7 @@ import {
 import { buildRenderPageLayoutPlans } from "../utils/PageLayout";
 import { RenderBodyContentLayout } from "../utils/RenderBodyContentLayout";
 import { RenderPageLayout } from "../utils/RenderPageLayout";
+import { formatPdfRoundDateTitle } from "../utils/FormatDate";
 
 type SummariesRenderProps = {
   item: any;
@@ -19,6 +20,7 @@ export function SummariesRender({
   sectorName,
   reports = [],
 }: SummariesRenderProps) {
+  const firstPageTitleSuffix = formatPdfRoundDateTitle(item);
   const sections = [
     buildSummaryTableContentSection("render", item, reports),
     ...buildSummaryDivisionContentSections("render", item, reports),
@@ -42,6 +44,7 @@ export function SummariesRender({
             title={TITLE}
             sectorName={sectorName}
             divisionName={section.divisionName}
+            firstPageTitleSuffix={firstPageTitleSuffix}
           >
             <RenderBodyContentLayout
               layout={{

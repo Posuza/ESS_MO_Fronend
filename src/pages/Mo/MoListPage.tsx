@@ -18,6 +18,7 @@ import { buildReportFilters } from "../../utils/positionAccess";
 import { FaHourglassHalf } from "react-icons/fa";
 import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";
 import NoDataMessage from "../../components/NoDataMessage";
+import { useMoContext } from "../../context/MoContext";
 
 const DEPARTMENT_NAMES: Record<number, string> = {
   4: "ฝ่ายปฎิบัติการภาค 1",
@@ -182,9 +183,9 @@ export default function MoListPage({
 }: Props) {
   const authEmployee = useStore((s) => s.authEmployee);
   const empCode = authEmployee?.employee_code;
-  const [selectedDate, setSelectedDate] = useState(
-    () => new Date().toISOString().split("T")[0],
-  );
+  const { listSearchDate, setListSearchDate, setMoSearchDate } =
+    useMoContext();
+  const [selectedDate, setSelectedDate] = useState(listSearchDate);
 
   const currentDept = useMemo<{ id: number; name: string } | null>(() => {
     if (authEmployee?.department_id && authEmployee?.department_name) {
@@ -295,6 +296,11 @@ export default function MoListPage({
     [calendarMonth],
   );
 
+  function updateMoSearchDate() {
+    setListSearchDate(selectedDate);
+    setMoSearchDate(selectedDate);
+  }
+
   async function submitSearch() {
     if (!selectedDepartment && !selectedDate) return;
 
@@ -332,6 +338,7 @@ export default function MoListPage({
     }
 
     await fetchReports(payload);
+    updateMoSearchDate();
     setLastSearchedDepartment(selectedDepartment);
     setLastSearchedDate(selectedDate);
   }
@@ -427,17 +434,16 @@ export default function MoListPage({
 
   useEffect(() => {
     if (!currentDept?.id) return;
-    const today = new Date().toISOString().split("T")[0];
-    setSelectedDate(today);
-    setCalendarMonth(parseYYYYMMDD(today) ?? new Date());
+    setCalendarMonth(parseYYYYMMDD(selectedDate) ?? new Date());
+    setMoSearchDate(selectedDate);
     if (currentEmployee) {
       const filters = buildReportFilters(currentEmployee, {
-        start_date: today,
-        end_date: today,
+        start_date: selectedDate,
+        end_date: selectedDate,
       });
       fetchReports(filters);
       setLastSearchedDepartment(currentDept.name);
-      setLastSearchedDate(today);
+      setLastSearchedDate(selectedDate);
     }
   }, [currentDept]);
 

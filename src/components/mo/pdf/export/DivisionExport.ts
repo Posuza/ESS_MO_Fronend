@@ -10,6 +10,7 @@ import {
   drawExportPageFooter,
   drawExportPageHeader,
 } from "../utils/ExportPageLayout";
+import { formatPdfRoundDateTitle } from "../utils/FormatDate";
 import { buildSummaryExportPageLayoutPlans } from "../utils/PageLayout";
 
 const TITLE = "รายงานประจำวันฝ่ายปฏิบัติการ (รายละเอียดภาค)";
@@ -23,6 +24,7 @@ export async function buildDivisionExport(item: any, sectorName: string): Promis
   });
   await registerExportFonts(doc);
 
+  const firstPageTitleSuffix = formatPdfRoundDateTitle(item);
   const sections = [
     buildDivisionTableContentSection("summaryExport", item),
     buildDetailContentSection("summaryExport", item),
@@ -39,6 +41,8 @@ export async function buildDivisionExport(item: any, sectorName: string): Promis
         title: TITLE,
         sectorName,
         divisionName: section.divisionName,
+        firstPageTitleSuffix,
+        pageNumber,
       });
       drawExportBodyContent(doc, {
         ...section.layout,

@@ -9,6 +9,7 @@ type RenderPageLayoutProps = {
   title: string;
   sectorName: string;
   divisionName?: string;
+  firstPageTitleSuffix?: string;
   children: ReactNode;
 };
 
@@ -17,8 +18,18 @@ export function RenderPageLayout({
   title,
   sectorName,
   divisionName,
+  firstPageTitleSuffix,
   children,
 }: RenderPageLayoutProps) {
+  const titleText = [
+    title,
+    sectorName,
+    divisionName,
+    page.pageNumber === 1 ? firstPageTitleSuffix : "",
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
   return (
     <div
       style={{
@@ -72,7 +83,7 @@ export function RenderPageLayout({
             lineHeight: 1.1,
           }}
         >
-          {[title, sectorName, divisionName].filter(Boolean).join(" | ")}
+          {titleText}
         </div>
       </header>
       <main style={{ minHeight: PDF_RENDER.page.bodyHeight }}>{children}</main>

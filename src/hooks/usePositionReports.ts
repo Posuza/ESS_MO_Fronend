@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useStore } from "../store/store";
-import { getDivisionScope } from "../utils/positionAccess";
+import { getDivisionScope, getLocalTodayYYYYMMDD } from "../utils/positionAccess";
 import type { SectorReport } from "../services/moReporTransaction.Service";
 
 /**
@@ -17,7 +17,7 @@ export function usePositionReports() {
 
   const fetchWithPosition = useCallback(() => {
     if (!employee?.department_id) return Promise.resolve<SectorReport[]>([]);
-    const today = new Date().toISOString().split("T")[0];
+    const today = getLocalTodayYYYYMMDD();
     const scope = getDivisionScope(employee);
     const filters = {
       department_id: employee.department_id,

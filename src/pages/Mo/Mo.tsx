@@ -4,6 +4,7 @@ import styles from "./Mo.module.css";
 import MoHome from "./MoHome";
 import { useStore } from "../../store/store";
 import { clearAllMoPersistedState } from "./moPersistence";
+import { MoProvider, useMoContext } from "../../context/MoContext";
 
 type Props = {
   onBackHome?: () => void;
@@ -58,16 +59,38 @@ function formatTransactionDate(date: Date) {
   return `วันที่ทำรายการ วัน${dayName} ที่ ${day} ${month} ${year} เวลา ${hour}:${minute} น.`;
 }
 
-function formatDateMeta(date: Date) {
+function parseYYYYMMDD(value: string) {
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+
+  if (!year || !month || !day) return new Date();
+
+  return new Date(year, month - 1, day);
+}
+
+function formatDateMeta(roundBaseDate: Date, transactionDate = new Date()) {
   return {
-    roundDate: formatRoundDate(date),
-    transactionDate: formatTransactionDate(date),
+    roundDate: formatRoundDate(roundBaseDate),
+    transactionDate: formatTransactionDate(transactionDate),
   };
 }
 
-export default function Mo({ onBackHome }: Props) {
+export default function Mo(props: Props) {
+  return (
+    <MoProvider>
+      <MoContent {...props} />
+    </MoProvider>
+  );
+}
+
+function MoContent({ onBackHome }: Props) {
   const authEmployee = useStore((state) => state.authEmployee);
-  const [dateMeta, setDateMeta] = useState(formatDateMeta(new Date()));
+  const { moSearchDate } = useMoContext();
+  const [dateMeta, setDateMeta] = useState(() =>
+    formatDateMeta(parseYYYYMMDD(moSearchDate)),
+  );
 
   // Clear persisted subview when leaving Mo so the next entry starts at main view
   const handleBackHome = useCallback(() => {
@@ -76,11 +99,16 @@ export default function Mo({ onBackHome }: Props) {
   }, [onBackHome]);
 
   useEffect(() => {
+    const updateDateMeta = () => {
+      setDateMeta(formatDateMeta(parseYYYYMMDD(moSearchDate)));
+    };
+
+    updateDateMeta();
     const timer = setInterval(() => {
-      setDateMeta(formatDateMeta(new Date()));
+      updateDateMeta();
     }, 2_000);
     return () => clearInterval(timer);
-  }, []);
+  }, [moSearchDate]);
 
   return (
     <div className={`guts-home ${styles["mo-page-wrap"]}`}>

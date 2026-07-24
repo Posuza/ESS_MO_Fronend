@@ -11,17 +11,30 @@ import MoUpdateForm from "../../components/mo/MoUpdateForm";
 import { useStore } from "../../store/store";
 import type { SectorReport } from "../../services/moReporTransaction.Service";
 import { HttpError } from "../../services/moReporTransaction.Service";
-import { canApprove, isReadOnly } from "../../utils/positionAccess";
+import {
+  canApprove,
+  getLocalTodayYYYYMMDD,
+  isReadOnly,
+} from "../../utils/positionAccess";
 import {
   clearMoDetailEditState,
   persistMoDetailEditState,
   readSavedMoDetailEditState,
 } from "./moPersistence";
+import { useMoContext } from "../../context/MoContext";
 
 type Props = {
   onCancel?: () => void;
   item?: SectorReport;
 };
+
+function getItemSearchDate(item: any, fallbackDate: string) {
+  return (
+    item?.report_date ||
+    (item?.created_at ? String(item.created_at).slice(0, 10) : "") ||
+    fallbackDate
+  );
+}
 
 // Approval status helpers (mirrors what MoUpdateForm uses internally)
 const approvalStatusLabels = [
@@ -58,6 +71,7 @@ const getApprovalStatusClass = (
 };
 
 export default function MoDetailPage(props: Props) {
+  const { moSearchDate, setMoSearchDate } = useMoContext();
   const savedEditState = readSavedMoDetailEditState();
   const [isEditing, setIsEditing] = useState(
     savedEditState?.itemId === props.item?.id
@@ -162,6 +176,15 @@ export default function MoDetailPage(props: Props) {
       ? (currentReport as unknown as Record<string, unknown>)
       : null) ?? (props.item as unknown as Record<string, unknown>);
 
+  useEffect(() => {
+    const detailItem =
+      currentReport?.id === props.item?.id ? currentReport : props.item;
+
+    if (detailItem) {
+      setMoSearchDate(getItemSearchDate(detailItem, moSearchDate));
+    }
+  }, [currentReport, moSearchDate, props.item, setMoSearchDate]);
+
   const itemCreatedBy = props.item?.created_by ?? currentReport?.created_by;
 
   // Check if current user has approval authority (Director / Deputy Director)
@@ -171,7 +194,7 @@ export default function MoDetailPage(props: Props) {
   const isDirector = isApprover;
 
   // Only allow edit/delete if the report's date is today
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalTodayYYYYMMDD();
   const reportDate = props.item?.report_date ?? currentReport?.report_date;
   const isReportDateToday = today === reportDate;
 

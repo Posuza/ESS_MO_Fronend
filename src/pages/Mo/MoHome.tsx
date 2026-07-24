@@ -24,6 +24,7 @@ import {
   readSavedMoDetailState,
   type MoDetailSource,
 } from "./moPersistence";
+import { useMoContext } from "../../context/MoContext";
 
 type SubView =
   | "main"
@@ -128,6 +129,7 @@ function getInitialSubView(initialView?: "main" | "search"): SubView {
 }
 
 export default function MoHome(props: Props) {
+  const { resetListSearchDate, resetMoSearchDate } = useMoContext();
   const [subView, setSubViewState] = useState<SubView>(() =>
     getInitialSubView(props.initialView),
   );
@@ -142,6 +144,13 @@ export default function MoHome(props: Props) {
     setSubViewState(v);
     persistSubView(v);
   }
+
+  useEffect(() => {
+    resetMoSearchDate();
+    if (subView === "main") {
+      resetListSearchDate();
+    }
+  }, [resetListSearchDate, resetMoSearchDate, subView]);
 
   const [selectedItem, setSelectedItem] = useState<SectorReport | null>(null);
   const [detailSource, setDetailSource] = useState<DetailSource>(

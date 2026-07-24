@@ -5,6 +5,7 @@ import {
 import { buildRenderPageLayoutPlans } from "../utils/PageLayout";
 import { RenderBodyContentLayout } from "../utils/RenderBodyContentLayout";
 import { RenderPageLayout } from "../utils/RenderPageLayout";
+import { formatPdfRoundDateTitle } from "../utils/FormatDate";
 
 type DivisionRenderProps = {
   item: any;
@@ -14,6 +15,7 @@ type DivisionRenderProps = {
 const TITLE = "รายงานประจำวันฝ่ายปฏิบัติการ (รายละเอียดภาค)";
 
 export function DivisionRender({ item, sectorName }: DivisionRenderProps) {
+  const firstPageTitleSuffix = formatPdfRoundDateTitle(item);
   const sections = [
     buildDivisionTableContentSection("render", item),
     buildDetailContentSection("render", item),
@@ -38,6 +40,7 @@ export function DivisionRender({ item, sectorName }: DivisionRenderProps) {
             title={TITLE}
             sectorName={sectorName}
             divisionName={section.divisionName}
+            firstPageTitleSuffix={firstPageTitleSuffix}
           >
             <RenderBodyContentLayout
               layout={{

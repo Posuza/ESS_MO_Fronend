@@ -13,6 +13,15 @@ export const AccessLevel = {
 
 export type AccessLevel = (typeof AccessLevel)[keyof typeof AccessLevel];
 
+export function getLocalTodayYYYYMMDD() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 /** Determine access level from position_id. */
 export function getAccessLevel(positionId?: number | null): AccessLevel {
   switch (positionId) {
@@ -89,8 +98,8 @@ export function buildReportFilters(
 
   const base: SectorReportFilters = {
     department_id: employee.department_id,
-    start_date: dateRange?.start_date ?? new Date().toISOString().split("T")[0],
-    end_date: dateRange?.end_date ?? new Date().toISOString().split("T")[0],
+    start_date: dateRange?.start_date ?? getLocalTodayYYYYMMDD(),
+    end_date: dateRange?.end_date ?? getLocalTodayYYYYMMDD(),
   };
 
   const level = getAccessLevel(employee.position_id);

@@ -8,6 +8,8 @@ export type ExportPageHeaderInput = {
   title: string;
   sectorName: string;
   divisionName?: string;
+  firstPageTitleSuffix?: string;
+  pageNumber?: number;
 };
 
 let logoDataUrlPromise: Promise<string> | null = null;
@@ -60,7 +62,12 @@ export async function drawExportPageHeader(
     /([ก-๙0-9]+)\s+([A-Za-z]+)/,
     "$1 | $2",
   );
-  const titleText = [header.title, formattedSectorName, header.divisionName]
+  const titleText = [
+    header.title,
+    formattedSectorName,
+    header.divisionName,
+    header.pageNumber === 1 ? header.firstPageTitleSuffix : "",
+  ]
     .filter(Boolean)
     .join(" | ");
 

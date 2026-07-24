@@ -10,6 +10,7 @@ import {
   drawExportPageFooter,
   drawExportPageHeader,
 } from "../utils/ExportPageLayout";
+import { formatPdfRoundDateTitle } from "../utils/FormatDate";
 import { buildSummaryExportPageLayoutPlans } from "../utils/PageLayout";
 
 const TITLE = "รายงานประจำวันฝ่ายปฏิบัติการ";
@@ -27,6 +28,7 @@ export function buildSummariesExport(
   });
 
   return registerExportFonts(doc).then(async () => {
+    const firstPageTitleSuffix = formatPdfRoundDateTitle(item);
     const sections = [
       buildSummaryTableContentSection("summaryExport", item, reports),
       ...buildSummaryDivisionContentSections("summaryExport", item, reports),
@@ -43,6 +45,8 @@ export function buildSummariesExport(
           title: TITLE,
           sectorName,
           divisionName: section.divisionName,
+          firstPageTitleSuffix,
+          pageNumber,
         });
         drawExportBodyContent(doc, {
           ...section.layout,

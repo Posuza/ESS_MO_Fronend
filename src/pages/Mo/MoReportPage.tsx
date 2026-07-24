@@ -26,6 +26,7 @@ import {
   persistMoReportState,
   readSavedMoReportState,
 } from "./moPersistence";
+import { useMoContext } from "../../context/MoContext";
 
 type ReportListItem = SectorReport & {
   department?: string;
@@ -46,6 +47,7 @@ export default function MoReportPage({
   initialDeptId,
   initialDate,
 }: Props) {
+  const { setMoSearchDate } = useMoContext();
   const authEmployee = useStore((s) => s.authEmployee);
   const empCode = authEmployee?.employee_code;
   const savedState = useMemo(() => readSavedMoReportState(), []);
@@ -140,10 +142,20 @@ export default function MoReportPage({
     currentDept?.name ?? "",
   );
 
+  function updateMoSearchDate(date = selectedDate) {
+    if (date) {
+      setMoSearchDate(date);
+    }
+  }
+
   useEffect(() => {
-    if (savedState?.selectedDate != null) return;
+    if (savedState?.selectedDate != null) {
+      updateMoSearchDate(savedState.selectedDate);
+      return;
+    }
     if (initialDate !== undefined) {
       setSelectedDate(initialDate);
+      updateMoSearchDate(initialDate);
     }
   }, [initialDate, savedState?.selectedDate]);
 
@@ -174,6 +186,7 @@ export default function MoReportPage({
         start_date: selectedDate,
         end_date: selectedDate,
       });
+      updateMoSearchDate();
     }
   }
 
