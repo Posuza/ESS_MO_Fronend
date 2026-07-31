@@ -110,7 +110,7 @@ export const SummaryTableCalculator = {
   },
 
   getTablesPerRow(columnCount: number): number {
-    return columnCount >= 8 ? 1 : columnCount >= 4 ? 2 : 3;
+    return columnCount >= 5 ? 1 : 2;
   },
 
   getWidth(config: LayoutConfig, columnCount = 3): number {

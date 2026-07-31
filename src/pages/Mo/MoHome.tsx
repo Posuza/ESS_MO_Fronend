@@ -177,9 +177,6 @@ export default function MoHome(props: Props) {
   const fetchAvailableReportDivisions = useStore(
     (s) => s.fetchAvailableReportDivisions,
   );
-  const positionActive = useStore((s) => s.positionActive);
-  const checkPositionActive = useStore((s) => s.checkPositionActive);
-
   // Local loading state with minimum 1.5-second display time
   const [showLoading, setShowLoading] = useState(true);
   const loadingStartRef = useRef(0);
@@ -231,13 +228,6 @@ export default function MoHome(props: Props) {
     }
   }, [fetchWithPosition]);
 
-  // Fresh position-active check on every mount (not relying on stale login data)
-  useEffect(() => {
-    if (currentEmployee?.position_id) {
-      checkPositionActive();
-    }
-  }, [currentEmployee?.employee_code, checkPositionActive]);
-
   useEffect(() => {
     if (subView !== "detail" || selectedItemId == null) return;
 
@@ -277,7 +267,7 @@ export default function MoHome(props: Props) {
 
   useEffect(() => {
     // Read-only users (position 3,4 or deactivated) don't need division counts
-    if (!isReadOnly(currentEmployee?.position_id, positionActive)) {
+    if (!isReadOnly(currentEmployee?.position_id)) {
       fetchDivisionCounts();
     }
   }, [currentEmployee?.department_id, fetchAvailableReportDivisions]);
@@ -300,8 +290,10 @@ export default function MoHome(props: Props) {
         id,
         department_id: report.department_id,
         division_name: report.division_name,
+        workflow_status: report.workflow_status,
         approved_status: report.approved_status,
         created_by: report.created_by,
+        report_date: report.report_date,
       };
     });
   }, [reports, currentEmployee?.department_id]);
@@ -557,14 +549,13 @@ export default function MoHome(props: Props) {
         )}
       </div>
 
-      {/* Read-only users (position 3,4 or deactivated) see the action, but cannot use it. */}
+      {/* Read-only users (position 3,4) see the action, but cannot use it. */}
       <div className={styles["guts-mo-btn"]}>
         <button
           type="button"
           className={styles["mo-home-addnew"]}
           disabled={
-            isReadOnly(currentEmployee?.position_id, positionActive) ||
-            noAvailableDivisions
+            isReadOnly(currentEmployee?.position_id) || noAvailableDivisions
           }
           onClick={() => {
             openNew();

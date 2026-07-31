@@ -10,11 +10,23 @@ import {
 import MoUpdateForm from "../../components/mo/MoUpdateForm";
 import { useStore } from "../../store/store";
 import type { SectorReport } from "../../services/moReporTransaction.Service";
-import { HttpError } from "../../services/moReporTransaction.Service";
+import {
+  HttpError,
+  sectorReportService,
+} from "../../services/moReporTransaction.Service";
 import {
   canApprove,
+  canApproveWorkflow,
+  canEditWorkflow,
+  canSendBackWorkflow,
+  getRestoreWorkflowStatus,
+  getWorkflowRank,
+  getWorkflowRankLabel,
   getLocalTodayYYYYMMDD,
+  isWorkflowLockedByOther,
   isReadOnly,
+  makeWorkflowStatus,
+  WorkflowState,
 } from "../../utils/positionAccess";
 import {
   clearMoDetailEditState,
@@ -22,6 +34,7 @@ import {
   readSavedMoDetailEditState,
 } from "./moPersistence";
 import { useMoContext } from "../../context/MoContext";
+import { getMoWorkflowDisplayStatus } from "../../utils/moWorkflowStatus";
 
 type Props = {
   onCancel?: () => void;
@@ -36,38 +49,21 @@ function getItemSearchDate(item: any, fallbackDate: string) {
   );
 }
 
-// Approval status helpers (mirrors what MoUpdateForm uses internally)
-const approvalStatusLabels = [
-  {
-    keys: ["approved", "ดำเนินการแล้ว"],
-    label: "อนุมัติเรียบร้อยแล้ว",
-    cssClass: "status-approved",
-  },
-  {
-    keys: ["PENDING", "pending", "waited", "รอการดำเนินการ", "รอ"],
-    label: "รอผู้อำนวยการอนุมัติ",
-    cssClass: "status-pending",
-  },
-  {
-    keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
-    label: "รอการดำเนินการแก้ไข",
-    cssClass: "status-rejected",
-  },
-];
+function normalizePositionLabel(positionName?: string | null) {
+  const value = String(positionName ?? "").trim();
+  if (!value) return "ผู้ใช้อื่น";
+  if (value.includes("ผู้จัดการ")) return "ผู้จัดการ";
+  if (value.includes("ผู้อำนวยการ")) return "ผู้อำนวยการ";
+  return value;
+}
 
-const getApprovalStatusClass = (
-  status: string,
+const getWorkflowStatusClass = (
+  tone: string,
   stylesMod: Record<string, string>,
 ) => {
-  const cleaned = String(status ?? "")
-    .trim()
-    .toLowerCase();
-  const found = approvalStatusLabels.find((item) =>
-    item.keys.some((k) => k.toLowerCase() === cleaned),
-  );
-  return found
-    ? (stylesMod[found.cssClass] ?? "")
-    : (stylesMod["status-pending"] ?? "");
+  if (tone === "approved") return stylesMod["status-approved"] ?? "";
+  if (tone === "rejected") return stylesMod["status-rejected"] ?? "";
+  return stylesMod["status-pending"] ?? "";
 };
 
 export default function MoDetailPage(props: Props) {
@@ -89,6 +85,10 @@ export default function MoDetailPage(props: Props) {
   // Fetch error state — report may have been deleted by someone else
   const [showFetchError, setShowFetchError] = useState(false);
   const [fetchErrorMessage, setFetchErrorMessage] = useState("");
+  const [showEditLockedWarning, setShowEditLockedWarning] = useState(false);
+  const [editLockedMessage, setEditLockedMessage] = useState(
+    "ผู้ใช้อื่นกำลังตรวจสอบแก้ไขอยู่ ไม่สามารถดำเนินการได้",
+  );
 
   // Delete loading popup with minimum 1.5-second display time
   const [isDeleting, setIsDeleting] = useState(false);
@@ -125,8 +125,8 @@ export default function MoDetailPage(props: Props) {
   >(null);
 
   const currentEmployee = useStore((state) => state.authEmployee);
-  const positionActive = useStore((s) => s.positionActive);
-  const { deleteReport, fetchReportById, currentReport } = useStore();
+  const { deleteReport, fetchReportById, updateReport, currentReport } =
+    useStore();
 
   // Fetch fresh data on mount — if report was deleted, show error and go back
   useEffect(() => {
@@ -185,38 +185,231 @@ export default function MoDetailPage(props: Props) {
     }
   }, [currentReport, moSearchDate, props.item, setMoSearchDate]);
 
-  const itemCreatedBy = props.item?.created_by ?? currentReport?.created_by;
+  const workflowReport = reportData as Partial<SectorReport>;
 
-  // Check if current user has approval authority (Director / Deputy Director)
-  const isApprover = canApprove(currentEmployee?.position_id, positionActive);
+  const workflowLockedByOther = isWorkflowLockedByOther(
+    currentEmployee,
+    workflowReport,
+  );
+  const editingPositionLabel = getWorkflowRankLabel(
+    workflowReport.workflow_status,
+  );
 
-  // Director-level users can approve
-  const isDirector = isApprover;
+  const canUseApprovalActions = canApprove(currentEmployee?.position_id);
+  const workflowDisplayStatus = getMoWorkflowDisplayStatus(
+    {
+      approved_status: approvalStatus,
+      workflow_status: workflowReport.workflow_status,
+    },
+    {
+      position_id: currentEmployee?.position_id,
+    },
+  );
 
-  // Only allow edit/delete if the report's date is today
+  const canSendBackApprovedByMe =
+    canUseApprovalActions &&
+    workflowReport.approved_status === "APPROVED" &&
+    !!currentEmployee?.employee_code &&
+    workflowReport.approved_by === currentEmployee.employee_code;
+  const canSendBack =
+    canUseApprovalActions &&
+    (canSendBackWorkflow(currentEmployee, workflowReport) || canSendBackApprovedByMe);
+  const isPendingApproval = approvalStatus === "PENDING";
+
+  // Allow actions on reports submitted today. The business report_date can be
+  // yesterday's round, while created_at is the actual transaction date.
   const today = getLocalTodayYYYYMMDD();
   const reportDate = props.item?.report_date ?? currentReport?.report_date;
-  const isReportDateToday = today === reportDate;
+  const transactionDate =
+    (reportData?.created_at ? String(reportData.created_at).slice(0, 10) : "") ||
+    (currentReport?.created_at ? String(currentReport.created_at).slice(0, 10) : "") ||
+    (props.item?.created_at ? String(props.item.created_at).slice(0, 10) : "");
+  const isReportDateToday = today === reportDate || today === transactionDate;
+  const canShowApprovalActions =
+    canUseApprovalActions &&
+    !isReadOnly(currentEmployee?.position_id) &&
+    !isEditing &&
+    !showPageLoading &&
+    isReportDateToday &&
+    (isPendingApproval || canSendBack);
+
+  const isCreator =
+    !!currentEmployee?.employee_code &&
+    workflowReport.created_by === currentEmployee.employee_code;
 
   // User can edit/delete only:
-  //   - Not read-only (position 3,4 or deactivated cannot edit/delete at all)
+  //   - Not read-only
   //   - Report date is today
-  //   - They are an approver OR the original creator
+  //   - Director-level users can edit/delete directly
+  //   - Manager-level users must be the original creator and workflow owner
   const canEditData =
-    !isReadOnly(currentEmployee?.position_id, positionActive) &&
+    !isReadOnly(currentEmployee?.position_id) &&
     !!currentEmployee &&
     isReportDateToday &&
-    (isApprover ||
-      (itemCreatedBy &&
-        itemCreatedBy !== "" &&
-        currentEmployee.employee_code &&
-        currentEmployee.employee_code !== "" &&
-        itemCreatedBy === currentEmployee.employee_code));
+    (canUseApprovalActions ||
+      (isCreator && canEditWorkflow(currentEmployee, workflowReport)));
 
-  function handleDelete(e: React.MouseEvent) {
+  function showWorkflowLockedWarning(positionName?: string | null) {
+    const positionLabel = normalizePositionLabel(positionName);
+    setEditLockedMessage(
+      `${positionLabel}กำลังตรวจสอบแก้ไขอยู่ ไม่สามารถดำเนินการได้`,
+    );
+    setShowEditLockedWarning(true);
+  }
+
+  function showWorkflowActionWarning(message: string) {
+    setEditLockedMessage(message);
+    setShowEditLockedWarning(true);
+  }
+
+  async function getFreshWorkflowReport() {
+    if (!props.item?.id) return null;
+    const freshWorkflow = await sectorReportService.getWorkflowStatus(
+      props.item.id,
+    );
+    return {
+      freshWorkflow,
+      freshReport: {
+        ...workflowReport,
+        workflow_status: freshWorkflow.workflow_status ?? undefined,
+        updated_by: freshWorkflow.updated_by ?? undefined,
+      },
+    };
+  }
+
+  async function canRunApprovalAction(action: "approve" | "sendBack") {
+    const fresh = await getFreshWorkflowReport();
+    if (!fresh) return false;
+
+    const { freshWorkflow, freshReport } = fresh;
+    if (isWorkflowLockedByOther(currentEmployee, freshReport)) {
+      showWorkflowLockedWarning(
+        freshWorkflow.updated_by_position_name ||
+          getWorkflowRankLabel(freshWorkflow.workflow_status),
+      );
+      return false;
+    }
+
+    const canRun =
+      action === "approve"
+        ? canApproveWorkflow(currentEmployee, freshReport)
+        : canSendBackWorkflow(currentEmployee, freshReport) ||
+          canSendBackApprovedByMe;
+
+    if (!canRun) {
+      showWorkflowActionWarning(
+        "รายการนี้ยังไม่อยู่ในขั้นตอนอนุมัติของตำแหน่งคุณ",
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleStartEdit() {
+    if (!props.item?.id) return;
+    const rank = getWorkflowRank(currentEmployee?.position_id);
+    if (!rank) return;
+    try {
+      const freshWorkflow = await sectorReportService.getWorkflowStatus(
+        props.item.id,
+      );
+      const freshReport = {
+        ...workflowReport,
+        workflow_status: freshWorkflow.workflow_status ?? undefined,
+        updated_by: freshWorkflow.updated_by ?? undefined,
+      };
+      if (isWorkflowLockedByOther(currentEmployee, freshReport)) {
+        showWorkflowLockedWarning(
+          freshWorkflow.updated_by_position_name ||
+            getWorkflowRankLabel(freshWorkflow.workflow_status),
+        );
+        return;
+      }
+      if (
+        !canUseApprovalActions &&
+        !canEditWorkflow(currentEmployee, freshReport)
+      ) {
+        setFetchErrorMessage("รายการนี้ยังไม่อยู่ในขั้นตอนแก้ไขของตำแหน่งคุณ");
+        setShowFetchError(true);
+        return;
+      }
+      await updateReport(props.item.id, {
+        workflow_status: makeWorkflowStatus(rank, WorkflowState.EDITING),
+      });
+      setIsEditing(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFetchErrorMessage(msg);
+      setShowFetchError(true);
+    }
+  }
+
+  async function handleCancelEdit() {
+    if (props.item?.id) {
+      try {
+        const freshWorkflow = await sectorReportService.getWorkflowStatus(
+          props.item.id,
+        );
+        const freshReport = {
+          ...workflowReport,
+          workflow_status: freshWorkflow.workflow_status ?? undefined,
+          updated_by: freshWorkflow.updated_by ?? undefined,
+        };
+        const restoreWorkflowStatus = getRestoreWorkflowStatus(
+          currentEmployee,
+          freshReport,
+        );
+        if (
+          restoreWorkflowStatus &&
+          restoreWorkflowStatus !== freshWorkflow.workflow_status
+        ) {
+          await updateReport(props.item.id, {
+            workflow_status: restoreWorkflowStatus,
+          });
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setFetchErrorMessage(msg);
+        setShowFetchError(true);
+        return;
+      }
+    }
+    setIsEditing(false);
+    setIsDirty(false);
+  }
+
+  function handleSavedEdit() {
+    setIsEditing(false);
+    setIsDirty(false);
+  }
+
+  async function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    setShowConfirmDelete(true);
+    if (!props.item?.id) return;
+    try {
+      const freshWorkflow = await sectorReportService.getWorkflowStatus(
+        props.item.id,
+      );
+      const freshReport = {
+        ...workflowReport,
+        workflow_status: freshWorkflow.workflow_status ?? undefined,
+        updated_by: freshWorkflow.updated_by ?? undefined,
+      };
+      if (isWorkflowLockedByOther(currentEmployee, freshReport)) {
+        showWorkflowLockedWarning(
+          freshWorkflow.updated_by_position_name ||
+            getWorkflowRankLabel(freshWorkflow.workflow_status),
+        );
+        return;
+      }
+      setShowConfirmDelete(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFetchErrorMessage(msg);
+      setShowFetchError(true);
+    }
   }
 
   function confirmDelete() {
@@ -251,22 +444,37 @@ export default function MoDetailPage(props: Props) {
       });
   }
 
-  // ── Approve: set status then trigger MoUpdateForm's save with the approve flag ──
+  // ── Approve: verify fresh workflow first, then trigger MoUpdateForm's save ──
   const handleApprove = async () => {
-    setApprovalStatus("APPROVED");
-    // give React one tick to flush the state before saving
-    await new Promise((r) => requestAnimationFrame(r));
-    await submitRef.current?.({ approve: true });
+    try {
+      const canRun = await canRunApprovalAction("approve");
+      if (!canRun) return;
+      setApprovalStatus("APPROVED");
+      await submitRef.current?.({ approve: true });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFetchErrorMessage(msg);
+      setShowFetchError(true);
+    }
   };
 
-  // ── Send back for revision: revert status to REJECTED, then save ──
+  // ── Send back for revision: verify fresh workflow first, then save ──
   const handleSendBack = async () => {
-    setApprovalStatus("REJECTED");
-    // give React one tick to flush the state into the submitRef closure
-    await new Promise((r) => requestAnimationFrame(r));
-    // save with the REJECTED status so the backend knows (no success popup)
-    await submitRef.current?.({ sendBack: true });
-    // stay in view mode — user can click the pencil to edit manually
+    try {
+      const canRun = await canRunApprovalAction("sendBack");
+      if (!canRun) return;
+      setApprovalStatus("REJECTED");
+      await submitRef.current?.({ sendBack: true });
+      if (props.item?.id) {
+        await fetchReportById(props.item.id);
+      }
+      setIsEditing(false);
+      setIsDirty(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFetchErrorMessage(msg);
+      setShowFetchError(true);
+    }
   };
 
   return (
@@ -274,21 +482,27 @@ export default function MoDetailPage(props: Props) {
       {/* ── Top action bar: back + edit/delete ── */}
       <div className={styles["gut-detail-btns-box"]}>
         <div className={styles["guts-action-icons"]}>
-          {canEditData && (
+          {(canEditData || workflowLockedByOther) && (
             <>
               {!isEditing && reportData?.approved_status !== "APPROVED" && (
                 <button
                   type="button"
                   className={styles["guts-icon-btn"]}
-                  title="แก้ไข"
+                  title={
+                    workflowLockedByOther
+                      ? `${editingPositionLabel}กำลังตรวจสอบแก้ไขอยู่ ไม่สามารถดำเนินการได้`
+                      : "แก้ไข"
+                  }
                   aria-label="Edit"
-                  onClick={() => setIsEditing(true)}
+                  onClick={handleStartEdit}
                 >
                   <Pencil size={18} />
                 </button>
               )}
 
-              {!isEditing && reportData?.approved_status !== "APPROVED" && (
+              {(canEditData || workflowLockedByOther) &&
+                !isEditing &&
+                reportData?.approved_status !== "APPROVED" && (
                 <button
                   type="button"
                   className={`${styles["guts-icon-btn"]} ${styles["guts-icon-delete"]}`}
@@ -342,15 +556,21 @@ export default function MoDetailPage(props: Props) {
         description={fetchErrorMessage}
       />
 
+      <InfoModel
+        open={showEditLockedWarning}
+        onClose={() => setShowEditLockedWarning(false)}
+        variant="error"
+        title="ไม่สามารถดำเนินการได้"
+        description={editLockedMessage}
+      />
+
       {/* ── Form — only mount after initial loading is done ── */}
       {!showPageLoading && (
         <MoUpdateForm
           reportData={reportData}
           selectedDivision={(props.item as any)?.division_name}
-          onCancel={() => {
-            setIsEditing(false);
-            setIsDirty(false);
-          }}
+          onCancel={handleCancelEdit}
+          onSaved={handleSavedEdit}
           submitRef={submitRef}
           isEditing={isEditing}
           onDirtyChange={setIsDirty}
@@ -380,11 +600,7 @@ export default function MoDetailPage(props: Props) {
       )}
 
       {/* ── Director-only approval buttons — only after initial loading ── */}
-      {isDirector &&
-        !isReadOnly(currentEmployee?.position_id, positionActive) &&
-        !isEditing &&
-        !showPageLoading &&
-        isReportDateToday && (
+      {canShowApprovalActions && (
           <div
             style={{
               display: "flex",
@@ -394,11 +610,11 @@ export default function MoDetailPage(props: Props) {
             }}
           >
             {/* อนุมัติรายงาน — hidden once already approved */}
-            {approvalStatus !== "APPROVED" && (
+            {isPendingApproval && (
               <button
                 type="button"
-                className={`${styles["guts-approve-btn"]} ${styles["status-pill"]} ${getApprovalStatusClass(
-                  reportData?.approved_status as string,
+                className={`${styles["guts-approve-btn"]} ${styles["status-pill"]} ${getWorkflowStatusClass(
+                  workflowDisplayStatus.tone,
                   styles,
                 )}`}
                 onClick={handleApprove}
@@ -407,13 +623,13 @@ export default function MoDetailPage(props: Props) {
               </button>
             )}
 
-            {/* ส่งกลับแก้ไข หลังอนุมัติ — only active when currently APPROVED */}
+            {/* ส่งกลับแก้ไข — only current workflow owner can reject/send back */}
             <button
               type="button"
               className={styles["guts-reactive-btn"]}
-              disabled={approvalStatus !== "APPROVED"}
+              disabled={!isPendingApproval && !canSendBack}
               style={
-                approvalStatus !== "APPROVED"
+                !isPendingApproval && !canSendBack
                   ? { opacity: 0.4, cursor: "not-allowed" }
                   : {}
               }

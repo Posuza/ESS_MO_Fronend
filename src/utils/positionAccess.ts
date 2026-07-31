@@ -1,4 +1,5 @@
 import type { AuthEmployee } from "../store/Slice/auth";
+import type { SectorReport } from "../services/moReporTransaction.Service";
 import type { SectorReportFilters } from "../store/Slice/moDailyTransactionSlice";
 
 /** Access levels for report data scope. */
@@ -13,6 +14,208 @@ export const AccessLevel = {
 
 export type AccessLevel = (typeof AccessLevel)[keyof typeof AccessLevel];
 
+export const WorkflowState = {
+  WAITING: "WAITING",
+  EDITING: "EDITING",
+  RETURNED_TO: "RETURNED_TO",
+  APPROVED: "APPROVED",
+} as const;
+
+const workflowRanks = ["MANAGER", "DIRECTOR"];
+
+function normalizePositionId(positionId?: number | string | null): number | null {
+  if (positionId == null || positionId === "") return null;
+  const parsed = Number(positionId);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function getWorkflowRank(positionId?: number | string | null): string | null {
+  switch (normalizePositionId(positionId)) {
+    case 1:
+    case 5:
+      return "DIRECTOR";
+    case 2:
+    case 6:
+      return "MANAGER";
+    default:
+      return null;
+  }
+}
+
+export function makeWorkflowStatus(
+  rankCode: string,
+  state: string,
+): string {
+  const rank = rankCode.toUpperCase();
+  const normalizedState = state.toUpperCase();
+  if (normalizedState === WorkflowState.WAITING) return `WAITING_${rank}`;
+  if (normalizedState === WorkflowState.EDITING) return `EDITING_${rank}`;
+  if (normalizedState === WorkflowState.RETURNED_TO) return `RETURNED_TO_${rank}`;
+  if (normalizedState === WorkflowState.APPROVED) return `APPROVED_${rank}`;
+  return `${normalizedState}_${rank}`;
+}
+
+function splitWorkflowStatus(
+  workflowStatus?: string | null,
+): { rank: string; state: string } {
+  const value = String(workflowStatus ?? "").toUpperCase();
+  const prefixes: Array<[string, string]> = [
+    ["RETURNED_TO_", WorkflowState.RETURNED_TO],
+    ["WAITING_", WorkflowState.WAITING],
+    ["EDITING_", WorkflowState.EDITING],
+    ["APPROVED_", WorkflowState.APPROVED],
+  ];
+
+  for (const [prefix, state] of prefixes) {
+    if (value.startsWith(prefix)) {
+      return { rank: value.slice(prefix.length), state };
+    }
+  }
+
+  const index = value.lastIndexOf("_");
+  if (index < 0) return { rank: "", state: "" };
+  const legacyRank = value.slice(0, index);
+  const legacyState = value.slice(index + 1);
+  if (legacyState === "PENDING") {
+    return { rank: legacyRank, state: WorkflowState.WAITING };
+  }
+  if (legacyState === "REJECTED") {
+    return {
+      rank: getPreviousWorkflowRank(legacyRank) || legacyRank,
+      state: WorkflowState.RETURNED_TO,
+    };
+  }
+  return { rank: legacyRank, state: legacyState };
+}
+
+function getPreviousWorkflowRank(rank: string): string | null {
+  const index = workflowRanks.indexOf(rank);
+  if (index <= 0) return null;
+  return workflowRanks[index - 1];
+}
+
+function getNextWorkflowRank(rank: string): string | null {
+  const index = workflowRanks.indexOf(rank);
+  if (index < 0 || index >= workflowRanks.length - 1) return null;
+  return workflowRanks[index + 1];
+}
+
+export function canApproveWorkflow(
+  employee: AuthEmployee | null,
+  report?: Partial<SectorReport> | null,
+): boolean {
+  const rank = getWorkflowRank(employee?.position_id);
+  if (!rank) return false;
+  const workflowStatus = String(report?.workflow_status ?? "").trim();
+  if (!workflowStatus || workflowStatus.toUpperCase() === "PENDING") {
+    return rank === "DIRECTOR" && report?.approved_status === "PENDING";
+  }
+  const { rank: workflowRank, state } = splitWorkflowStatus(workflowStatus);
+  return workflowRank === rank && state === WorkflowState.WAITING;
+}
+
+export function canSendBackWorkflow(
+  employee: AuthEmployee | null,
+  report?: Partial<SectorReport> | null,
+): boolean {
+  const rank = getWorkflowRank(employee?.position_id);
+  if (!rank) return false;
+  const workflowStatus = String(report?.workflow_status ?? "").trim();
+  if (!workflowStatus) {
+    return rank === "DIRECTOR" && report?.approved_status === "APPROVED";
+  }
+  const { rank: workflowRank, state } = splitWorkflowStatus(workflowStatus);
+  return (
+    workflowRank === rank &&
+    (state === WorkflowState.WAITING || state === WorkflowState.APPROVED)
+  );
+}
+
+export function canEditWorkflow(
+  employee: AuthEmployee | null,
+  report?: Partial<SectorReport> | null,
+): boolean {
+  const rank = getWorkflowRank(employee?.position_id);
+  if (!rank) return false;
+  const { rank: workflowRank, state } = splitWorkflowStatus(
+    report?.workflow_status,
+  );
+  if (state === WorkflowState.RETURNED_TO) {
+    return (
+      workflowRank === rank || report?.approved_by === employee?.employee_code
+    );
+  }
+  if (
+    state === WorkflowState.WAITING &&
+    report?.created_by === employee?.employee_code
+  ) {
+    return true;
+  }
+  if (workflowRank !== rank) return false;
+  return (
+    state === WorkflowState.EDITING &&
+    report?.updated_by === employee?.employee_code
+  );
+}
+
+export function isWorkflowLockedByOther(
+  employee: AuthEmployee | null,
+  report?: Partial<SectorReport> | null,
+): boolean {
+  const { state } = splitWorkflowStatus(report?.workflow_status);
+  return (
+    state === WorkflowState.EDITING &&
+    !!report?.updated_by &&
+    report.updated_by !== employee?.employee_code
+  );
+}
+
+export function getWorkflowRankLabel(workflowStatus?: string | null): string {
+  const { rank } = splitWorkflowStatus(workflowStatus);
+  switch (rank) {
+    case "DIRECTOR":
+      return "ผู้อำนวยการ";
+    case "MANAGER":
+      return "ผู้จัดการ";
+    case "GM":
+      return "GM";
+    case "CEO":
+      return "CEO";
+    default:
+      return "ผู้ใช้อื่น";
+  }
+}
+
+export function getRestoreWorkflowStatus(
+  employee: AuthEmployee | null,
+  report?: Partial<SectorReport> | null,
+): string | null {
+  const actorRank = getWorkflowRank(employee?.position_id);
+  if (!actorRank) return null;
+
+  const { rank: workflowRank, state } = splitWorkflowStatus(
+    report?.workflow_status,
+  );
+  if (state !== WorkflowState.EDITING) {
+    return report?.workflow_status ?? null;
+  }
+
+  if (report?.approved_status === "REJECTED") {
+    if (report.approved_by === employee?.employee_code) {
+      const returnedRank = getPreviousWorkflowRank(actorRank) || actorRank;
+      return makeWorkflowStatus(returnedRank, WorkflowState.RETURNED_TO);
+    }
+    return makeWorkflowStatus(actorRank, WorkflowState.RETURNED_TO);
+  }
+
+  if (report?.approved_status === "APPROVED") {
+    return makeWorkflowStatus(workflowRank || actorRank, WorkflowState.APPROVED);
+  }
+
+  const waitingRank = getNextWorkflowRank(actorRank) || workflowRank || actorRank;
+  return makeWorkflowStatus(waitingRank, WorkflowState.WAITING);
+}
+
 export function getLocalTodayYYYYMMDD() {
   const today = new Date();
   const year = today.getFullYear();
@@ -23,8 +226,8 @@ export function getLocalTodayYYYYMMDD() {
 }
 
 /** Determine access level from position_id. */
-export function getAccessLevel(positionId?: number | null): AccessLevel {
-  switch (positionId) {
+export function getAccessLevel(positionId?: number | string | null): AccessLevel {
+  switch (normalizePositionId(positionId)) {
     case 1:
     case 5:
       return AccessLevel.ALL_DEPT;
@@ -41,12 +244,13 @@ export function getAccessLevel(positionId?: number | null): AccessLevel {
 
 /** Whether this position can approve/reject reports. */
 export function canApprove(
-  positionId?: number | null,
+  positionId?: number | string | null,
   positionIsActive?: boolean,
 ): boolean {
   // Deactivated positions cannot approve
   if (positionIsActive === false) return false;
-  return positionId === 1 || positionId === 5;
+  const normalizedPositionId = normalizePositionId(positionId);
+  return normalizedPositionId === 1 || normalizedPositionId === 5;
 }
 
 /**
@@ -110,19 +314,18 @@ export function buildReportFilters(
       return base;
 
     case AccessLevel.DIVISION_ONLY:
-      // See only their division's reports
-      // If division_id is available, filter by it; otherwise return all dept reports
-      if (employee.division_id != null) {
-        return { ...base, division_id: employee.division_id };
-      }
-      return base;
+      // See only their division's reports.
+      return {
+        ...base,
+        division_id: employee.division_id != null ? employee.division_id : -1,
+      };
 
     case AccessLevel.OWN_ONLY:
-      // See their division's reports
-      if (employee.division_id != null) {
-        return { ...base, division_id: employee.division_id };
-      }
-      return base;
+      // See only their division's reports.
+      return {
+        ...base,
+        division_id: employee.division_id != null ? employee.division_id : -1,
+      };
 
     default:
       return base;

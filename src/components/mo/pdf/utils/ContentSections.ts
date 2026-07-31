@@ -86,7 +86,7 @@ export function buildDivisionTableContentSection(
   const layout = buildBodyContentLayout({
     mode,
     tableKind: "division",
-    tablesPerRow: 3,
+    tablesPerRow: 2,
     groups,
   });
 

@@ -51,15 +51,15 @@ export const PDF_EXPORT_PAGE = {
 
 export const PDF_SUMMARY_EXPORT_PAGE = {
   size: "A4",
-  direction: "landscape" as PageDirection,
-  width: 297,
-  height: 210,
+  direction: "portrait" as PageDirection,
+  width: 210,
+  height: 297,
   paddingLeftRight: 7,
   paddingTopBottom: 4,
   headerHeight: 22.5,
   footerHeight: 10,
-  bodyWidth: 283,
-  bodyHeight: 169.5,
+  bodyWidth: 196,
+  bodyHeight: 256.5,
 } as const;
 
 export const PDF_EXPORT_TABLE = {
@@ -88,19 +88,19 @@ export const PDF_RENDER_FONT = {
 
 export const PDF_RENDER_PAGE = {
   size: "A4",
-  direction: "landscape" as PageDirection,
-  width: 842,
-  height: 566,
+  direction: "portrait" as PageDirection,
+  width: 566,
+  height: 842,
   paddingLeftRight: 20,
   paddingTopBottom: 14,
   headerHeight: 66,
   footerHeight: 28,
-  bodyWidth: 802,
-  bodyHeight: 472,
+  bodyWidth: 526,
+  bodyHeight: 720,
 } as const;
 
 export const PDF_RENDER_TABLE = {
-  tablesPerRow: 3,
+  tablesPerRow: 2,
   gap: 6,
   rowHeight: 16,
   rowPaddingX: 0,

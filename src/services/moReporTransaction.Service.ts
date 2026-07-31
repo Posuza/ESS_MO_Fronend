@@ -26,6 +26,7 @@ export interface SectorReport {
   division_name: string;
   report_date: string;
   status: string;
+  workflow_status?: string;
   approved_status?: string;
   approved_by?: string | null;
   approved_at?: string | null;
@@ -108,18 +109,12 @@ export interface EmployeeTodayReport {
   }>;
 }
 
-export interface EmployeePositionStatus {
-  employee_code: string;
-  employee_is_active: boolean;
-  position_id: number;
-  position_name: string | null;
-  position_is_active: boolean;
-  department_id: number;
-  department_name: string | null;
-  department_is_active: boolean;
-  division_id: number;
-  division_name: string | null;
-  division_is_active: boolean;
+export interface MoWorkflowStatus {
+  mo_daily_transaction_id: number;
+  workflow_status?: string | null;
+  updated_by?: string | null;
+  updated_by_position_name?: string | null;
+  updated_at?: string | null;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -215,6 +210,12 @@ export const sectorReportService = {
 
   // ── Derived / convenience methods ────────────────────────────────────────
 
+  async getWorkflowStatus(id: number): Promise<MoWorkflowStatus> {
+    return request<MoWorkflowStatus>(
+      `/${id}/mo_daily_transaction_workflow_status`,
+    );
+  },
+
   /**
    * Fetch ALL distinct discipline types (key + label) from across all reports.
    */
@@ -309,14 +310,6 @@ export const sectorReportService = {
       "/distinct-guard-post-movement-statuses",
     );
     return result.statuses;
-  },
-
-  /**
-   * Fresh DB check — does the current employee's position allow MO access?
-   * Returns fresh employee scope and position active state.
-   */
-  async checkPositionActive() {
-    return request<EmployeePositionStatus>("/employee-position-active");
   },
 
   /**

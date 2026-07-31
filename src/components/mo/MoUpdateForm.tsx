@@ -9,6 +9,7 @@ import {
   InfoModel,
   MoLoadingPopup,
 } from "./popup";
+import { getMoWorkflowDisplayStatus } from "../../utils/moWorkflowStatus";
 
 // ============================================================
 // TYPES & INTERFACES
@@ -21,7 +22,8 @@ export type EmployeeDepartment = {
 };
 
 type Props = {
-  onCancel?: () => void;
+  onCancel?: () => void | Promise<void>;
+  onSaved?: () => void | Promise<void>;
   selectedDivision?: string;
   departments?: EmployeeDepartment[];
   reportData?: Record<string, unknown>;
@@ -54,43 +56,10 @@ const statusOptions = [
   { label: "ฉุกเฉิน", key: "danger" },
 ];
 
-/** Report approval status label definitions */
-const approvalStatusLabels = [
-  {
-    keys: ["approved", "ดำเนินการแล้ว"],
-    label: "อนุมัติเรียบร้อยแล้ว",
-    cssClass: styles["status-approved"],
-  },
-  {
-    keys: ["PENDING", "pending", "waited", "รอการดำเนินการ", "รอ"],
-    label: "รอผู้อำนวยการอนุมัติ",
-    cssClass: styles["status-pending"],
-  },
-  {
-    keys: ["REJECTED", "rejected", "reject", "ถูกปฏิเสธ"],
-    label: "รอการดำเนินการแก้ไข",
-    cssClass: styles["status-rejected"],
-  },
-];
-
-const getApprovalStatusClass = (status: string) => {
-  const cleaned = String(status ?? "")
-    .trim()
-    .toLowerCase();
-  const found = approvalStatusLabels.find((item) =>
-    item.keys.some((k) => k.toLowerCase() === cleaned),
-  );
-  return found ? found.cssClass : styles["status-pending"];
-};
-
-const getApprovalStatusLabel = (status: string) => {
-  const cleaned = String(status ?? "")
-    .trim()
-    .toLowerCase();
-  const found = approvalStatusLabels.find((item) =>
-    item.keys.some((k) => k.toLowerCase() === cleaned),
-  );
-  return found ? found.label : status;
+const getWorkflowStatusClass = (tone: string) => {
+  if (tone === "approved") return styles["status-approved"];
+  if (tone === "rejected") return styles["status-rejected"];
+  return styles["status-pending"];
 };
 
 /** Minimum time (ms) the submission loading popup must display */
@@ -511,6 +480,15 @@ export default function MoUpdateForm(props: Props) {
   );
 
   const approvalStatus = props.externalApprovalStatus ?? localApprovalStatus;
+  const workflowDisplayStatus = getMoWorkflowDisplayStatus(
+    {
+      approved_status: approvalStatus,
+      workflow_status: props.reportData?.workflow_status as string | null,
+    },
+    {
+      position_id: authEmployee?.position_id,
+    },
+  );
 
   const [approvalRemark, setApprovalRemark] = useState<string>(
     (props.reportData?.approved_remark as string) || "",
@@ -1510,7 +1488,7 @@ export default function MoUpdateForm(props: Props) {
     }
     setEditingKey(null);
     setEditingRaw("0");
-    if (props.onCancel) props.onCancel();
+    if (props.onCancel) void props.onCancel();
   };
 
   const doSave = async (opts?: { approve?: boolean; sendBack?: boolean }) => {
@@ -1592,10 +1570,20 @@ export default function MoUpdateForm(props: Props) {
       payload.approved_at = new Date().toISOString();
       // Notify parent so its approvalStatus state stays in sync
       props.onApprovalStatusChange?.("APPROVED");
-    } else {
-      payload.approved_status = approvalStatus;
+    } else if (opts?.sendBack) {
+      payload.approved_status = "REJECTED";
       payload.approved_remark = approvalRemark;
-      if (approvalStatus === "APPROVED") {
+      payload.approved_by = authEmployee?.employee_code || "ADMIN";
+      payload.approved_at = new Date().toISOString();
+      props.onApprovalStatusChange?.("REJECTED");
+    } else {
+      const isRejectedEditResubmit =
+        props.isEditing && props.reportData?.approved_status === "REJECTED";
+      payload.approved_status = isRejectedEditResubmit
+        ? "PENDING"
+        : approvalStatus;
+      payload.approved_remark = approvalRemark;
+      if (payload.approved_status === "APPROVED") {
         payload.approved_by = authEmployee?.employee_code || "ADMIN";
         payload.approved_at = new Date().toISOString();
       } else {
@@ -1717,11 +1705,9 @@ export default function MoUpdateForm(props: Props) {
                     </span>
                     {props.reportData?.approved_status && (
                       <span
-                        className={`${styles["status-pill"]} ${getApprovalStatusClass(props.reportData.approved_status as string)}`}
+                        className={`${styles["status-pill"]} ${getWorkflowStatusClass(workflowDisplayStatus.tone)}`}
                       >
-                        {getApprovalStatusLabel(
-                          props.reportData.approved_status as string,
-                        )}
+                        {workflowDisplayStatus.label}
                       </span>
                     )}
                   </div>
@@ -3136,7 +3122,8 @@ export default function MoUpdateForm(props: Props) {
         open={showSuccess}
         onClose={() => {
           setShowSuccess(false);
-          if (props.onCancel) props.onCancel();
+          if (props.onSaved) props.onSaved();
+          else if (props.onCancel) props.onCancel();
           else window.history.back();
         }}
         variant="success"

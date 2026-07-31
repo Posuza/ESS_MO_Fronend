@@ -25,6 +25,7 @@ import {
 } from "./pdf/export/SummariesExport";
 import { DivisionRender } from "./pdf/render/DivisionRender";
 import { SummariesRender } from "./pdf/render/SummariesRender";
+import { PDF_RENDER } from "./pdf/constant/Variable";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import MoLoadingPopup from "./popup/MoLoadingPopup";
 import "./PdfViewer.css";
@@ -63,9 +64,8 @@ const PdfViewer = forwardRef<PdfViewerHandle, Props>(function PdfViewer(
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
       if (w > 0) {
-        // Fit PDF page width to container (capped at A4 landscape 842pt)
-        const pageW = Math.min(842, w);
-        const f = pageW / 842;
+        const pageW = Math.min(PDF_RENDER.page.width, w);
+        const f = pageW / PDF_RENDER.page.width;
         // Auto-fit page width — also locks min zoom so page never smaller than container
         setScale(f);
         setMinScale(f);
