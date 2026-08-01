@@ -62,7 +62,7 @@ export function drawExportSummaryTable(
   const NO_W = 7;
   const LOC_W = 10;
   const TOTAL_W = 10;
-  const UNIT_W = 12;
+  const UNIT_W = 12.5;
   const columnStyles: Record<number, Record<string, unknown>> = {
     0: { cellWidth: NO_W, halign: "center" },
   };

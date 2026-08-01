@@ -50,6 +50,7 @@ export type BuildBodyLayoutInput = {
   mode: LayoutMode;
   tableKind?: TableKind;
   tablesPerRow?: number;
+  tableWidthRatio?: number;
   summaryColumns?: SummaryColumn[];
   groups?: Group[];
   detailSections?: Array<{
@@ -87,6 +88,7 @@ export function buildBodyContentLayout({
   mode,
   tableKind = "division",
   tablesPerRow,
+  tableWidthRatio = 1,
   summaryColumns,
   groups = [],
   detailSections = [],
@@ -94,7 +96,8 @@ export function buildBodyContentLayout({
   const config = getModeConfig(mode);
   const resolvedTablesPerRow = tablesPerRow ?? config.table.tablesPerRow;
   const tableGapWidth = Math.max(resolvedTablesPerRow - 1, 0) * config.table.gap;
-  const tableWidth = (config.page.bodyWidth - tableGapWidth) / resolvedTablesPerRow;
+  const baseTableWidth = (config.page.bodyWidth - tableGapWidth) / resolvedTablesPerRow;
+  const tableWidth = baseTableWidth * tableWidthRatio;
   const blocks: BodyBlock[] = [];
 
   groups.forEach((group, index) => {

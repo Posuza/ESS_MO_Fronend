@@ -44,8 +44,8 @@ export function drawExportTable(
 ): number {
   const tableWidth = position.width ?? PDF_EXPORT.table.width;
   const indexWidth = 7;
-  const valueWidth = Math.min(11, tableWidth * 0.18);
-  const unitWidth = Math.min(12, tableWidth * 0.2);
+  const valueWidth = Math.min(12, tableWidth * 0.18);
+  const unitWidth = Math.min(13, tableWidth * 0.22);
   const itemOffset = group._itemOffset ?? 0;
   const displayItems =
     group.key === "guard_movements"

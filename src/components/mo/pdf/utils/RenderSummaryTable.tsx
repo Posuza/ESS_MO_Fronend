@@ -1,4 +1,5 @@
 import type { Group } from "../constant/SummaryGroups";
+import { PDF_RENDER } from "../constant/Variable";
 import type { SummaryColumn } from "./BodyContentLayout";
 import {
   displayTableValue,
@@ -23,10 +24,11 @@ export function RenderSummaryTable({
   const itemOffset = group._itemOffset ?? 0;
   const cellStyle: React.CSSProperties = {
     border: "1px solid #d0d0d0",
-    height: 16,
-    padding: "1px 2px",
-    fontSize: 6,
-    lineHeight: "14px",
+    height: PDF_RENDER.table.rowHeight,
+    padding: `${PDF_RENDER.table.rowPaddingY}px ${PDF_RENDER.table.rowPaddingX}px`,
+    fontSize: PDF_RENDER.font.size.tableCell,
+    lineHeight: "12px",
+    letterSpacing: 0,
     verticalAlign: "middle",
   };
   const headerCellStyle: React.CSSProperties = {
@@ -34,17 +36,17 @@ export function RenderSummaryTable({
     background: "#d9d9d9",
     backgroundColor: "#d9d9d9",
     fontWeight: 700,
-    fontSize: 7,
+    fontSize: PDF_RENDER.font.size.tableHeader,
   };
   const whiteHeaderCellStyle: React.CSSProperties = {
     ...cellStyle,
     background: "#fff",
     backgroundColor: "#fff",
     fontWeight: 700,
-    fontSize: 6,
-    height: 18,
-    padding: "3px 1px",
-    lineHeight: "10px",
+    fontSize: PDF_RENDER.font.size.tableCell,
+    height: PDF_RENDER.table.rowHeight,
+    padding: `${PDF_RENDER.table.rowPaddingY}px ${PDF_RENDER.table.rowPaddingX}px`,
+    lineHeight: "12px",
     textAlign: "center",
   };
   const divisionHeaderCellStyle: React.CSSProperties = {
@@ -78,12 +80,12 @@ export function RenderSummaryTable({
   return (
     <table style={{ borderCollapse: "collapse", width: "100%", tableLayout: "fixed" }}>
       <colgroup>
-        <col style={{ width: 22 }} />
+        <col style={{ width: 19 }} />
         <col />
         {columns.map((column) => (
-          <col key={String(column.id)} style={{ width: 24 }} />
+          <col key={String(column.id)} style={{ width: 26 }} />
         ))}
-        <col style={{ width: 24 }} />
+        <col style={{ width: 26 }} />
         <col style={{ width: 36 }} />
       </colgroup>
       <thead>

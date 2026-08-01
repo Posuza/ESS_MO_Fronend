@@ -83,10 +83,10 @@ export const SummaryTableCalculator = {
     tableWidth = getTableWidth(config),
     columnCount = 0,
   ): number {
-    const indexWidth = config.page.width > 400 ? 22 : 7;
-    const valueWidth = config.page.width > 400 ? 24 : 10;
-    const totalWidth = config.page.width > 400 ? 24 : 10;
-    const unitWidth = config.page.width > 400 ? 36 : 12;
+    const indexWidth = config.page.width > 400 ? 19 : 7;
+    const valueWidth = config.page.width > 400 ? 26 : 10;
+    const totalWidth = config.page.width > 400 ? 26 : 10;
+    const unitWidth = config.page.width > 400 ? 36 : 12.5;
     const labelWidth =
       tableWidth -
       indexWidth -
@@ -131,9 +131,9 @@ export const DivisionTableCalculator = {
     config: LayoutConfig,
     tableWidth = getTableWidth(config),
   ): number {
-    const indexWidth = config.page.width > 400 ? 22 : 7;
-    const valueWidth = config.page.width > 400 ? 24 : Math.min(11, tableWidth * 0.18);
-    const unitWidth = config.page.width > 400 ? 36 : Math.min(12, tableWidth * 0.2);
+    const indexWidth = config.page.width > 400 ? 19 : 7;
+    const valueWidth = config.page.width > 400 ? 28 : Math.min(12, tableWidth * 0.18);
+    const unitWidth = config.page.width > 400 ? 36 : Math.min(13, tableWidth * 0.22);
     const labelWidth = tableWidth - indexWidth - valueWidth - unitWidth;
     const headerHeight = config.table.rowHeight;
     const rows =

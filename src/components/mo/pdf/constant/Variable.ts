@@ -28,10 +28,10 @@ export const PDF_EXPORT_FONT = {
     title: 9.5,
     meta: 9,
     pageNumber: 7,
-    tableHeader: 6.7,
-    tableCell: 6.7,
-    detail: 6.7,
-    empty: 6.7,
+    tableHeader: 7.7,
+    tableCell: 7.7,
+    detail: 7.7,
+    empty: 7.7,
     gap: 3,
   },
 } as const;
@@ -66,8 +66,8 @@ export const PDF_EXPORT_TABLE = {
   tablesPerRow: 3,
   gap: 2,
   width: 64,
-  rowHeight: 5.9,
-  rowPaddingX: 1,
+  rowHeight: 6.2,
+  rowPaddingX: 0.5,
   rowPaddingY: 1.4,
   rowBorderStroke: 0.1,
 } as const;
@@ -78,10 +78,10 @@ export const PDF_RENDER_FONT = {
     title: 9.5,
     meta: 9,
     pageNumber: 7,
-    tableHeader: 7,
-    tableCell: 7,
-    detail: 7,
-    empty: 7,
+    tableHeader: 7.4,
+    tableCell: 7.4,
+    detail: 7.4,
+    empty: 7.4,
     gap: 3,
   },
 } as const;
@@ -102,9 +102,9 @@ export const PDF_RENDER_PAGE = {
 export const PDF_RENDER_TABLE = {
   tablesPerRow: 2,
   gap: 6,
-  rowHeight: 16,
-  rowPaddingX: 0,
-  rowPaddingY: 0,
+  rowHeight: 16.5,
+  rowPaddingX: 1,
+  rowPaddingY: 2,
   rowBorderStroke: 1,
 } as const;
 

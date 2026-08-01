@@ -46,17 +46,18 @@ export function RenderDivisionTable({ group, groupIndex }: RenderTableProps) {
       : group.items;
   const cellStyle: React.CSSProperties = {
     border: "1px solid #d0d0d0",
-    height: 16,
-    padding: "1px 2px",
-    fontSize: 6,
-    lineHeight: "14px",
+    height: PDF_RENDER.table.rowHeight,
+    padding: `${PDF_RENDER.table.rowPaddingY}px ${PDF_RENDER.table.rowPaddingX}px`,
+    fontSize: PDF_RENDER.font.size.tableCell,
+    lineHeight: "12px",
+    letterSpacing: 0,
     verticalAlign: "middle",
   };
   const headerCellStyle: React.CSSProperties = {
     ...cellStyle,
     background: "#d9d9d9",
     fontWeight: 700,
-    fontSize: 7,
+    fontSize: PDF_RENDER.font.size.tableHeader,
   };
 
   return (
@@ -65,13 +66,13 @@ export function RenderDivisionTable({ group, groupIndex }: RenderTableProps) {
         borderCollapse: "collapse",
         width: "100%",
         tableLayout: "fixed",
-        fontSize: 6,
+        fontSize: PDF_RENDER.font.size.tableCell,
       }}
     >
       <colgroup>
-        <col style={{ width: 22 }} />
+        <col style={{ width: 19 }} />
         <col />
-        <col style={{ width: 24 }} />
+        <col style={{ width: 28 }} />
         <col style={{ width: 36 }} />
       </colgroup>
       <thead>

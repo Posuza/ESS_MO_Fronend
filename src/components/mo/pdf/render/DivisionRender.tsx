@@ -1,50 +1,42 @@
 import {
-  buildDetailContentSection,
-  buildDivisionTableContentSection,
-} from "../utils/ContentSections";
-import { buildRenderPageLayoutPlans } from "../utils/PageLayout";
+  buildDivisionPdfDocumentData,
+  scaleExportLayoutForRender,
+} from "../context/PdfDocumentData";
+import { buildPreviewPageLayoutPlans } from "../utils/PageLayout";
 import { RenderBodyContentLayout } from "../utils/RenderBodyContentLayout";
 import { RenderPageLayout } from "../utils/RenderPageLayout";
-import { formatPdfRoundDateTitle } from "../utils/FormatDate";
 
 type DivisionRenderProps = {
   item: any;
   sectorName: string;
 };
 
-const TITLE = "รายงานประจำวันฝ่ายปฏิบัติการ (รายละเอียดภาค)";
-
 export function DivisionRender({ item, sectorName }: DivisionRenderProps) {
-  const firstPageTitleSuffix = formatPdfRoundDateTitle(item);
-  const sections = [
-    buildDivisionTableContentSection("render", item),
-    buildDetailContentSection("render", item),
-  ];
-  const pagePlans = sections.flatMap((section) => section.pages);
-  const pages = buildRenderPageLayoutPlans(pagePlans);
+  const documentData = buildDivisionPdfDocumentData(item, sectorName);
   let pageOffset = 0;
 
   return (
     <>
-      {sections.flatMap((section) => {
-        const sectionPages = buildRenderPageLayoutPlans(section.pages).map((page) => ({
+      {documentData.sections.flatMap((section) => {
+        const renderLayout = scaleExportLayoutForRender(section.layout);
+        const sectionPages = buildPreviewPageLayoutPlans(section.pages).map((page) => ({
           ...page,
           pageNumber: page.pageNumber + pageOffset,
-          totalPages: pages.length,
+          totalPages: documentData.totalPages,
         }));
         pageOffset += section.pages.length;
         return sectionPages.map((page) => (
           <RenderPageLayout
             key={`${section.key}-${page.pageNumber}`}
             page={page}
-            title={TITLE}
-            sectorName={sectorName}
+            title={documentData.title}
+            sectorName={documentData.sectorName}
             divisionName={section.divisionName}
-            firstPageTitleSuffix={firstPageTitleSuffix}
+            firstPageTitleSuffix={documentData.firstPageTitleSuffix}
           >
             <RenderBodyContentLayout
               layout={{
-                ...section.layout,
+                ...renderLayout,
                 blocks: page.plan.blocks,
                 columns: page.plan.columns,
               }}

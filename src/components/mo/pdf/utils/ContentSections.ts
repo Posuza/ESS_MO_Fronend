@@ -120,13 +120,13 @@ export function buildDetailContentSection(
   const detailSections = [
     {
       groupIndex: 6,
-      title: "เข้าพบผู้ว่าจ้าง",
+      title: "รายละเอียด เพิ่มเติม : เข้าพบผู้ว่าจ้าง",
       items: toProjectItems(item),
       emptyText: "<ไม่มีข้อมูล>",
     },
     {
       groupIndex: 7,
-      title: "การเปลี่ยนแปลงจุดรักษาการณ์",
+      title: "รายละเอียด เพิ่มเติม : การเปลี่ยนแปลงจุดรักษาการณ์",
       items: toGuardMovementItems(item),
       emptyText: "<ไม่มีข้อมูล>",
     },
@@ -135,6 +135,7 @@ export function buildDetailContentSection(
     mode,
     tableKind: "detail",
     tablesPerRow: 1,
+    tableWidthRatio: 0.6,
     detailSections,
   });
 

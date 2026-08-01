@@ -1,5 +1,6 @@
-import { Fragment } from "react";
 import type { GroupItem } from "../constant/SummaryGroups";
+import { PDF_RENDER } from "../constant/Variable";
+import { Fragment } from "react";
 import { statusLabel, statusTextColor } from "./SummaryValue";
 
 type RenderDetailTableProps = {
@@ -19,17 +20,22 @@ export function RenderDetailTable({
 }: RenderDetailTableProps) {
   const cellStyle: React.CSSProperties = {
     border: "1px solid #d0d0d0",
-    height: 16,
-    padding: "1px 3px",
-    fontSize: 6,
-    lineHeight: "14px",
+    height: PDF_RENDER.table.rowHeight,
+    padding: `${PDF_RENDER.table.rowPaddingY}px ${PDF_RENDER.table.rowPaddingX}px`,
+    fontSize: PDF_RENDER.font.size.detail,
+    lineHeight: "12px",
+    letterSpacing: 0,
     verticalAlign: "middle",
   };
   const headerCellStyle: React.CSSProperties = {
     ...cellStyle,
     background: "#d9d9d9",
     fontWeight: 700,
-    fontSize: 7,
+    fontSize: PDF_RENDER.font.size.tableHeader,
+  };
+  const multilineCellStyle: React.CSSProperties = {
+    ...cellStyle,
+    whiteSpace: "pre-wrap",
   };
 
   return (
@@ -81,7 +87,7 @@ export function RenderDetailTable({
                 </td>
                 <td
                   colSpan={5}
-                  style={cellStyle}
+                  style={multilineCellStyle}
                 >
                   {item.label}
                 </td>
@@ -92,7 +98,7 @@ export function RenderDetailTable({
                 </td>
                 <td
                   colSpan={5}
-                  style={cellStyle}
+                  style={multilineCellStyle}
                 >
                   {item.detail || "-"}
                 </td>
@@ -117,7 +123,7 @@ export function RenderDetailTable({
                 </td>
                 <td
                   colSpan={5}
-                  style={cellStyle}
+                  style={multilineCellStyle}
                 >
                   {item.note || "-"}
                 </td>

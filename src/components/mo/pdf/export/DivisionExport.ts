@@ -1,19 +1,13 @@
 import { jsPDF } from "jspdf";
 import { PDF_SUMMARY_EXPORT } from "../constant/Variable";
-import {
-  buildDetailContentSection,
-  buildDivisionTableContentSection,
-} from "../utils/ContentSections";
+import { buildDivisionPdfDocumentData } from "../context/PdfDocumentData";
 import { drawExportBodyContent } from "../utils/ExportBodyContentLayout";
 import { registerExportFonts } from "../utils/ExportFont";
 import {
   drawExportPageFooter,
   drawExportPageHeader,
 } from "../utils/ExportPageLayout";
-import { formatPdfRoundDateTitle } from "../utils/FormatDate";
 import { buildSummaryExportPageLayoutPlans } from "../utils/PageLayout";
-
-const TITLE = "รายงานประจำวันฝ่ายปฏิบัติการ (รายละเอียดภาค)";
 
 export async function buildDivisionExport(item: any, sectorName: string): Promise<jsPDF> {
   const doc = new jsPDF({
@@ -24,24 +18,19 @@ export async function buildDivisionExport(item: any, sectorName: string): Promis
   });
   await registerExportFonts(doc);
 
-  const firstPageTitleSuffix = formatPdfRoundDateTitle(item);
-  const sections = [
-    buildDivisionTableContentSection("summaryExport", item),
-    buildDetailContentSection("summaryExport", item),
-  ];
-  const totalPages = sections.reduce((sum, section) => sum + section.pages.length, 0);
+  const documentData = buildDivisionPdfDocumentData(item, sectorName);
   let pageNumber = 1;
 
-  for (const section of sections) {
+  for (const section of documentData.sections) {
     const pages = buildSummaryExportPageLayoutPlans(section.pages);
     for (const page of pages) {
       if (pageNumber > 1) doc.addPage();
-      const exportPage = { ...page, pageNumber, totalPages };
+      const exportPage = { ...page, pageNumber, totalPages: documentData.totalPages };
       await drawExportPageHeader(doc, {
-        title: TITLE,
-        sectorName,
+        title: documentData.title,
+        sectorName: documentData.sectorName,
         divisionName: section.divisionName,
-        firstPageTitleSuffix,
+        firstPageTitleSuffix: documentData.firstPageTitleSuffix,
         pageNumber,
       });
       drawExportBodyContent(doc, {

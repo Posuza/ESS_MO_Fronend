@@ -40,7 +40,7 @@ export function buildPageLayoutPlans(
   }));
 }
 
-export function buildRenderPageLayoutPlans(plans: PagePlan[]): PageLayoutPlan[] {
+export function buildPreviewPageLayoutPlans(plans: PagePlan[]): PageLayoutPlan[] {
   return buildPageLayoutPlans("render", plans);
 }
 
