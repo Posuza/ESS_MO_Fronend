@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getLocalTodayYYYYMMDD } from "../utils/positionAccess";
+import { getLocalTodayYYYYMMDD } from "../utils/mo/date";
 
 type MoContextValue = {
   moSearchDate: string;

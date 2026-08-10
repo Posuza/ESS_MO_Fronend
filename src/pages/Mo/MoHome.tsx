@@ -3,7 +3,10 @@ import { useState, useEffect, useMemo, useRef } from "react";
 
 import { useStore } from "../../store/store";
 import { type SectorReport } from "../../services/moReporTransaction.Service";
-import { canApprove, isReadOnly } from "../../utils/positionAccess";
+import {
+  canAccessMoDashboard,
+  isReadOnly,
+} from "../../utils/mo/positionAccess";
 import MoReportPage from "./MoReportPage";
 import MoListPage from "./MoListPage";
 import MoAddNewPage from "./MoAddNewPage";
@@ -448,10 +451,7 @@ export default function MoHome(props: Props) {
     );
   }
 
-  if (
-    subView === "dashboard" &&
-    currentEmployee?.position_name !== "สายตรวจและประสานงาน"
-  ) {
+  if (subView === "dashboard" && canAccessMoDashboard(currentEmployee)) {
     return (
       <div className={styles["mo-table-wrapper"]}>
         <h2>Dashboard View</h2>

@@ -317,7 +317,7 @@ select.guts-mo-search-input option {
 .toolbar {
     margin: 15px 0px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 0px 2px;
 }

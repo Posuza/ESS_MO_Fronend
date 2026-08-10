@@ -1,3 +1,10 @@
+import {
+  getMoWorkflowRankByPositionId,
+  getMoWorkflowRankLabel,
+  getNextWorkflowRank,
+  parseMoWorkflowStatus,
+} from "./workflowStatus";
+
 export type MoWorkflowTone = "pending" | "approved" | "rejected";
 
 export type MoWorkflowDisplayStatus = {
@@ -16,82 +23,8 @@ type MoWorkflowViewer = {
   position_id?: number | string | null;
 };
 
-const workflowPrefixes: Array<[string, string]> = [
-  ["RETURNED_TO_", "RETURNED_TO"],
-  ["WAITING_", "WAITING"],
-  ["EDITING_", "EDITING"],
-  ["APPROVED_", "APPROVED"],
-];
-
-export function parseMoWorkflowStatus(workflowStatus?: string | null) {
-  const value = String(workflowStatus ?? "")
-    .trim()
-    .toUpperCase();
-
-  for (const [prefix, state] of workflowPrefixes) {
-    if (value.startsWith(prefix)) {
-      return {
-        state,
-        rank: value.slice(prefix.length),
-      };
-    }
-  }
-
-  const index = value.lastIndexOf("_");
-  if (index < 0) return { state: "", rank: "" };
-
-  const rank = value.slice(0, index);
-  const legacyState = value.slice(index + 1);
-  if (legacyState === "PENDING") return { state: "WAITING", rank };
-  if (legacyState === "REJECTED") return { state: "RETURNED_TO", rank };
-
-  return { state: legacyState, rank };
-}
-
-export function getMoWorkflowRankLabel(rank?: string | null) {
-  switch (String(rank ?? "").trim().toUpperCase()) {
-    case "MANAGER":
-      return "ผู้จัดการ";
-    case "DIRECTOR":
-      return "ผู้อำนวยการ";
-    case "GM":
-      return "GM";
-    case "CEO":
-      return "CEO";
-    default:
-      return "ผู้ใช้อื่น";
-  }
-}
-
-export function getMoWorkflowRankByPositionId(
-  positionId?: number | string | null,
-) {
-  const normalized = Number(positionId);
-  if (!Number.isFinite(normalized)) return "";
-
-  switch (normalized) {
-    case 1:
-    case 5:
-      return "DIRECTOR";
-    case 2:
-    case 6:
-      return "MANAGER";
-    default:
-      return "";
-  }
-}
-
 function getNextMoWorkflowRank(rank?: string | null) {
-  switch (String(rank ?? "").trim().toUpperCase()) {
-    case "MANAGER":
-      return "DIRECTOR";
-    case "DIRECTOR":
-      return "GM";
-    case "GM":
-      return "CEO";
-    default:
-      return "";
-  }
+  return getNextWorkflowRank(rank) ?? "";
 }
 
 function getRoleAwareWaitingLabel(rank: string, viewerRank: string) {
@@ -205,3 +138,4 @@ export function getMoWorkflowDisplayStatus(
     rank,
   };
 }
+

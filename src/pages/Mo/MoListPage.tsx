@@ -14,7 +14,10 @@ import {
 import styles from "./MoListPage.module.css";
 import { useStore } from "../../store/store";
 import type { SectorReport } from "../../services/moReporTransaction.Service";
-import { buildReportFilters } from "../../utils/positionAccess";
+import {
+  buildReportFilters,
+  canSeeDepartmentGroup,
+} from "../../utils/mo/positionAccess";
 import { FaHourglassHalf } from "react-icons/fa";
 import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";
 import NoDataMessage from "../../components/NoDataMessage";
@@ -224,8 +227,7 @@ export default function MoListPage({
     selectedDepartment !== lastSearchedDepartment ||
     selectedDate !== lastSearchedDate;
 
-  // Position check: only position_id 1 or 5 can see the Department Group
-  const canSeeDeptGroup = [1, 5].includes(Number(currentEmployee?.position_id));
+  const canSeeDeptGroup = canSeeDepartmentGroup(currentEmployee?.position_id);
   const datePickerWrapRef = useRef<HTMLDivElement>(null);
   const [activeDatePicker, setActiveDatePicker] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => {

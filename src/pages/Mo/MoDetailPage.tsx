@@ -14,27 +14,29 @@ import {
   HttpError,
   sectorReportService,
 } from "../../services/moReporTransaction.Service";
+import { getLocalTodayYYYYMMDD } from "../../utils/mo/date";
+import { isReadOnly } from "../../utils/mo/positionAccess";
 import {
-  canApprove,
-  canApproveWorkflow,
-  canEditWorkflow,
-  canSendBackWorkflow,
+  canApproveWorkflowStep,
+  canEditReportContent,
+  canSendBackWorkflowStep,
   getRestoreWorkflowStatus,
   getWorkflowRank,
-  getWorkflowRankLabel,
-  getLocalTodayYYYYMMDD,
+  isWorkflowEditingByEmployee,
   isWorkflowLockedByOther,
-  isReadOnly,
+} from "../../utils/mo/workflowAccess";
+import {
+  getWorkflowRankLabel,
   makeWorkflowStatus,
   WorkflowState,
-} from "../../utils/positionAccess";
+} from "../../utils/mo/workflowStatus";
 import {
   clearMoDetailEditState,
   persistMoDetailEditState,
   readSavedMoDetailEditState,
 } from "./moPersistence";
 import { useMoContext } from "../../context/MoContext";
-import { getMoWorkflowDisplayStatus } from "../../utils/moWorkflowStatus";
+import { getMoWorkflowDisplayStatus } from "../../utils/mo/workflowDisplay";
 
 type Props = {
   onCancel?: () => void;
@@ -161,13 +163,6 @@ export default function MoDetailPage(props: Props) {
 
   useEffect(() => {
     if (!props.item?.id) return;
-
-    const saved = readSavedMoDetailEditState();
-    setIsEditing(saved?.itemId === props.item.id ? saved.isEditing : false);
-  }, [props.item?.id]);
-
-  useEffect(() => {
-    if (!props.item?.id) return;
     persistMoDetailEditState(props.item.id, isEditing);
   }, [props.item?.id, isEditing]);
 
@@ -187,6 +182,25 @@ export default function MoDetailPage(props: Props) {
 
   const workflowReport = reportData as Partial<SectorReport>;
 
+  useEffect(() => {
+    if (!props.item?.id) return;
+
+    const saved = readSavedMoDetailEditState();
+    const savedEditing =
+      saved?.itemId === props.item.id ? saved.isEditing : false;
+    const backendEditingByMe = isWorkflowEditingByEmployee(
+      currentEmployee,
+      workflowReport,
+    );
+
+    setIsEditing(savedEditing || backendEditingByMe);
+  }, [
+    currentEmployee,
+    props.item?.id,
+    workflowReport.workflow_status,
+    workflowReport.updated_by,
+  ]);
+
   const workflowLockedByOther = isWorkflowLockedByOther(
     currentEmployee,
     workflowReport,
@@ -195,7 +209,6 @@ export default function MoDetailPage(props: Props) {
     workflowReport.workflow_status,
   );
 
-  const canUseApprovalActions = canApprove(currentEmployee?.position_id);
   const workflowDisplayStatus = getMoWorkflowDisplayStatus(
     {
       approved_status: approvalStatus,
@@ -206,15 +219,8 @@ export default function MoDetailPage(props: Props) {
     },
   );
 
-  const canSendBackApprovedByMe =
-    canUseApprovalActions &&
-    workflowReport.approved_status === "APPROVED" &&
-    !!currentEmployee?.employee_code &&
-    workflowReport.approved_by === currentEmployee.employee_code;
-  const canSendBack =
-    canUseApprovalActions &&
-    (canSendBackWorkflow(currentEmployee, workflowReport) || canSendBackApprovedByMe);
-  const isPendingApproval = approvalStatus === "PENDING";
+  const canApproveStep = canApproveWorkflowStep(currentEmployee, workflowReport);
+  const canSendBack = canSendBackWorkflowStep(currentEmployee, workflowReport);
 
   // Allow actions on reports submitted today. The business report_date can be
   // yesterday's round, while created_at is the actual transaction date.
@@ -226,16 +232,11 @@ export default function MoDetailPage(props: Props) {
     (props.item?.created_at ? String(props.item.created_at).slice(0, 10) : "");
   const isReportDateToday = today === reportDate || today === transactionDate;
   const canShowApprovalActions =
-    canUseApprovalActions &&
     !isReadOnly(currentEmployee?.position_id) &&
     !isEditing &&
     !showPageLoading &&
     isReportDateToday &&
-    (isPendingApproval || canSendBack);
-
-  const isCreator =
-    !!currentEmployee?.employee_code &&
-    workflowReport.created_by === currentEmployee.employee_code;
+    (canApproveStep || canSendBack);
 
   // User can edit/delete only:
   //   - Not read-only
@@ -246,8 +247,7 @@ export default function MoDetailPage(props: Props) {
     !isReadOnly(currentEmployee?.position_id) &&
     !!currentEmployee &&
     isReportDateToday &&
-    (canUseApprovalActions ||
-      (isCreator && canEditWorkflow(currentEmployee, workflowReport)));
+    canEditReportContent(currentEmployee, workflowReport);
 
   function showWorkflowLockedWarning(positionName?: string | null) {
     const positionLabel = normalizePositionLabel(positionName);
@@ -292,9 +292,8 @@ export default function MoDetailPage(props: Props) {
 
     const canRun =
       action === "approve"
-        ? canApproveWorkflow(currentEmployee, freshReport)
-        : canSendBackWorkflow(currentEmployee, freshReport) ||
-          canSendBackApprovedByMe;
+        ? canApproveWorkflowStep(currentEmployee, freshReport)
+        : canSendBackWorkflowStep(currentEmployee, freshReport);
 
     if (!canRun) {
       showWorkflowActionWarning(
@@ -327,8 +326,7 @@ export default function MoDetailPage(props: Props) {
         return;
       }
       if (
-        !canUseApprovalActions &&
-        !canEditWorkflow(currentEmployee, freshReport)
+        !canEditReportContent(currentEmployee, freshReport)
       ) {
         setFetchErrorMessage("รายการนี้ยังไม่อยู่ในขั้นตอนแก้ไขของตำแหน่งคุณ");
         setShowFetchError(true);
@@ -599,7 +597,7 @@ export default function MoDetailPage(props: Props) {
         />
       )}
 
-      {/* ── Director-only approval buttons — only after initial loading ── */}
+      {/* ── Workflow action buttons — only after initial loading ── */}
       {canShowApprovalActions && (
           <div
             style={{
@@ -610,7 +608,7 @@ export default function MoDetailPage(props: Props) {
             }}
           >
             {/* อนุมัติรายงาน — hidden once already approved */}
-            {isPendingApproval && (
+            {canApproveStep && (
               <button
                 type="button"
                 className={`${styles["guts-approve-btn"]} ${styles["status-pill"]} ${getWorkflowStatusClass(
@@ -627,15 +625,15 @@ export default function MoDetailPage(props: Props) {
             <button
               type="button"
               className={styles["guts-reactive-btn"]}
-              disabled={!isPendingApproval && !canSendBack}
+              disabled={!canSendBack}
               style={
-                !isPendingApproval && !canSendBack
+                !canSendBack
                   ? { opacity: 0.4, cursor: "not-allowed" }
                   : {}
               }
               onClick={handleSendBack}
             >
-              ผู้อำนวยการส่งกลับให้ผู้จัดการแก้ไข
+              ส่งกลับแก้ไข
             </button>
           </div>
         )}

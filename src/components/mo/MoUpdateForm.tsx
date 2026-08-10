@@ -9,7 +9,7 @@ import {
   InfoModel,
   MoLoadingPopup,
 } from "./popup";
-import { getMoWorkflowDisplayStatus } from "../../utils/moWorkflowStatus";
+import { getMoWorkflowDisplayStatus } from "../../utils/mo/workflowDisplay";
 
 // ============================================================
 // TYPES & INTERFACES

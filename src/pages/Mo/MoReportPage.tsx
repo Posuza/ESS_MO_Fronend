@@ -1,13 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import {
-  ArrowLeft,
-  MapPin,
-  Table2Icon,
-  FileDown,
-  Share2,
-  Trash2,
-  Pencil,
-} from "lucide-react";
+import { MapPin } from "lucide-react";
 import { BsFillFileEarmarkPdfFill } from "react-icons/bs";
 import { LuLandmark } from "react-icons/lu";
 import styles from "./MoReportPage.module.css";
@@ -15,14 +7,12 @@ import { useStore } from "../../store/store";
 import type { SectorReport } from "../../services/moReporTransaction.Service";
 import DetailViewer from "../../components/mo/DetailViewer";
 import MoUpdateForm from "../../components/mo/MoUpdateForm";
-import PdfViewer, { type PdfViewerHandle } from "../../components/mo/PdfViewer";
 import {
   ConfirmDeleteDialog,
   InfoModel,
   MoLoadingPopup,
 } from "../../components/mo/popup";
 import {
-  clearMoReportState,
   persistMoReportState,
   readSavedMoReportState,
 } from "./moPersistence";
@@ -55,17 +45,15 @@ export default function MoReportPage({
     savedState?.selectedDate ?? initialDate ?? "",
   );
 
-  // viewMode and PDF controls — lifted up from DetailViewer so MoReportPage is the orchestrator
-  const [viewMode, setViewMode] = useState<"table" | "pdf">(
-    savedState?.viewMode ?? "table",
-  );
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const pdfViewerRef = useRef<PdfViewerHandle>(null);
-
   const reports = useStore((state) => state.reports);
   const currentEmployee = useStore((state) => state.authEmployee);
   const fetchReports = useStore((state) => state.fetchReports);
   const deleteReport = useStore((state) => state.deleteReport);
+  const pdfLoading = useStore((state) => state.isPdfExportLoading);
+  const pdfExportJob = useStore((state) => state.currentPdfExportJob);
+  const downloadMoReportPdfExport = useStore(
+    (state) => state.downloadMoReportPdfExport,
+  );
   const storeLoading = useStore((state) => state.isLoading);
 
   // Page loading popup — same concept as MoHome
@@ -100,23 +88,34 @@ export default function MoReportPage({
   }, [storeLoading, showLoading]);
 
   const handleDownload = async () => {
-    setPdfLoading(true);
-    // Let React commit the loading state before starting heavy PDF work
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    try {
-      await pdfViewerRef.current?.downloadPdf();
-    } finally {
-      setPdfLoading(false);
+    if (!empCode) {
+      alert("ไม่พบรหัสพนักงานสำหรับสร้าง PDF");
+      return;
     }
-  };
+    if (!selectedSectorId || transactionIds.length < 1) {
+      alert("ไม่มีรายงานให้ดาวน์โหลด PDF");
+      return;
+    }
 
-  const handleShare = async () => {
-    setPdfLoading(true);
-    await new Promise((resolve) => requestAnimationFrame(resolve));
     try {
-      await pdfViewerRef.current?.sharePdf();
-    } finally {
-      setPdfLoading(false);
+      const reportType = selectedTransactionId
+        ? "mo_division_report"
+        : "mo_summary_report";
+      const filters = selectedTransactionId
+        ? {
+            mo_daily_transaction_ids: [selectedTransactionId],
+            division_id: selectedTransactionRow?.division_id,
+          }
+        : { mo_daily_transaction_ids: transactionIds };
+
+      await downloadMoReportPdfExport({
+        report_type: reportType,
+        filters,
+        requested_by: empCode,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      alert(`เกิดข้อผิดพลาดในการดาวน์โหลด PDF: ${message}`);
     }
   };
 
@@ -303,6 +302,36 @@ export default function MoReportPage({
     return ids as number[];
   }, [selectedSectorId, visibleReports]);
 
+  const exportButtonText = useMemo(() => {
+    if (!pdfLoading) {
+      return "ดาวน์โหลด PDF";
+    }
+
+    if (!pdfExportJob || pdfExportJob.job_status === "queued") {
+      return "กำลังเตรียม...";
+    }
+
+    if (pdfExportJob.job_status === "processing") {
+      const percent = Math.max(
+        0,
+        Math.min(100, Math.floor(pdfExportJob.progress_percent || 0)),
+      );
+      if (percent > 0) {
+        return `กำลังสร้าง ${percent}%`;
+      }
+      if (pdfExportJob.progress_total > 0) {
+        return `กำลังสร้าง ${pdfExportJob.progress_current}/${pdfExportJob.progress_total}`;
+      }
+      return "กำลังสร้าง...";
+    }
+
+    if (pdfExportJob.job_status === "completed") {
+      return "กำลังดาวน์โหลด...";
+    }
+
+    return "ดาวน์โหลด PDF";
+  }, [pdfLoading, pdfExportJob]);
+
   const [selectedTransactionId, setSelectedTransactionId] = useState<
     number | null
   >(savedState?.selectedTransactionId ?? null);
@@ -316,10 +345,10 @@ export default function MoReportPage({
     persistMoReportState({
       selectedTransactionId,
       isEditing,
-      viewMode,
+      viewMode: "table",
       selectedDate,
     });
-  }, [selectedTransactionId, isEditing, viewMode, selectedDate]);
+  }, [selectedTransactionId, isEditing, selectedDate]);
 
   // Delete / success dialog state
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -383,28 +412,6 @@ export default function MoReportPage({
     visibleReports,
   ]);
 
-  // ── Permission logic (same as MoDetailPage) ──
-  const itemCreatedBy = (currentReport as any)?.created_by;
-  const isDirector = currentEmployee
-    ? (currentEmployee as any).position_name?.includes("หัวหน้า") ||
-      (currentEmployee as any).position_name?.includes("manager") ||
-      (currentEmployee as any).role_name === "admin"
-    : false;
-  const canEditData =
-    !!currentEmployee &&
-    (isDirector ||
-      (itemCreatedBy &&
-        itemCreatedBy !== "" &&
-        currentEmployee.employee_code &&
-        currentEmployee.employee_code !== "" &&
-        itemCreatedBy === currentEmployee.employee_code));
-
-  function handleDelete(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowConfirmDelete(true);
-  }
-
   function confirmDelete() {
     const idToDelete =
       (currentReport as any)?.id ||
@@ -423,17 +430,12 @@ export default function MoReportPage({
       });
   }
 
-  const sectorNameForPdf = useMemo(() => {
-    if (selectedTransactionRow) {
-      const nm = String(selectedTransactionRow.division_name ?? "");
-      return `ฝ่ายปฏิบัติการภาค ${selectedTransactionRow.department_id} ${nm}`;
-    }
-    return selectedSectorName || "ฝ่ายปฏิบัติการภาค 9";
-  }, [selectedTransactionRow, selectedSectorName]);
-
   return (
     <div className={styles["reportPage"]}>
-      <MoLoadingPopup open={showLoading} />
+      <MoLoadingPopup
+        open={showLoading || pdfLoading}
+        message={pdfLoading ? "กำลังสร้าง PDF..." : undefined}
+      />
 
       {/* หน่วยงาน / Sector row */}
 
@@ -494,59 +496,24 @@ export default function MoReportPage({
           )}
         </table>
       </div>
-      {/* Toolbar — table/pdf toggle + PDF actions */}
+      {/* Toolbar */}
       <div className={styles["toolbar"]}>
-        <div className={styles["toolbar-left"]}>
-          <div
-            className={`${styles["toggle-btn"]} ${viewMode === "table" ? styles["active"] : ""}`}
-            onClick={() => setViewMode("table")}
-            title="ดูตารางรายการ"
-          >
-            {/*<Table2Icon size={20} />*/}
-            <span>ตารางรายการ</span>
-          </div>
-          <div
-            className={`${styles["pdf-icon-container"]} ${styles["toggle-btn"]} ${viewMode === "pdf" ? styles["active"] : ""} ${transactionIds.length < 1 ? styles["disabled"] : ""}`}
-            onClick={() => {
-              if (transactionIds.length > 0) setViewMode("pdf");
-            }}
+        <div className={styles["toolbar-right"]}>
+          <button
+            type="button"
+            className={`${styles["toolbar-action-btn"]} ${styles["pdf-download-btn"]}`}
+            onClick={handleDownload}
+            disabled={pdfLoading || transactionIds.length < 1}
             title={
               transactionIds.length < 1
-                ? "ไม่มีรายงานให้ดู PDF"
-                : "ดูรายงาน PDF"
+                ? "ไม่มีรายงานให้ดาวน์โหลด PDF"
+                : "ดาวน์โหลด PDF"
             }
           >
-            {/*<BsFillFileEarmarkPdfFill className={styles["pdf-icon"]} />*/}
-            <span>รายงาน PDF</span>
-            {viewMode === "pdf" && selectedTransactionId && (
-              <MapPin className={styles["pin-icon-on-pdf"]} />
-            )}
-          </div>
+            <BsFillFileEarmarkPdfFill size={18} />
+            {exportButtonText}
+          </button>
         </div>
-
-        {viewMode === "pdf" && (
-          <div className={styles["toolbar-right"]}>
-            <button
-              type="button"
-              className={`${styles["toolbar-action-btn"]} ${styles["pdf-download-btn"]}`}
-              onClick={handleDownload}
-              disabled={pdfLoading}
-              title="ดาวน์โหลด PDF"
-            >
-              <BsFillFileEarmarkPdfFill size={18} />
-              ดาวน์โหลด PDF
-            </button>
-            {/* <button
-              type="button"
-              className={styles["toolbar-action-btn"]}
-              onClick={handleShare}
-              disabled={pdfLoading}
-              title="แชร์ PDF"
-            >
-              <Share2 size={22} />
-            </button> */}
-          </div>
-        )}
       </div>
 
       {/* Toolbar — for detialPae edit+ delte bnt  for talbe viwemode*/}
@@ -576,39 +543,29 @@ export default function MoReportPage({
       {!showLoading && (
         <>
           {/* Content — MoReportPage decides what to show */}
-          {viewMode === "table" ? (
-            isEditing ? (
-              <MoUpdateForm
-                reportData={currentReport as unknown as Record<string, unknown>}
-                onCancel={() => {
-                  setIsEditing(false);
-                  setIsDirty(false);
-                }}
-                isDirty={isDirty}
-                onDirtyChange={setIsDirty}
-                submitRef={submitRef}
-              />
-            ) : selectedTransactionId ? (
-              <DetailViewer
-                view="sector"
-                selectedTransactionId={selectedTransactionId}
-                departmentId={selectedSectorId}
-                selectedDate={selectedDate}
-              />
-            ) : (
-              <DetailViewer
-                view="summary"
-                departmentId={selectedSectorId}
-                selectedDate={selectedDate}
-              />
-            )
+          {isEditing ? (
+            <MoUpdateForm
+              reportData={currentReport as unknown as Record<string, unknown>}
+              onCancel={() => {
+                setIsEditing(false);
+                setIsDirty(false);
+              }}
+              isDirty={isDirty}
+              onDirtyChange={setIsDirty}
+              submitRef={submitRef}
+            />
+          ) : selectedTransactionId ? (
+            <DetailViewer
+              view="sector"
+              selectedTransactionId={selectedTransactionId}
+              departmentId={selectedSectorId}
+              selectedDate={selectedDate}
+            />
           ) : (
-            <PdfViewer
-              ref={pdfViewerRef}
-              item={currentReport}
-              sectorName={sectorNameForPdf}
-              isSector={!!selectedTransactionId}
-              loading={pdfLoading}
+            <DetailViewer
+              view="summary"
+              departmentId={selectedSectorId}
+              selectedDate={selectedDate}
             />
           )}
         </>

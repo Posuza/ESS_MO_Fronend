@@ -53,7 +53,6 @@ export interface SectorReportSlice {
   ) => Promise<
     { division_id: number; division_name: string; department_id: number }[]
   >;
-
 }
 
 type SectorReportSliceDependencies = {

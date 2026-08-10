@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useStore } from "../store/store";
-import { getDivisionScope, getLocalTodayYYYYMMDD } from "../utils/positionAccess";
+import { getLocalTodayYYYYMMDD } from "../utils/mo/date";
+import { getDivisionScope } from "../utils/mo/positionAccess";
 import type { SectorReport } from "../services/moReporTransaction.Service";
 
 /**
