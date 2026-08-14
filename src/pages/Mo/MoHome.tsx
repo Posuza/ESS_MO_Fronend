@@ -5,13 +5,16 @@ import { useStore } from "../../store/store";
 import { type SectorReport } from "../../services/moReporTransaction.Service";
 import {
   canAccessMoDashboard,
+  canSeeFieldGroup,
   isReadOnly,
 } from "../../utils/mo/positionAccess";
 import MoReportPage from "./MoReportPage";
 import MoListPage from "./MoListPage";
+import MoFieldOnlyListPage from "./MoFieldOnlyListPage";
 import MoAddNewPage from "./MoAddNewPage";
 import MoConfigPage from "./MoConfigPage";
 import MoDetailPage from "./MoDetailPage";
+import MoFieldOnlyDetailPage from "./MoFieldOnlyDetailPage";
 import { MoLoadingPopup, InfoModel } from "../../components/mo/popup";
 import { ChevronRight, RefreshCw, Check, X } from "lucide-react";
 import { FaHourglassHalf } from "react-icons/fa";
@@ -22,6 +25,7 @@ import { usePositionReports } from "../../hooks/usePositionReports";
 import {
   clearMoDetailState,
   clearMoDetailEditState,
+  clearMoFieldListState,
   clearMoReportState,
   persistMoDetailState,
   readSavedMoDetailState,
@@ -175,8 +179,10 @@ export default function MoHome(props: Props) {
   const [notFoundErrorMessage, setNotFoundErrorMessage] = useState("");
 
   const currentEmployee = useStore((state) => state.authEmployee);
+  const canSeeField = canSeeFieldGroup(currentEmployee);
   const { reports, isLoading, fetchWithPosition } = usePositionReports();
   const fetchReportById = useStore((s) => s.fetchReportById);
+  const clearReports = useStore((s) => s.clearReports);
   const fetchAvailableReportDivisions = useStore(
     (s) => s.fetchAvailableReportDivisions,
   );
@@ -218,9 +224,9 @@ export default function MoHome(props: Props) {
     }
   }, [isLoading]);
 
-  // Main Fetch Effect: Fetch reports based on position-based access
+  // Field viewers fetch reports only from the field-list Search action.
   useEffect(() => {
-    if (currentEmployee?.department_id) {
+    if (!canSeeField && currentEmployee?.department_id) {
       fetchWithPosition()
         .then((data) => {
           console.log("MoHome: Freshly fetched reports data:", data);
@@ -229,7 +235,7 @@ export default function MoHome(props: Props) {
           console.error("MoHome: Failed to fetch initial reports:", err);
         });
     }
-  }, [fetchWithPosition]);
+  }, [canSeeField, currentEmployee?.department_id, fetchWithPosition]);
 
   useEffect(() => {
     if (subView !== "detail" || selectedItemId == null) return;
@@ -254,7 +260,9 @@ export default function MoHome(props: Props) {
     }
   }, [reports, isLoading, selectedItem, selectedItemId, showLoading, subView]);
 
-  const deptName = currentEmployee?.department_name;
+  const deptName = canSeeField
+    ? currentEmployee?.field_name
+    : currentEmployee?.department_name;
 
   const [availableDivisionCount, setAvailableDivisionCount] = useState(0);
 
@@ -277,7 +285,7 @@ export default function MoHome(props: Props) {
 
   // Refresh all main-view data (reports + division counts)
   function refreshMainView() {
-    if (!currentEmployee?.department_id) return;
+    if (canSeeField || !currentEmployee?.department_id) return;
     fetchWithPosition();
     fetchDivisionCounts();
   }
@@ -285,13 +293,14 @@ export default function MoHome(props: Props) {
   const noAvailableDivisions = availableDivisionCount === 0;
 
   const locationTable = useMemo(() => {
-    if (!currentEmployee?.department_id) return [];
+    if (!currentEmployee?.field_id && !currentEmployee?.department_id) return [];
 
     return (reports || []).map((report) => {
       const id = report.id || (report as any).mo_daily_transaction_id;
       return {
         id,
         department_id: report.department_id,
+        department_name: report.department_name,
         division_name: report.division_name,
         workflow_status: report.workflow_status,
         approved_status: report.approved_status,
@@ -299,7 +308,7 @@ export default function MoHome(props: Props) {
         report_date: report.report_date,
       };
     });
-  }, [reports, currentEmployee?.department_id]);
+  }, [reports, currentEmployee?.department_id, currentEmployee?.field_id]);
 
   const getStatusMeta = (statusRaw?: string) => {
     const s = String(statusRaw ?? "").toLowerCase();
@@ -352,11 +361,17 @@ export default function MoHome(props: Props) {
   }
 
   if (subView === "list") {
+    const ListPage = canSeeField ? MoFieldOnlyListPage : MoListPage;
+
     return (
-      <MoListPage
+      <ListPage
         onCancel={() => {
           clearMoDetailState();
           clearMoDetailEditState();
+          if (canSeeField) {
+            clearMoFieldListState();
+            clearReports();
+          }
           setSubView("main");
           refreshMainView();
         }}
@@ -393,6 +408,21 @@ export default function MoHome(props: Props) {
   }
 
   if (subView === "report") {
+    if (canSeeField) {
+      return (
+        <MoFieldOnlyDetailPage
+          view="summary"
+          departmentId={reportInitialDeptId}
+          selectedDate={reportInitialDate}
+          onCancel={() => {
+            clearMoReportState();
+            clearMoDetailEditState();
+            setSubView("list");
+          }}
+        />
+      );
+    }
+
     return (
       <MoReportPage
         initialDeptId={reportInitialDeptId}
@@ -421,6 +451,25 @@ export default function MoHome(props: Props) {
         : detailSource === "report"
           ? "report"
           : "main";
+    if (canSeeField) {
+      return (
+        <MoFieldOnlyDetailPage
+          view="sector"
+          item={selectedItem}
+          onCancel={() => {
+            clearMoDetailState();
+            clearMoDetailEditState();
+            setSelectedItemId(null);
+            setSelectedItem(null);
+            setSubView(backToView);
+            if (backToView === "main") {
+              refreshMainView();
+            }
+          }}
+        />
+      );
+    }
+
     return (
       <MoDetailPage
         item={selectedItem}
@@ -463,7 +512,9 @@ export default function MoHome(props: Props) {
 
   return (
     <div className={styles["mo-home-page"]}>
-      <div className={styles["mo-reload-box"]}>
+      {!canSeeField && (
+        <>
+          <div className={styles["mo-reload-box"]}>
         <button
           type="button"
           className={styles["mo-reload-btn"]}
@@ -472,8 +523,8 @@ export default function MoHome(props: Props) {
         >
           <RefreshCw size={15} className={styles["mo-reload-icon"]} />
         </button>
-      </div>
-      <div className={styles["mo-card-wrapper"]}>
+          </div>
+          <div className={styles["mo-card-wrapper"]}>
         <div className={styles["mo-card-header"]}>
           <LuLandmark size={16} />
           <span>{deptName}</span>
@@ -499,8 +550,9 @@ export default function MoHome(props: Props) {
 
                     if (
                       found &&
-                      Number(found.department_id) ===
-                        Number(currentEmployee?.department_id)
+                      (canSeeField ||
+                        Number(found.department_id) ===
+                          Number(currentEmployee?.department_id))
                     ) {
                       fetchReportById(found.id)
                         .then(() => {
@@ -527,7 +579,11 @@ export default function MoHome(props: Props) {
 
                   <div className={styles["mo-card-body"]}>
                     <span className={styles["mo-card-name"]}>
-                      {r.division_name || "-"}
+                      {canSeeField
+                        ? [r.department_name, r.division_name]
+                            .filter(Boolean)
+                            .join(" | ") || "-"
+                        : r.division_name || "-"}
                     </span>
                   </div>
 
@@ -547,25 +603,41 @@ export default function MoHome(props: Props) {
         ) : (
           <NoDataMessage />
         )}
-      </div>
+          </div>
 
-      {/* Read-only users (position 3,4) see the action, but cannot use it. */}
-      <div className={styles["guts-mo-btn"]}>
-        <button
-          type="button"
-          className={styles["mo-home-addnew"]}
-          disabled={
-            isReadOnly(currentEmployee?.position_id) || noAvailableDivisions
-          }
-          onClick={() => {
-            openNew();
-          }}
-        >
-          {noAvailableDivisions
-            ? "ไม่มีหน่วยงานที่สามารถบันทึกรายงานได้"
-            : "บันทึกรายงานประจำวันวันนี้"}
-        </button>
-      </div>
+          {/* Read-only users (position 3,4) see the action, but cannot use it. */}
+          <div className={styles["guts-mo-btn"]}>
+            <button
+              type="button"
+              className={styles["mo-home-addnew"]}
+              disabled={
+                isReadOnly(currentEmployee?.position_id) ||
+                noAvailableDivisions
+              }
+              onClick={() => {
+                openNew();
+              }}
+            >
+              {noAvailableDivisions
+                ? "ไม่มีหน่วยงานที่สามารถบันทึกรายงานได้"
+                : "บันทึกรายงานประจำวันวันนี้"}
+            </button>
+          </div>
+
+          <MoLoadingPopup open={showLoading} />
+
+          <InfoModel
+            open={showNotFoundError}
+            onClose={() => {
+              setShowNotFoundError(false);
+              refreshMainView();
+            }}
+            variant="error"
+            title="ไม่พบรายงาน"
+            description={notFoundErrorMessage}
+          />
+        </>
+      )}
       <div className={styles["guts-mo-btn"]}>
         <button
           type="button"
@@ -575,19 +647,6 @@ export default function MoHome(props: Props) {
           รายงานสถิติ
         </button>
       </div>
-
-      <MoLoadingPopup open={showLoading} />
-
-      <InfoModel
-        open={showNotFoundError}
-        onClose={() => {
-          setShowNotFoundError(false);
-          refreshMainView();
-        }}
-        variant="error"
-        title="ไม่พบรายงาน"
-        description={notFoundErrorMessage}
-      />
 
       <hr className={styles["mo-divider"]} />
 

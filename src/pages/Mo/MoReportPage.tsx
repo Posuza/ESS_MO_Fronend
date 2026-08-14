@@ -17,6 +17,7 @@ import {
   readSavedMoReportState,
 } from "./moPersistence";
 import { useMoContext } from "../../context/MoContext";
+import { canSeeFieldGroup } from "../../utils/mo/positionAccess";
 
 type ReportListItem = SectorReport & {
   department?: string;
@@ -47,6 +48,7 @@ export default function MoReportPage({
 
   const reports = useStore((state) => state.reports);
   const currentEmployee = useStore((state) => state.authEmployee);
+  const canSeeField = canSeeFieldGroup(currentEmployee);
   const fetchReports = useStore((state) => state.fetchReports);
   const deleteReport = useStore((state) => state.deleteReport);
   const pdfLoading = useStore((state) => state.isPdfExportLoading);
@@ -199,17 +201,22 @@ export default function MoReportPage({
   const derivedDepartments = useMemo(() => {
     try {
       const rows = reports;
-      const map: Record<string, Set<string>> = {};
+      const map: Record<string, { name: string; divisions: Set<string> }> = {};
       rows.forEach((r: any) => {
         const id = Number(r.department_id) || 0;
         const div = (r.division_name ? String(r.division_name) : "").trim();
-        if (!map[id]) map[id] = new Set();
-        if (div) map[id].add(div);
+        if (!map[id]) {
+          map[id] = {
+            name: r.department_name || `ฝ่ายปฏิบัติการภาค ${id}`,
+            divisions: new Set(),
+          };
+        }
+        if (div) map[id].divisions.add(div);
       });
       return Object.keys(map).map((k) => ({
         id: Number(k),
-        department: `Department ${k}`,
-        divisions: Array.from(map[k]),
+        department: map[k].name,
+        divisions: Array.from(map[k].divisions),
       }));
     } catch (e) {
       return [] as any;
@@ -248,6 +255,10 @@ export default function MoReportPage({
         ] as string[],
     );
 
+    if (canSeeField) {
+      return derivedCombined.length > 0 ? derivedCombined : uniqueDepartments;
+    }
+
     if (empCode) {
       if (employeeDepartments.length > 0) return employeeDepartments;
       return derivedCombined.length > 0 ? derivedCombined : uniqueDepartments;
@@ -255,7 +266,13 @@ export default function MoReportPage({
 
     // Default: prefer derivedCombined if available, otherwise fall back to uniqueDepartments
     return derivedCombined.length > 0 ? derivedCombined : uniqueDepartments;
-  }, [empCode, employeeDepartments, derivedDepartments, uniqueDepartments]);
+  }, [
+    canSeeField,
+    empCode,
+    employeeDepartments,
+    derivedDepartments,
+    uniqueDepartments,
+  ]);
 
   const selectedSectorName =
     selectedDepartment || currentEmployee?.department_name || "";

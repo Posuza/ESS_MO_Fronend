@@ -9,6 +9,8 @@ export interface AuthEmployee {
   last_name: string;
   role_name: string;
   name_prefix: string;
+  field_id?: number | null;
+  field_name?: string | null;
   position_name: string;
   department_id?: number | null;
   department_name?: string | null;

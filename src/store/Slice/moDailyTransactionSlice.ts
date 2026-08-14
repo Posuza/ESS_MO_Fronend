@@ -8,6 +8,7 @@ import {
 import type { AuthEmployee } from "./auth";
 
 export interface SectorReportFilters {
+  field_id?: number;
   department_id?: number;
   division_id?: number;
   created_by?: string;
@@ -24,6 +25,7 @@ export interface SectorReportSlice {
   reportCache: Record<string, SectorReport[]>; // Add reportCache to the interface
 
   fetchReports: (filters?: SectorReportFilters) => Promise<SectorReport[]>;
+  clearReports: () => void;
   fetchReportById: (id: number) => Promise<void>;
   createReport: (data: any) => Promise<void>;
   updateReport: (id: number, data: any) => Promise<void>;
@@ -70,6 +72,14 @@ export const createSectorReportSlice: StateCreator<
   isLoading: false,
   error: null,
   reportCache: {},
+
+  clearReports: () =>
+    set({
+      reports: [],
+      currentReport: null,
+      error: null,
+      reportCache: {},
+    }),
 
   fetchReports: async (filters?: SectorReportFilters) => {
     const cacheKey = JSON.stringify(filters || {});

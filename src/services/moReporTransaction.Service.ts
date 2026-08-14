@@ -81,6 +81,7 @@ export interface SectorReport {
 }
 
 export interface SectorReportFilters {
+  field_id?: number;
   department_id?: number;
   division_id?: number;
   created_by?: string;
@@ -123,6 +124,8 @@ export interface MoWorkflowStatus {
 function toQuery(filters?: SectorReportFilters): string {
   if (!filters) return "";
   const params = new URLSearchParams();
+  if (filters.field_id != null)
+    params.set("field_id", String(filters.field_id));
   if (filters.department_id != null)
     params.set("department_id", String(filters.department_id));
   if (filters.division_id != null)

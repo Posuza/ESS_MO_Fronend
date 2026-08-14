@@ -169,9 +169,11 @@ select.guts-mo-search-input {
 .date-popover {
     position: absolute;
     top: calc(100% + 6px);
-    right: 0;
+    left: 50%;
+    transform: translateX(-58%);
     z-index: 80;
-    width: min(292px, calc(100vw - 24px));
+    width: 292px;
+    max-width: calc(100vw - 24px);
     padding: 10px;
     border: 1px solid rgba(148, 163, 184, 0.28);
     border-radius: 14px;

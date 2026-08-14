@@ -397,7 +397,7 @@
     color: #b71c1c;
     text-decoration: underline;
     text-decoration-color: #b71c1c;
-    font-weight: 700;
+    font-weight: 600;
     text-align: center;
 }
 
@@ -604,7 +604,7 @@
     box-sizing: border-box;
     min-width: 40px;
     width: 10%;
-    vertical-align: top !important;
+    vertical-align: middle !important;
     border-right: 1px solid #e5e7eb;
 }
 
@@ -643,8 +643,6 @@
     text-decoration: underline;
     font-weight: 600;
     font-size: 12px;
-    text-underline-offset: 3px;
-    text-decoration-thickness: 2px;
     display: inline-block;
     cursor: pointer;
 }
@@ -1462,10 +1460,11 @@ textarea.approval-textarea:focus,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 72px;
-    padding: 4px 10px;
-    border: 1px solid transparent;
+    min-width: 60px;
+    padding: 3px 6px;
+    border: 0.75px solid transparent;
     border-radius: 999px;
+    font-size: 11px;
     font-weight: 700;
     line-height: 1;
 }

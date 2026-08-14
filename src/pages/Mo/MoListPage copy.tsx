@@ -2,10 +2,13 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Search,
   ChevronRight,
+  Home,
   MapPin,
   Landmark,
   Check,
+  Clock3,
   X,
+  Users,
   CalendarDays,
 } from "lucide-react";
 import styles from "./MoListPage.module.css";
@@ -176,11 +179,7 @@ type Props = {
   onOpenReport?: (deptId: number, date: string) => void;
 };
 
-export default function MoListPage(props: Props) {
-  return <MoListPageContent {...props} />;
-}
-
-function MoListPageContent({
+export default function MoListPage({
   onCancel,
   onOpenDetail,
   onOpenReport,
@@ -340,17 +339,10 @@ function MoListPageContent({
       Object.assign(payload, filters);
     }
 
-    try {
-      await fetchReports(payload);
-      updateMoSearchDate();
-      setLastSearchedDepartment(selectedDepartment);
-      setLastSearchedDate(selectedDate);
-    } catch (error: unknown) {
-      setNotFoundErrorMessage(
-        error instanceof Error ? error.message : String(error),
-      );
-      setShowNotFoundError(true);
-    }
+    await fetchReports(payload);
+    updateMoSearchDate();
+    setLastSearchedDepartment(selectedDepartment);
+    setLastSearchedDate(selectedDate);
   }
 
   function openDatePicker() {
@@ -385,22 +377,17 @@ function MoListPageContent({
   const derivedDepartments = useMemo(() => {
     try {
       const rows = reports;
-      const map: Record<string, { name: string; divisions: Set<string> }> = {};
+      const map: Record<string, Set<string>> = {};
       rows.forEach((r: any) => {
         const id = Number(r.department_id) || 0;
         const sub = (r.division_name ? String(r.division_name) : "").trim();
-        if (!map[id]) {
-          map[id] = {
-            name: r.department_name || getDepartmentName(id),
-            divisions: new Set(),
-          };
-        }
-        if (sub) map[id].divisions.add(sub);
+        if (!map[id]) map[id] = new Set();
+        if (sub) map[id].add(sub);
       });
       return Object.keys(map).map((k) => ({
         id: Number(k),
-        department: map[k].name,
-        divisions: Array.from(map[k].divisions),
+        department: getDepartmentName(Number(k)),
+        divisions: Array.from(map[k]),
       }));
     } catch (_e) {
       return [] as any;
@@ -413,7 +400,7 @@ function MoListPageContent({
       r.department_id === currentEmployee?.department_id &&
       currentEmployee?.department_name
         ? currentEmployee.department_name
-        : r.department_name || getDepartmentName(r.department_id),
+        : getDepartmentName(r.department_id),
     create_at: r.created_at,
     user_id: r.created_by,
   }));

@@ -10,6 +10,7 @@ import {
   MoLoadingPopup,
 } from "./popup";
 import { getMoWorkflowDisplayStatus } from "../../utils/mo/workflowDisplay";
+import { sanitizeMoFreeText } from "../../utils/mo/textSanitizer";
 
 // ============================================================
 // TYPES & INTERFACES
@@ -491,7 +492,7 @@ export default function MoUpdateForm(props: Props) {
   );
 
   const [approvalRemark, setApprovalRemark] = useState<string>(
-    (props.reportData?.approved_remark as string) || "",
+    sanitizeMoFreeText(props.reportData?.approved_remark),
   );
 
   // ---- 7. Dialog / Submission State ----
@@ -596,7 +597,7 @@ export default function MoUpdateForm(props: Props) {
     if (!props.externalApprovalStatus) {
       props.onApprovalStatusChange?.(incoming);
     }
-    setApprovalRemark((props.reportData?.approved_remark as string) || "");
+    setApprovalRemark(sanitizeMoFreeText(props.reportData?.approved_remark));
   }, [props.reportData]);
 
   // -- Ensure counts contains entries for all dynamic count keys --
@@ -640,7 +641,7 @@ export default function MoUpdateForm(props: Props) {
             if (!items.find((it: any) => it.key === d.key)) {
               items.push({
                 key: d.key,
-                label: d.label,
+                label: sanitizeMoFreeText(d.label),
                 unit: "คน",
                 value: String(d.value),
                 isActive: d.value > 0,
@@ -689,10 +690,10 @@ export default function MoUpdateForm(props: Props) {
   useEffect(() => {
     const projects = Array.isArray(props.reportData?.projects)
       ? (props.reportData!.projects as any[]).map((p) => ({
-          label: p.project_name ?? p.name ?? "",
-          detail: p.detail ?? "",
+          label: sanitizeMoFreeText(p.project_name ?? p.name),
+          detail: sanitizeMoFreeText(p.detail),
           status: p.status ?? "warning",
-          note: p.note ?? "",
+          note: sanitizeMoFreeText(p.note),
         }))
       : [];
     setDynamicGroup3([
@@ -706,10 +707,10 @@ export default function MoUpdateForm(props: Props) {
       (props.reportData as any)?.guard_post_movements,
     )
       ? (props.reportData as any).guard_post_movements.map((m: any) => ({
-          label: m.name ?? "",
-          detail: m.detail ?? "",
-          status: m.status ?? "",
-          note: m.note ?? "",
+          label: sanitizeMoFreeText(m.name),
+          detail: sanitizeMoFreeText(m.detail),
+          status: sanitizeMoFreeText(m.status),
+          note: sanitizeMoFreeText(m.note),
         }))
       : [];
     setDynamicGroup4([
@@ -926,6 +927,17 @@ export default function MoUpdateForm(props: Props) {
     el.style.height = `${el.scrollHeight + 2}px`;
   };
 
+  const handleFreeTextChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+  ) => {
+    const el = e.target;
+    const sanitized = sanitizeMoFreeText(el.value);
+    setter(sanitized);
+    if (el.value !== sanitized) el.value = sanitized;
+    adjustTextareaHeight(el);
+  };
+
   const triggerWarning = (key: string) => {
     const existing = warningTimersRef.current[key];
     if (existing) window.clearTimeout(existing);
@@ -1061,8 +1073,8 @@ export default function MoUpdateForm(props: Props) {
     const newKey = `auto_gen_${autoGenCount + 1}`;
     const newItem = {
       key: newKey,
-      label: newGroup2Label || "รายการใหม่",
-      unit: newGroup2Unit || "คน",
+      label: sanitizeMoFreeText(newGroup2Label) || "รายการใหม่",
+      unit: sanitizeMoFreeText(newGroup2Unit) || "คน",
       value: initialValue || "0",
       isActive: true,
     };
@@ -1214,19 +1226,19 @@ export default function MoUpdateForm(props: Props) {
     const item = meetingGroup?.items[idx];
     if (!item) return;
     setEditingGroup3Index(idx);
-    setNewGroup3Label(item.label ?? "");
-    setNewGroup3Detail(item.detail ?? "");
+    setNewGroup3Label(sanitizeMoFreeText(item.label));
+    setNewGroup3Detail(sanitizeMoFreeText(item.detail));
     setNewGroup3Status(item.status ?? "warning");
-    setNewGroup3Note(item.note ?? "");
+    setNewGroup3Note(sanitizeMoFreeText(item.note));
     setShowAddGroup3(true);
   };
 
   const saveGroup3Modal = () => {
     const nextItem = {
-      label: newGroup3Label || "รายการใหม่",
-      detail: newGroup3Detail,
+      label: sanitizeMoFreeText(newGroup3Label) || "รายการใหม่",
+      detail: sanitizeMoFreeText(newGroup3Detail),
       status: newGroup3Status,
-      note: newGroup3Note,
+      note: sanitizeMoFreeText(newGroup3Note),
     };
     setDynamicGroup3((prev: any[]) =>
       prev.map((pg) =>
@@ -1249,17 +1261,13 @@ export default function MoUpdateForm(props: Props) {
   const handleGroup3DetailChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    const el = e.target;
-    setNewGroup3Detail(el.value);
-    adjustTextareaHeight(el);
+    handleFreeTextChange(e, setNewGroup3Detail);
   };
 
   const handleGroup3NoteChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    const el = e.target;
-    setNewGroup3Note(el.value);
-    adjustTextareaHeight(el);
+    handleFreeTextChange(e, setNewGroup3Note);
   };
 
   const handleGroup3StatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1269,9 +1277,7 @@ export default function MoUpdateForm(props: Props) {
   const handleLabelChangeGroup3 = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    const el = e.target;
-    setNewGroup3Label(el.value);
-    adjustTextareaHeight(el);
+    handleFreeTextChange(e, setNewGroup3Label);
   };
 
   const handleLabelFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
@@ -1331,20 +1337,20 @@ export default function MoUpdateForm(props: Props) {
     const isKnown = guardPostStatusesOptions.includes(savedStatus);
 
     setEditingGroup4Index(idx);
-    setNewGroup4Label(item.label ?? "");
-    setNewGroup4Detail(item.detail ?? "");
-    setNewGroup4Status(savedStatus);
-    setNewGroup4Note(item.note ?? "");
+    setNewGroup4Label(sanitizeMoFreeText(item.label));
+    setNewGroup4Detail(sanitizeMoFreeText(item.detail));
+    setNewGroup4Status(sanitizeMoFreeText(savedStatus));
+    setNewGroup4Note(sanitizeMoFreeText(item.note));
     setIsGroup4OtherMode(!isKnown);
     setShowAddGroup4(true);
   };
 
   const saveGroup4Modal = () => {
     const nextItem = {
-      label: newGroup4Label || "รายการใหม่",
-      detail: newGroup4Detail,
-      status: newGroup4Status,
-      note: newGroup4Note,
+      label: sanitizeMoFreeText(newGroup4Label) || "รายการใหม่",
+      detail: sanitizeMoFreeText(newGroup4Detail),
+      status: sanitizeMoFreeText(newGroup4Status),
+      note: sanitizeMoFreeText(newGroup4Note),
     };
 
     setDynamicGroup4((prev) =>
@@ -1369,17 +1375,13 @@ export default function MoUpdateForm(props: Props) {
   const handleGroup4DetailChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    const el = e.target;
-    setNewGroup4Detail(el.value);
-    adjustTextareaHeight(el);
+    handleFreeTextChange(e, setNewGroup4Detail);
   };
 
   const handleGroup4NoteChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    const el = e.target;
-    setNewGroup4Note(el.value);
-    adjustTextareaHeight(el);
+    handleFreeTextChange(e, setNewGroup4Note);
   };
 
   const handleGroup4StatusChange = (
@@ -1398,9 +1400,7 @@ export default function MoUpdateForm(props: Props) {
   const handleLabelChangeGroup4 = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    const el = e.target;
-    setNewGroup4Label(el.value);
-    adjustTextareaHeight(el);
+    handleFreeTextChange(e, setNewGroup4Label);
   };
 
   // ============================================================
@@ -1515,7 +1515,7 @@ export default function MoUpdateForm(props: Props) {
           if (val > 0) {
             disciplines.push({
               key: item.key,
-              label: item.label,
+              label: sanitizeMoFreeText(item.label),
               value: val,
             });
           }
@@ -1535,10 +1535,10 @@ export default function MoUpdateForm(props: Props) {
       g.items.forEach((it: any, i: number) => {
         projects.push({
           key: String(i + 1),
-          name: it.label,
-          detail: it.detail ?? "",
+          name: sanitizeMoFreeText(it.label),
+          detail: sanitizeMoFreeText(it.detail),
           status: it.status ?? "warning",
-          note: it.note ?? "",
+          note: sanitizeMoFreeText(it.note),
         });
       });
     }
@@ -1554,10 +1554,10 @@ export default function MoUpdateForm(props: Props) {
     for (const g of dynamicGroup4) {
       g.items.forEach((it: any) => {
         guardPostMovements.push({
-          name: it.label,
-          detail: it.detail ?? "",
-          status: it.status ?? "",
-          note: it.note ?? "",
+          name: sanitizeMoFreeText(it.label),
+          detail: sanitizeMoFreeText(it.detail),
+          status: sanitizeMoFreeText(it.status),
+          note: sanitizeMoFreeText(it.note),
         });
       });
     }
@@ -1572,7 +1572,7 @@ export default function MoUpdateForm(props: Props) {
       props.onApprovalStatusChange?.("APPROVED");
     } else if (opts?.sendBack) {
       payload.approved_status = "REJECTED";
-      payload.approved_remark = approvalRemark;
+      payload.approved_remark = sanitizeMoFreeText(approvalRemark);
       payload.approved_by = authEmployee?.employee_code || "ADMIN";
       payload.approved_at = new Date().toISOString();
       props.onApprovalStatusChange?.("REJECTED");
@@ -1582,7 +1582,7 @@ export default function MoUpdateForm(props: Props) {
       payload.approved_status = isRejectedEditResubmit
         ? "PENDING"
         : approvalStatus;
-      payload.approved_remark = approvalRemark;
+      payload.approved_remark = sanitizeMoFreeText(approvalRemark);
       if (payload.approved_status === "APPROVED") {
         payload.approved_by = authEmployee?.employee_code || "ADMIN";
         payload.approved_at = new Date().toISOString();
@@ -1918,9 +1918,12 @@ export default function MoUpdateForm(props: Props) {
                                     placeholder="ระบุรายการอื่น..."
                                     rows={1}
                                     onChange={(e) => {
-                                      setNewGroup2Label(e.target.value);
-                                      adjustTextareaHeight(e.target);
+                                      handleFreeTextChange(
+                                        e,
+                                        setNewGroup2Label,
+                                      );
                                     }}
+                                    onKeyDown={handleLabelKeyDown}
                                     style={{
                                       paddingRight: 28,
                                       textAlign: "left",
@@ -2304,9 +2307,9 @@ export default function MoUpdateForm(props: Props) {
                             value={newGroup3Label}
                             rows={1}
                             onChange={handleLabelChangeGroup3}
+                            onKeyDown={handleLabelKeyDown}
                             onPaste={() => {}}
                             onFocus={handleLabelFocus}
-                            onKeyDown={handleLabelKeyDown}
                             onBlur={(e) =>
                               adjustTextareaHeight(
                                 e.target as HTMLTextAreaElement,
@@ -2333,7 +2336,6 @@ export default function MoUpdateForm(props: Props) {
                             onChange={handleGroup3DetailChange}
                             onPaste={() => {}}
                             onFocus={handleLabelFocus}
-                            onKeyDown={handleLabelKeyDown}
                             onBlur={(e) =>
                               adjustTextareaHeight(
                                 e.target as HTMLTextAreaElement,
@@ -2381,7 +2383,6 @@ export default function MoUpdateForm(props: Props) {
                             onChange={handleGroup3NoteChange}
                             onPaste={() => {}}
                             onFocus={handleLabelFocus}
-                            onKeyDown={handleLabelKeyDown}
                             onBlur={(e) =>
                               adjustTextareaHeight(
                                 e.target as HTMLTextAreaElement,
@@ -2722,11 +2723,11 @@ export default function MoUpdateForm(props: Props) {
                             value={newGroup4Label}
                             rows={1}
                             onChange={handleLabelChangeGroup4}
+                            onKeyDown={handleLabelKeyDown}
                             onPaste={() => {
                               /* allow any text paste */
                             }}
                             onFocus={handleLabelFocus}
-                            onKeyDown={handleLabelKeyDown}
                             onBlur={(e) =>
                               adjustTextareaHeight(
                                 e.target as HTMLTextAreaElement,
@@ -2752,8 +2753,10 @@ export default function MoUpdateForm(props: Props) {
                                 placeholder="ระบุสถานะอื่น..."
                                 rows={1}
                                 onChange={(e) => {
-                                  setNewGroup4Status(e.target.value);
-                                  adjustTextareaHeight(e.target);
+                                  handleFreeTextChange(
+                                    e,
+                                    setNewGroup4Status,
+                                  );
                                 }}
                                 onFocus={handleLabelFocus}
                                 onKeyDown={handleLabelKeyDown}
@@ -2833,7 +2836,6 @@ export default function MoUpdateForm(props: Props) {
                               /* allow any text paste */
                             }}
                             onFocus={handleLabelFocus}
-                            onKeyDown={handleLabelKeyDown}
                             onBlur={(e) =>
                               adjustTextareaHeight(
                                 e.target as HTMLTextAreaElement,
@@ -2862,7 +2864,6 @@ export default function MoUpdateForm(props: Props) {
                               /* allow any text paste */
                             }}
                             onFocus={handleLabelFocus}
-                            onKeyDown={handleLabelKeyDown}
                             onBlur={(e) =>
                               adjustTextareaHeight(
                                 e.target as HTMLTextAreaElement,

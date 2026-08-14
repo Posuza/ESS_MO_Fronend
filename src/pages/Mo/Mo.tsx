@@ -123,6 +123,9 @@ function MoContent({ onBackHome }: Props) {
         {/* Station + division on one line */}
         <div className={styles["guts-card-meta"]}>
           <div className={styles["guts-meta-station"]}>
+            {authEmployee?.field_name && (
+              <span>{authEmployee.field_name}</span>
+            )}
             <span>{authEmployee?.department_name ?? "-"}</span>
             {authEmployee?.division_name && (
               <span>{authEmployee.division_name}</span>

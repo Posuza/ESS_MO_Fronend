@@ -403,11 +403,9 @@ export default function MoSummariesForm(props: Props) {
               <tr>
                 <td
                   colSpan={headerColSpan}
+                  className={styles["empty-table-cell"]}
                   style={{
                     textAlign: "center",
-                    color: "#000000",
-                    padding: "6px",
-                    fontSize: "12px",
                     border: "0.8px solid #ccc",
                   }}
                 >
@@ -615,11 +613,9 @@ export default function MoSummariesForm(props: Props) {
               <tr>
                 <td
                   colSpan={headerColSpan}
+                  className={styles["empty-table-cell"]}
                   style={{
                     textAlign: "center",
-                    color: "#000000",
-                    padding: "6px",
-                    fontSize: "12px",
                     border: "0.8px solid #ccc",
                   }}
                 >
@@ -759,11 +755,9 @@ export default function MoSummariesForm(props: Props) {
               <tr>
                 <td
                   colSpan={headerColSpan}
+                  className={styles["empty-table-cell"]}
                   style={{
                     textAlign: "center",
-                    color: "#000000",
-                    padding: "6px",
-                    fontSize: "12px",
                     border: "0.8px solid #ccc",
                   }}
                 >

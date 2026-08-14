@@ -18,9 +18,19 @@ export type SavedMoReportState = {
   selectedDate?: string;
 };
 
+export type SavedMoFieldListState = {
+  selectedDepartment: string;
+  selectedDivision: string;
+  selectedDate: string;
+  lastSearchedDepartment: string;
+  lastSearchedDivision: string;
+  lastSearchedDate: string;
+};
+
 const MO_DETAIL_STATE_KEY = "mo_detail_state";
 const MO_DETAIL_EDIT_STATE_KEY = "mo_detail_edit_state";
 const MO_REPORT_STATE_KEY = "mo_report_state";
+const MO_FIELD_LIST_STATE_KEY = "mo_field_list_state";
 
 function readJson<T>(key: string): T | null {
   try {
@@ -129,6 +139,34 @@ export function clearMoReportState() {
   }
 }
 
+export function readSavedMoFieldListState(): SavedMoFieldListState | null {
+  const saved = readJson<SavedMoFieldListState>(MO_FIELD_LIST_STATE_KEY);
+  if (
+    !saved ||
+    typeof saved.selectedDepartment !== "string" ||
+    typeof saved.selectedDivision !== "string" ||
+    typeof saved.selectedDate !== "string" ||
+    typeof saved.lastSearchedDepartment !== "string" ||
+    typeof saved.lastSearchedDivision !== "string" ||
+    typeof saved.lastSearchedDate !== "string"
+  ) {
+    return null;
+  }
+  return saved;
+}
+
+export function persistMoFieldListState(state: SavedMoFieldListState) {
+  writeJson(MO_FIELD_LIST_STATE_KEY, state);
+}
+
+export function clearMoFieldListState() {
+  try {
+    sessionStorage.removeItem(MO_FIELD_LIST_STATE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 /** Keys used by MoHome.tsx for subview and report-params persistence.
  *  sessionStorage so they survive F5 refresh but auto-clear on tab close. */
 const MO_SUBVIEW_KEY = "mo_subview";
@@ -152,4 +190,5 @@ export function clearAllMoPersistedState() {
   clearMoDetailState();
   clearMoDetailEditState();
   clearMoReportState();
+  clearMoFieldListState();
 }
