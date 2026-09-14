@@ -3,6 +3,11 @@ import { User, X, MailCheck } from "lucide-react";
 import styles from "./ForgotPasswordModal.module.css";
 import TimingMessagePopUp from "../popup/TimingMessagePopUp";
 import BigIconSuccessSmsPopUp from "../popup/BigIconSuccessSmsPopUp";
+import FaceForgetPassSuccessSmsPopUp from "../popup/FaceForgetPassSuccessSmsPopUp";
+import { preloadCameraModels } from "@/components/auth/ailoader/preloadCameraModels";
+import VerificationCameraModal from "@/components/auth/models/VerificationCameraModal";
+import { MoLoadingPopup } from "@/components/mo/popup";
+import { useStore } from "@/store/store";
 
 type Props = {
   open: boolean;
@@ -26,13 +31,19 @@ export default function ForgotPasswordModal({
 }: Props) {
   const empValid = /^\d{6}$/.test(empCode);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<
+    "scan" | "send" | "faceVerify" | null
+  >(null);
   const [showResult, setShowResult] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
   const [resultContacts, setResultContacts] = useState<
     Array<{ team?: string; email?: string }> | undefined
   >(undefined);
+  const [camOpen, setCamOpen] = useState(false);
+  const [successMode, setSuccessMode] = useState<"email" | "face">("email");
+  const loading = !!loadingMessage;
 
   useEffect(() => {
     if (open) {
@@ -41,21 +52,25 @@ export default function ForgotPasswordModal({
       setShowResult(false);
       setResultSuccess(false);
       setResultMessage("");
-      setLoading(false);
+      setLoadingMessage(null);
+      setLoadingAction(null);
+      setCamOpen(false);
+      setSuccessMode("email");
     }
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !loading) onClose();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open, loading, onClose]);
 
   const handleSend = async () => {
-    setLoading(true);
+    setLoadingAction("send");
+    setLoadingMessage("กำลังส่งรหัสผ่าน...");
     try {
       const result = await onSend();
       setResultSuccess(result.success);
@@ -73,13 +88,92 @@ export default function ForgotPasswordModal({
       );
       setShowResult(true);
     } finally {
-      setLoading(false);
+      setLoadingMessage(null);
+      setLoadingAction(null);
+    }
+  };
+
+  const handleScanFace = async () => {
+    if (!empValid) {
+      setResultSuccess(false);
+      setResultContacts(undefined);
+      setResultMessage("กรุณากรอกรหัสพนักงาน 6 หลักให้ถูกต้อง");
+      setShowResult(true);
+      return;
+    }
+
+    setLoadingAction("scan");
+    setLoadingMessage("กำลังตรวจสอบข้อมูลใบหน้า...");
+    let openingCamera = false;
+    let profileChecked = false;
+    try {
+      const profile = await useStore
+        .getState()
+        .lookupEmployeeFaceProfile(empCode);
+      profileChecked = true;
+
+      if (!profile.has_face_profile) {
+        setResultSuccess(false);
+        setResultContacts(undefined);
+        setResultMessage("ยังไม่มีข้อมูลใบหน้า\nกรุณาติดต่อ GutsEssCenter");
+        setShowResult(true);
+        return;
+      }
+
+      setShowResult(false);
+      setLoadingMessage("กำลังเตรียมระบบสแกนใบหน้า...");
+      await preloadCameraModels("verify");
+      setLoadingMessage("กำลังเปิดกล้อง...");
+      openingCamera = true;
+      setCamOpen(true);
+    } catch (error) {
+      setResultSuccess(false);
+      setResultContacts(undefined);
+      setResultMessage(
+        !profileChecked && error instanceof Error
+          ? error.message
+          : "ไม่สามารถเตรียมระบบสแกนใบหน้าได้",
+      );
+      setShowResult(true);
+    } finally {
+      if (!openingCamera) {
+        setLoadingMessage(null);
+        setLoadingAction(null);
+      }
+    }
+  };
+
+  const handleFaceCaptured = async (imageDataUrl: string) => {
+    setLoadingAction("faceVerify");
+    setLoadingMessage("กำลังยืนยันใบหน้า...");
+    try {
+      const result = await useStore
+        .getState()
+        .verifyEmployeeFace(empCode, imageDataUrl);
+      setResultContacts(undefined);
+      setResultSuccess(result.success && result.is_match);
+      setSuccessMode("face");
+      setResultMessage(
+        result.success && result.is_match
+          ? result.password || "ไม่พบรหัสผ่าน กรุณาติดต่อ GutsEssCenter"
+          : result.message || "ใบหน้าไม่ตรงกับข้อมูลพนักงาน",
+      );
+      setShowResult(true);
+    } catch {
+      setResultSuccess(false);
+      setResultContacts(undefined);
+      setResultMessage("ยังไม่มีข้อมูลใบหน้า\nกรุณาติดต่อ GutsEssCenter");
+      setShowResult(true);
+    } finally {
+      setLoadingMessage(null);
+      setLoadingAction(null);
     }
   };
 
   const closeResult = () => {
     setShowResult(false);
     setResultSuccess(false);
+    setResultContacts(undefined);
   };
 
   if (!open) return null;
@@ -101,7 +195,9 @@ export default function ForgotPasswordModal({
           <X
             size={35}
             strokeWidth={2.5}
-            onClick={onClose}
+            onClick={() => {
+              if (!loading) onClose();
+            }}
             className={styles.closeBtn}
           />
         </div>
@@ -137,9 +233,18 @@ export default function ForgotPasswordModal({
               type="button"
               className={styles.primaryBtn}
               disabled={loading}
+              onClick={handleScanFace}
+            >
+              {loadingAction === "scan" ? "กำลังตรวจสอบ..." : "สแกนใบหน้า"}
+            </button>
+
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              disabled={loading}
               onClick={handleSend}
             >
-              {loading ? "กำลังส่ง..." : "กดส่งรหัสผ่าน"}
+              {loadingAction === "send" ? "กำลังส่ง..." : "กดส่งรหัสผ่าน"}
             </button>
 
             <button
@@ -160,7 +265,17 @@ export default function ForgotPasswordModal({
         </>
       </div>
 
-      {resultSuccess ? (
+      {resultSuccess && successMode === "face" ? (
+        <FaceForgetPassSuccessSmsPopUp
+          open={showResult}
+          message={resultMessage}
+          onClose={() => {
+            setShowResult(false);
+            setResultSuccess(false);
+            onClose();
+          }}
+        />
+      ) : resultSuccess ? (
         <BigIconSuccessSmsPopUp
           open={showResult}
           icon={<MailCheck size={80} />}
@@ -185,6 +300,34 @@ export default function ForgotPasswordModal({
           onClose={closeResult}
         />
       )}
+
+      <MoLoadingPopup open={loading} message={loadingMessage || undefined} />
+
+      <VerificationCameraModal
+        open={camOpen}
+        onClose={() => {
+          setCamOpen(false);
+          setLoadingMessage(null);
+          setLoadingAction(null);
+        }}
+        onCaptured={handleFaceCaptured}
+        onReady={() => {
+          setLoadingMessage(null);
+          setLoadingAction(null);
+        }}
+        onSetupError={(message) => {
+          setCamOpen(false);
+          setLoadingMessage(null);
+          setLoadingAction(null);
+          setResultSuccess(false);
+          setResultContacts(undefined);
+          setResultMessage(message);
+          setShowResult(true);
+        }}
+        closeOnBackdrop={false}
+        closeOnEsc={true}
+        modelSettingsPreloaded={true}
+      />
     </div>
   );
 }
