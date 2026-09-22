@@ -6,6 +6,7 @@ import BackButton from "@/components/BackButton";
 import OutOfAreaModal from "@/components/OutOfAreaModal";
 import CameraModal from "@/components/CameraModal";
 import SuccessModal from "@/components/SuccessModal";
+import { scheduleCameraModelPreload } from "@/components/auth/ailoader/modelPreloadScheduler";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCamera, faRotateLeft } from "@fortawesome/free-solid-svg-icons";
@@ -187,6 +188,8 @@ export default function FaceVerify({
   // ✅ กันผลเก่ามาทับ
   const locReqRef = useRef(0);
   const saveReqRef = useRef(0);
+
+  useEffect(() => scheduleCameraModelPreload("verify"), []);
 
   // รีเซ็ตเมื่อเปลี่ยน in/out
   useEffect(() => {

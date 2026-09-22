@@ -3,6 +3,7 @@ export type FaceMode = "register" | "verify";
 export interface FaceVerifyRequest {
   employee_code: string;
   image_data_url: string;
+  purpose?: "login" | "forgot_password" | "generic";
 }
 
 export interface FaceEnrollRequest {

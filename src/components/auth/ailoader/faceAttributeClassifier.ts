@@ -34,7 +34,12 @@ cropCanvas.height = INPUT_SIZE;
 
 export function loadVisionFileset() {
   if (!visionPromise) {
-    visionPromise = FilesetResolver.forVisionTasks(WASM_URL);
+    visionPromise = FilesetResolver.forVisionTasks(WASM_URL).catch(
+      (error: unknown) => {
+        visionPromise = null;
+        throw error;
+      },
+    );
   }
   return visionPromise;
 }
@@ -55,6 +60,8 @@ function loadLegacyFaceAttributeClassifier() {
         return loadedClassifier;
       }),
     ).catch((error: unknown) => {
+      classifier = null;
+      classifierPromise = null;
       classifierLoadFailed = true;
       throw error;
     });

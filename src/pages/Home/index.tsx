@@ -1,4 +1,5 @@
 // src/pages/Home.tsx
+import { useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faClock,
@@ -11,6 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import Header from "@/layout/Header";
+import { scheduleCameraModelPreload } from "@/components/auth/ailoader/modelPreloadScheduler";
 import styles from "./Home.module.css";
 
 type Props = {
@@ -33,6 +35,8 @@ export default function Home({
   onGoUniform,
   onGoOther,
 }: Props) {
+  useEffect(() => scheduleCameraModelPreload("verify"), []);
+
   return (
     <main className="guts-bg">
       <div className={styles.home}>

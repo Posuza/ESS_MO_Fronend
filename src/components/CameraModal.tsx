@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCamera } from "@fortawesome/free-solid-svg-icons";
 import styles from "./CameraModal.module.css";
-
-// ✅ Face Detection (TensorFlow.js)
-import * as tf from "@tensorflow/tfjs";
-import "@tensorflow/tfjs-backend-webgl";
-import * as faceDetection from "@tensorflow-models/face-detection";
+import {
+  loadFaceDetector,
+  type LoadedFaceDetector,
+} from "@/components/auth/ailoader/faceDetectorLoader";
+import { loadFaceModelSettings } from "@/components/auth/ailoader/faceModelSettings";
 
 type Props = {
   open: boolean;
@@ -60,7 +60,7 @@ export default function CameraModal({
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const detectorRef = useRef<faceDetection.FaceDetector | null>(null);
+  const detectorRef = useRef<LoadedFaceDetector | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const [busy, setBusy] = useState(false);
@@ -72,37 +72,6 @@ export default function CameraModal({
   const [faceMessage, setFaceMessage] = useState("กำลังโหลดระบบตรวจจับใบหน้า...");
 
   const [forceEnableCapture, setForceEnableCapture] = useState(false);
-
-  // โหลด detector ครั้งเดียว
-  useEffect(() => {
-    let canceled = false;
-
-    const load = async () => {
-      try {
-        await tf.ready();
-        await tf.setBackend("webgl");
-        await tf.ready();
-
-        const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
-        const detector = await faceDetection.createDetector(model, { runtime: "tfjs" });
-
-        if (canceled) return;
-        detectorRef.current = detector;
-        setDetectorReady(true);
-        setFaceMessage("✅ พร้อมตรวจจับใบหน้า");
-      } catch (e) {
-        console.error("❌ load face detector failed:", e);
-        detectorRef.current = null;
-        setDetectorReady(false);
-        setFaceMessage("❌ ตรวจจับใบหน้าไม่ได้");
-      }
-    };
-
-    load();
-    return () => {
-      canceled = true;
-    };
-  }, []);
 
   // ESC ปิด
   useEffect(() => {
@@ -133,6 +102,22 @@ export default function CameraModal({
       try {
         setBusy(true);
 
+        await loadFaceModelSettings("verify");
+        const detectorLoad = loadFaceDetector()
+          .then((detector) => {
+            if (canceled) return;
+            detectorRef.current = detector;
+            setDetectorReady(true);
+            setFaceMessage("✅ พร้อมตรวจจับใบหน้า");
+          })
+          .catch((error: unknown) => {
+            console.error("❌ load face detector failed:", error);
+            if (canceled) return;
+            detectorRef.current = null;
+            setDetectorReady(false);
+            setFaceMessage("❌ ตรวจจับใบหน้าไม่ได้");
+          });
+
         if (!navigator.mediaDevices?.getUserMedia) {
           setFaceMessage("อุปกรณ์นี้ไม่รองรับการเปิดกล้อง");
           return;
@@ -156,6 +141,7 @@ export default function CameraModal({
           video.onloadedmetadata = async () => {
             try {
               await video.play();
+              await detectorLoad;
               if (canceled) return;
               setIsReady(true);
             } catch {

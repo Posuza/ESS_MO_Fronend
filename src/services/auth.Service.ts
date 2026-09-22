@@ -206,6 +206,87 @@ export const authService = {
   },
 
   /**
+   * Login with employee code and face image
+   */
+  async faceLogin(
+    employee_code: string,
+    image_data_url: string,
+  ): Promise<{
+    success: boolean;
+    data?: unknown;
+    error?: string;
+    message?: string;
+    contacts?: Array<{ team?: string; email?: string }>;
+  }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/face-login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ..._geoHeaders(),
+        },
+        body: JSON.stringify({
+          employee_code,
+          image_data_url,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          success: true,
+          data,
+        };
+      }
+
+      const errorData = await response.json().catch(() => null);
+
+      let message = "";
+      let error_key = undefined;
+      let contacts = undefined;
+
+      if (errorData?.detail) {
+        if (typeof errorData.detail === "object") {
+          message = errorData.detail.message || "เกิดข้อผิดพลาด";
+          error_key = errorData.detail.error;
+
+          if (
+            errorData.detail.contacts &&
+            errorData.detail.contacts.length > 0
+          ) {
+            contacts = errorData.detail.contacts;
+          }
+        } else if (typeof errorData.detail === "string") {
+          message = errorData.detail;
+        }
+      }
+
+      if (!message) {
+        message =
+          response.status === 500
+            ? "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาติดต่อทีมพัฒนา"
+            : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+        if (response.status === 500) {
+          contacts = [{ team: "BE_CORE", email: "be-core@gutsess.com" }];
+        }
+      }
+
+      return {
+        success: false,
+        error: error_key,
+        message,
+        contacts,
+      };
+    } catch (error) {
+      console.error("Face login error:", error);
+      return {
+        success: false,
+        message: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์",
+      };
+    }
+  },
+
+  /**
    * Change password — production mode
    */
   async changePassword(

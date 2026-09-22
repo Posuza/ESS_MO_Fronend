@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import styles from "./VerificationCameraModal.module.css";
+import styles from "./LoginFaceCameraModal.module.css";
 import {
   getFaceAttributeMessage,
   loadFaceAttributeClassifier,
@@ -33,7 +33,6 @@ export type CameraModalProps = {
   /** ถ้าจะให้ปิดด้วยการคลิกฉากหลัง */
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
-  modelSettingsPreloaded?: boolean;
 };
 
 type Point = { x: number; y: number };
@@ -624,7 +623,7 @@ function getLandmarkQualityMessage(
   return null;
 }
 
-export default function VerificationCameraModal({
+export default function LoginFaceCameraModal({
   open,
   onClose,
   onCaptured,
@@ -632,7 +631,6 @@ export default function VerificationCameraModal({
   onSetupError,
   closeOnBackdrop = true,
   closeOnEsc = true,
-  modelSettingsPreloaded = false,
 }: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -719,7 +717,7 @@ export default function VerificationCameraModal({
     }
 
     if (captureReadyRef.current || finalCaptureInFlightRef.current) {
-      console.log("[VerificationCameraModal] green cancelled message:", message);
+      console.log("[LoginFaceCameraModal] green cancelled message:", message);
     }
 
     validSinceRef.current = null;
@@ -763,7 +761,7 @@ export default function VerificationCameraModal({
       };
       resetAttributeCheck();
       resetAntiSpoofCheck();
-      console.log("[VerificationCameraModal] green ready baseline", {
+      console.log("[LoginFaceCameraModal] green ready baseline", {
         eyeDistance: captureReadyEyeDistanceRef.current,
         eyeCenter: captureReadyEyeCenterRef.current,
       });
@@ -777,12 +775,12 @@ export default function VerificationCameraModal({
         0,
         faceDetectorSetting("capture_ready_lock_hold_ms"),
       );
-      console.log("[VerificationCameraModal] auto capture scheduled", {
+      console.log("[LoginFaceCameraModal] auto capture scheduled", {
         lockHoldMs,
       });
       autoCaptureTimerRef.current = window.setTimeout(() => {
         autoCaptureTimerRef.current = null;
-        console.log("[VerificationCameraModal] auto capture timer fired", {
+        console.log("[LoginFaceCameraModal] auto capture timer fired", {
           captureReady: captureReadyRef.current,
           finalCaptureInFlight: finalCaptureInFlightRef.current,
         });
@@ -837,9 +835,7 @@ export default function VerificationCameraModal({
       try {
         setBusy(true);
 
-        if (!modelSettingsPreloaded) {
-          await loadFaceModelSettings("verify");
-        }
+        await loadFaceModelSettings("verify");
 
         if (!detectorRef.current) {
           detectorRef.current = await loadFaceDetector();
@@ -875,8 +871,7 @@ export default function VerificationCameraModal({
               await video.play();
               if (canceled) return;
               await loadFaceAttributeClassifier({
-                skipSettingsReload: modelSettingsPreloaded,
-                mode: "verify",
+                skipSettingsReload: true,
               });
               if (isFaceModelActive("minifasnet_v2")) {
                 await loadAntiSpoofClassifier();
@@ -937,7 +932,7 @@ export default function VerificationCameraModal({
         streamRef.current = null;
       }
     };
-  }, [open, modelSettingsPreloaded]);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !isReady) return;
@@ -1063,7 +1058,7 @@ export default function VerificationCameraModal({
           );
           stablePointsRef.current = points;
           if (movement > faceDetectorSetting("max_capture_ready_face_movement")) {
-            console.log("[VerificationCameraModal] green hold cancelled by movement", {
+            console.log("[LoginFaceCameraModal] green hold cancelled by movement", {
               movement,
               limit: faceDetectorSetting("max_capture_ready_face_movement"),
             });
@@ -1077,7 +1072,7 @@ export default function VerificationCameraModal({
             captureReadyEyeCenterRef.current,
           );
           if (lockMessage) {
-            console.log("[VerificationCameraModal] green hold cancelled by lock", {
+            console.log("[LoginFaceCameraModal] green hold cancelled by lock", {
               lockMessage,
               readyEyeDistance: captureReadyEyeDistanceRef.current,
               readyEyeCenter: captureReadyEyeCenterRef.current,
@@ -1265,7 +1260,7 @@ export default function VerificationCameraModal({
     const previewCanvas = previewCanvasRef.current;
     const canvas = canvasRef.current;
     const detector = detectorRef.current;
-    console.log("[VerificationCameraModal] capture requested", {
+    console.log("[LoginFaceCameraModal] capture requested", {
       auto,
       hasVideo: !!video,
       hasPreviewCanvas: !!previewCanvas,
@@ -1276,23 +1271,23 @@ export default function VerificationCameraModal({
       finalCaptureInFlight: finalCaptureInFlightRef.current,
     });
     if (!video || !previewCanvas || !canvas || !detector || (!auto && !captureReady)) {
-      console.log("[VerificationCameraModal] capture skipped: missing dependency or not ready");
+      console.log("[LoginFaceCameraModal] capture skipped: missing dependency or not ready");
       return;
     }
     if (finalCaptureInFlightRef.current) {
-      console.log("[VerificationCameraModal] capture skipped: already in flight");
+      console.log("[LoginFaceCameraModal] capture skipped: already in flight");
       return;
     }
 
     const failCapture = (message: string) => {
-      console.log("[VerificationCameraModal] capture failed", { message });
+      console.log("[LoginFaceCameraModal] capture failed", { message });
       finalCaptureInFlightRef.current = false;
       setInvalidFaceMessage(message, true);
     };
 
     finalCaptureInFlightRef.current = true;
     setBusy(true);
-    console.log("[VerificationCameraModal] final capture started");
+    console.log("[LoginFaceCameraModal] final capture started");
 
     if (!drawMirroredCoverFrame(video, previewCanvas)) {
       failCapture("กล้องกำลังเริ่มทำงาน...");
@@ -1320,7 +1315,7 @@ export default function VerificationCameraModal({
     }
 
     const face = faces[0];
-    console.log("[VerificationCameraModal] final face detected", {
+    console.log("[LoginFaceCameraModal] final face detected", {
       faces: faces.length,
       box: normalizeDetectedFaceBox(face),
     });
@@ -1349,7 +1344,7 @@ export default function VerificationCameraModal({
 
     ctx.drawImage(video, 0, 0, width, height);
     const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-    console.log("[VerificationCameraModal] capture success", {
+    console.log("[LoginFaceCameraModal] capture success", {
       width,
       height,
       dataUrlLength: dataUrl.length,

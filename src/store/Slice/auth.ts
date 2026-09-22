@@ -30,6 +30,7 @@ export interface AuthSlice {
 
   // Actions
   login: (employee_code: string, password: string) => Promise<boolean>;
+  faceLogin: (employee_code: string, imageDataUrl: string) => Promise<boolean>;
   logout: (employee_code: string) => Promise<boolean>;
   clearAuthError: () => void;
   changePassword: (
@@ -85,6 +86,44 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
       set({
         authLoading: false,
         authError: result.message || "เข้าสู่ระบบไม่สำเร็จ",
+        authErrorKey: result.error || null,
+        authContacts: result.contacts,
+      });
+      return false;
+    } catch {
+      set({ authLoading: false, authError: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์" });
+      return false;
+    }
+  },
+
+  faceLogin: async (employee_code, imageDataUrl) => {
+    set({
+      authLoading: true,
+      authError: null,
+      authErrorKey: null,
+      authContacts: undefined,
+    });
+    try {
+      const result = await authService.faceLogin(employee_code, imageDataUrl);
+
+      if (result.success && result.data) {
+        const emp: AuthEmployee = (result.data as { employee: AuthEmployee })
+          .employee;
+        const displayName =
+          `${emp.first_name} ${emp.last_name}`.trim() || emp.employee_code;
+
+        sessionStorage.setItem("emp_code", emp.employee_code);
+        sessionStorage.setItem("display_name", displayName);
+        sessionStorage.setItem("auth_employee", JSON.stringify(emp));
+        sessionStorage.setItem("login_time", String(Date.now()));
+
+        set({ authEmployee: emp, authLoading: false, authError: null });
+        return true;
+      }
+
+      set({
+        authLoading: false,
+        authError: result.message || "เข้าสู่ระบบด้วยใบหน้าไม่สำเร็จ",
         authErrorKey: result.error || null,
         authContacts: result.contacts,
       });

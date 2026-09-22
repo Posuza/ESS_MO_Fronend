@@ -26,13 +26,18 @@ async function createDetector(detectorModelUrl: string) {
 
 export function loadFaceDetector() {
   if (!detectorPromise) {
-    detectorPromise = createDetector(LOCAL_DETECTOR_MODEL_URL).catch((error: unknown) => {
-      console.warn(
-        "[FaceDetector] Local TFJS detector failed; falling back to TFHub.",
-        error,
-      );
-      return createDetector(TFHUB_DETECTOR_MODEL_URL);
-    });
+    detectorPromise = createDetector(LOCAL_DETECTOR_MODEL_URL)
+      .catch((error: unknown) => {
+        console.warn(
+          "[FaceDetector] Local TFJS detector failed; falling back to TFHub.",
+          error,
+        );
+        return createDetector(TFHUB_DETECTOR_MODEL_URL);
+      })
+      .catch((error: unknown) => {
+        detectorPromise = null;
+        throw error;
+      });
   }
 
   return detectorPromise;

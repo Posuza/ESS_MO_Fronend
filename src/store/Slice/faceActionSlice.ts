@@ -12,6 +12,7 @@ export interface FaceActionSlice {
   verifyEmployeeFace: (
     employeeCode: string,
     imageDataUrl: string,
+    purpose?: "login" | "forgot_password" | "generic",
   ) => Promise<FaceVerifyResult>;
   enrollEmployeeFace: (
     employeeCode: string,
@@ -48,11 +49,12 @@ export const createFaceActionSlice: StateCreator<
     }
   },
 
-  verifyEmployeeFace: async (employeeCode, imageDataUrl) => {
+  verifyEmployeeFace: async (employeeCode, imageDataUrl, purpose = "generic") => {
     set({ faceActionBusy: true, faceActionError: "", faceVerifyResult: null });
     const result = await faceVerifyService.verify({
       employee_code: employeeCode,
       image_data_url: imageDataUrl,
+      purpose,
     });
     set({
       faceVerifyResult: result,

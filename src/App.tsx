@@ -1,4 +1,3 @@
-// src/App.tsx
 import {
   Suspense,
   lazy,
@@ -11,7 +10,8 @@ import { useStore } from "./store/store";
 import LogoutPopUp, {
   type LogoutStatus,
 } from "./components/auth/popup/LogoutPopUp";
-const Login = lazy(() => import("./pages/Login"));
+
+const Login = lazy(() => import("./pages/Login/Login"));
 const Home = lazy(() => import("./pages/Home"));
 import Mo from "./pages/Mo/Mo";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -25,6 +25,7 @@ type Route =
   | "checkInOut"
   | "faceVerify"
   | "mo";
+
 type PunchType = "in" | "out";
 
 export default function App() {
