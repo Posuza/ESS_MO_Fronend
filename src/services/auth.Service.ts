@@ -23,7 +23,47 @@ export interface ForgotPasswordResponse {
   contacts?: Array<{ team?: string; email?: string }>;
 }
 
+export type EssEmployeeProfile = {
+  employee_code: string;
+  email: string | null;
+  first_name: string;
+  last_name: string;
+  role_name: string;
+  name_prefix: string;
+  field_id?: number | null;
+  field_name?: string | null;
+  position_id?: number | null;
+  position_name: string;
+  department_id?: number | null;
+  department_name?: string | null;
+  division_id?: number | null;
+  division_name?: string | null;
+  route_id?: number | null;
+  route_name?: string | null;
+};
+
 export const authService = {
+  /** Resolve an ESS employee ID to the local, non-secret employee profile. */
+  async getEssEmployeeProfile(employeeId: string): Promise<{
+    success: boolean;
+    employee?: EssEmployeeProfile;
+    message?: string;
+  }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/ess/profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ..._geoHeaders() },
+        body: JSON.stringify({ employee_id: employeeId }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.employee) {
+        return { success: false, message: data?.detail || "ไม่พบข้อมูลพนักงาน" };
+      }
+      return { success: true, employee: data.employee };
+    } catch {
+      return { success: false, message: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์" };
+    }
+  },
   /**
    * Send forgot password request - sends password to employee's registered email
    */

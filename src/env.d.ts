@@ -8,6 +8,15 @@ declare module '*.json' {
 
 declare module 'html2pdf.js';
 
+interface ImportMetaEnv {
+  readonly VITE_API_URL?: string;
+  readonly VITE_ESS_PUBLIC_KEY: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 // config JS modules without types
 declare module '../config/api.config' {
   export const API_URL: any;

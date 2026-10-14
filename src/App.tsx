@@ -8,10 +8,19 @@ import {
   useState,
 } from "react";
 import { useStore } from "./store/store";
+import { authService, type EssEmployeeProfile } from "./services/auth.Service";
+import {
+  getEssAuth,
+  loginWithEss,
+  logoutFromEss,
+} from "./services/ess-auth";
+import type { AuthEmployee } from "./store/Slice/auth";
 import LogoutPopUp, {
   type LogoutStatus,
 } from "./components/auth/popup/LogoutPopUp";
-const Login = lazy(() => import("./pages/Login"));
+// Legacy password login is preserved in ./pages/Login but ESS now owns the
+// complete login/logout flow, so the component is intentionally not mounted.
+// const Login = lazy(() => import("./pages/Login"));
 const Home = lazy(() => import("./pages/Home"));
 import Mo from "./pages/Mo/Mo";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -26,12 +35,122 @@ type Route =
   | "faceVerify"
   | "mo";
 type PunchType = "in" | "out";
+type EssState =
+  | { status: "loading" }
+  | { status: "anonymous" }
+  | { status: "authenticated"; employeeId: string }
+  | { status: "error"; message: string };
+
+function toAuthEmployee(profile: EssEmployeeProfile): AuthEmployee {
+  return {
+    employee_code: profile.employee_code,
+    email: profile.email,
+    first_name: profile.first_name,
+    last_name: profile.last_name,
+    role_name: profile.role_name,
+    name_prefix: profile.name_prefix,
+    field_id: profile.field_id,
+    field_name: profile.field_name,
+    position_id: profile.position_id,
+    position_name: profile.position_name,
+    department_id: profile.department_id,
+    department_name: profile.department_name,
+    division_id: profile.division_id,
+    division_name: profile.division_name,
+    route: profile.route_name,
+  };
+}
 
 export default function App() {
-  // Restore session on refresh — if emp_code exists in sessionStorage, skip login
+  const [essState, setEssState] = useState<EssState>({ status: "loading" });
+
+  // The SDK is initialized once at the application boundary. The shared
+  // promise also protects React Strict Mode from creating two instances.
+  useEffect(() => {
+    let active = true;
+
+    getEssAuth()
+      .then(async (auth) => {
+        if (!active) return;
+        if (auth.error) {
+          setEssState({ status: "error", message: auth.error.message });
+          return;
+        }
+        if (!auth.employeeId) {
+          setEssState({ status: "anonymous" });
+          // Start ESS login immediately on the first unauthenticated load.
+          // ESS will return to the current URL after the callback.
+          void loginWithEss().catch((error: unknown) => {
+            if (active) {
+              setEssState({
+                status: "error",
+                message:
+                  error instanceof Error ? error.message : "ESS unavailable",
+              });
+            }
+          });
+          return;
+        }
+
+        const result = await authService.getEssEmployeeProfile(auth.employeeId);
+        if (!active) return;
+        if (!result.success || !result.employee) {
+          setEssState({
+            status: "error",
+            message: result.message || "ไม่พบข้อมูลพนักงาน",
+          });
+          return;
+        }
+
+        const employee = toAuthEmployee(result.employee);
+        const displayName =
+          `${employee.first_name} ${employee.last_name}`.trim() ||
+          employee.employee_code;
+        sessionStorage.setItem("emp_code", employee.employee_code);
+        sessionStorage.setItem("display_name", displayName);
+        sessionStorage.setItem("auth_employee", JSON.stringify(employee));
+        sessionStorage.setItem("login_time", String(Date.now()));
+        useStore.setState({ authEmployee: employee });
+        setEssState({ status: "authenticated", employeeId: auth.employeeId });
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setEssState({
+            status: "error",
+            message: error instanceof Error ? error.message : "ESS unavailable",
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (essState.status === "loading" || essState.status === "anonymous") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        กำลังเชื่อมต่อ ESS...
+      </div>
+    );
+  }
+  if (essState.status === "error") return <p>ESS unavailable: {essState.message}</p>;
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
+
+  // ESS is already authenticated before this application shell is mounted.
   const savedRoute = sessionStorage.getItem("app_route") as Route | null;
-  const isLoggedIn = !!sessionStorage.getItem("emp_code");
-  const initialRoute: Route = savedRoute && isLoggedIn ? savedRoute : "login";
+  const initialRoute: Route =
+    savedRoute && savedRoute !== "login" ? savedRoute : "home";
   const [stack, setStack] = useState<Route[]>([initialRoute]);
   const route = stack[stack.length - 1];
 
@@ -50,7 +169,8 @@ export default function App() {
     const loginTime = sessionStorage.getItem("login_time");
     if (loginTime && Date.now() - Number(loginTime) > SESSION_TIMEOUT_MS) {
       sessionStorage.clear();
-      window.location.reload();
+      useStore.setState({ authEmployee: null });
+      void logoutFromEss().finally(() => window.location.reload());
       return false;
     }
     return true;
@@ -102,38 +222,33 @@ export default function App() {
     setLogoutStatus("attempt");
     setShowLogoutPopup(true);
 
-    // Start logout in background — popup waits
+    // Record the local audit event before ESS potentially redirects away.
     const code = sessionStorage.getItem("emp_code");
     const p = useStore.getState().logout(code || "");
     logoutPromiseRef.current = p;
+    await p;
 
-    const ok = await p;
-    if (ok) {
+    try {
+      await logoutFromEss();
+      sessionStorage.removeItem("emp_code");
+      sessionStorage.removeItem("display_name");
+      sessionStorage.removeItem("auth_employee");
+      sessionStorage.removeItem("app_route");
+      useStore.setState({ authEmployee: null });
       // Small delay so user sees the attempt state briefly
       setTimeout(() => setLogoutStatus("success"), 600);
-    } else {
+    } catch {
       setLogoutStatus("fail");
     }
   }
 
-  const onLogoutPopupClose = useCallback(async () => {
+  const onLogoutPopupClose = useCallback(() => {
     setShowLogoutPopup(false);
-    reset("login");
+    window.location.reload();
   }, []);
 
   const onLogoutRetry = useCallback(() => {
-    setLogoutStatus("attempt");
-    // Re-run logout
-    const code = sessionStorage.getItem("emp_code");
-    const p = useStore.getState().logout(code || "");
-    logoutPromiseRef.current = p;
-    p.then((ok) => {
-      if (ok) {
-        setTimeout(() => setLogoutStatus("success"), 600);
-      } else {
-        setLogoutStatus("fail");
-      }
-    });
+    void onLogout();
   }, []);
 
   function goFaceVerify(type: PunchType) {
@@ -176,7 +291,7 @@ export default function App() {
       }
     >
       <>
-        {route === "login" && <Login onLoginSuccess={() => reset("home")} />}
+        {/* Legacy password login is intentionally not rendered. */}
 
         {route === "home" && (
           <Home

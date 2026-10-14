@@ -5,7 +5,9 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,
+    host: "127.0.0.1",
+    port: 4101,
+    strictPort: true,
     allowedHosts: ["guts.n6t.online"],
     proxy: {
       "/api": {

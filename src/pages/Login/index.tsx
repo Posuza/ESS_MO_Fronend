@@ -10,9 +10,10 @@ import styles from "./Login.module.css";
 
 type Props = {
   onLoginSuccess: (empCode: string, displayName: string) => void;
+  onEssLogin: () => void;
 };
 
-export default function Login({ onLoginSuccess }: Props) {
+export default function Login({ onLoginSuccess, onEssLogin }: Props) {
   const [empCode, setEmpCode] = useState(
     () => sessionStorage.getItem("emp_code") || "",
   );
@@ -91,7 +92,9 @@ export default function Login({ onLoginSuccess }: Props) {
     return await changePassword(empCode, oldPin, newPin);
   };
 
-  return (
+  // Existing branded login UI remains the fallback if ESS cannot redirect.
+  if (true) {
+    return (
     <main className={styles["guts-bg"]}>
       {/* ✅ ใช้ Header ร่วมทุกหน้า */}
       <div
@@ -269,6 +272,29 @@ export default function Login({ onLoginSuccess }: Props) {
           setFirstLoginOpen(false);
         }}
       />
+    </main>
+    );
+  }
+
+  return (
+    <main className={styles["guts-bg"]}>
+      <div
+        className={styles["guts-app-header"]}
+        aria-label="Employee Self Service"
+      >
+        <Header showUserCard={false} />
+      </div>
+      <section className={styles["guts-card"]} aria-label="ESS login">
+        <div className={styles["guts-card-title"]}>เข้าสู่ระบบ</div>
+        <p>เข้าสู่ระบบผ่าน Employee Self Service</p>
+        <button
+          className={styles["guts-btn"]}
+          type="button"
+          onClick={onEssLogin}
+        >
+          Sign in with ESS
+        </button>
+      </section>
     </main>
   );
 }

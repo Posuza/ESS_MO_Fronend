@@ -44,7 +44,14 @@ Copy `.env.development` or `.env.production` and set your API endpoint:
 
 ```
 VITE_API_URL=https://your-api-endpoint
+VITE_ESS_PUBLIC_KEY=Tg2wbdIU3C0JRfSX
 ```
+
+ESS initializes once in `src/App.tsx` through the shared
+`src/services/ess-auth.ts` service. The browser-verified employee ID is used
+to bootstrap a local profile from `/api/v1/auth/ess/profile`; it must not be
+used by itself as authorization for sensitive backend operations. Those
+operations still require a backend-verifiable session or ESS token.
 
 ---
 
