@@ -8,10 +8,10 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 4101,
     strictPort: true,
-    allowedHosts: ["guts.n6t.online"],
+    allowedHosts: [".trycloudflare.com"],
     proxy: {
       "/api": {
-        target: "http://localhost:8000",
+        target: "http://127.0.0.1:8001",
         changeOrigin: true,
       },
     },
@@ -23,17 +23,9 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ["@mediapipe/face_mesh"],
       output: {
         manualChunks: {
           "vendor-react": ["react", "react-dom"],
-          "vendor-tf": [
-            "@tensorflow/tfjs",
-            "@tensorflow/tfjs-backend-webgl",
-            "@tensorflow-models/face-detection",
-            "@tensorflow-models/coco-ssd",
-            "@mediapipe/face_detection",
-          ],
           "vendor-leaflet": ["leaflet", "react-leaflet"],
           "vendor-d3": ["d3-selection", "d3-zoom"],
           "vendor-maps": ["react-simple-maps", "topojson-client"],

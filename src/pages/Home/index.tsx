@@ -1,12 +1,7 @@
 // src/pages/Home.tsx
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faClock,
-  faBed,
   faUsers,
-  faGavel,
-  faShirt,
-  faEllipsis,
   faRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -15,7 +10,6 @@ import styles from "./Home.module.css";
 
 type Props = {
   onLogout: () => void;
-  onGoCheckInOut: () => void;
   onGoLeaveOnline: () => void;
 
   onGoMo?: () => void;
@@ -26,7 +20,6 @@ type Props = {
 
 export default function Home({
   onLogout,
-  onGoCheckInOut,
   onGoLeaveOnline,
   onGoMo,
   onGoDiscipline,
@@ -43,19 +36,6 @@ export default function Home({
 
           <div className={styles.menuStack}>
             {/*
-            <button
-              type="button"
-              className={styles.menuBtn}
-              onClick={onGoCheckInOut}
-            >
-              <div className={styles.menuBox}>
-                <div className={styles.iconWrap} aria-hidden="true">
-                  <FontAwesomeIcon className={styles.fa} icon={faClock} />
-                </div>
-                <div className={styles.text}>ลงเวลา เข้า-ออกงาน</div>
-              </div>
-            </button>
-
             <button
               type="button"
               className={styles.menuBtn}

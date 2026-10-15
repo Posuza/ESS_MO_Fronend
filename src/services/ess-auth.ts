@@ -1,6 +1,7 @@
 const bucket = Math.floor(Date.now() / 300_000);
+
 const SDK_URL =
-  `https://cdn.jsdelivr.net/gh/Posuza/EssAuth@1/cdn/v1/index.js?v=${bucket}`;
+  `https://cdn.jsdelivr.net/gh/Posuza/EssAuth@release-v1/cdn/v1/index.js?v=${bucket}`;
 
 export type EssAuthClient = {
   employeeId: string | null;
@@ -11,11 +12,14 @@ export type EssAuthClient = {
 
 let authPromise: Promise<EssAuthClient> | undefined;
 
-/** Return the one shared ESS SDK instance for the entire application. */
 export function getEssAuth(): Promise<EssAuthClient> {
-  authPromise ??= import(/* @vite-ignore */ SDK_URL).then(({ default: EssAuth }) =>
-    EssAuth.init({ publicKey: import.meta.env.VITE_ESS_PUBLIC_KEY }),
+  authPromise ??= import(/* @vite-ignore */ SDK_URL).then(
+    ({ default: EssAuth }) =>
+      EssAuth.init({
+        publicKey: import.meta.env.VITE_ESS_PUBLIC_KEY,
+      }),
   );
+
   return authPromise;
 }
 
