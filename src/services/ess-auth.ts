@@ -1,9 +1,4 @@
-const SDK_URL =
-  `https://options-carpet-gravity-pickup.trycloudflare.com/sdk/v1/index.js?v=${Date.now()}`;
-
-
-
-
+const SDK_URL = "https://ess-faceregister.esscentor.com/sdk/v1/index.js";
 export type EssAuthClient = {
   employeeId: string | null;
   error: Error | null;
