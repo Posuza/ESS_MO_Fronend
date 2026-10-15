@@ -1,5 +1,5 @@
 const SDK_URL =
-  `https://cdn.jsdelivr.net/gh/Posuza/EssAuth@release-v1/cdn/v1/index.js?v=${Date.now()}`;
+  `https://cdn.jsdelivr.net/gh/Posuza/EssAuth@1/cdn/v1/index.js?v=${Date.now()}`;
 
 
 export type EssAuthClient = {
