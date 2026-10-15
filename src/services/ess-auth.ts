@@ -1,5 +1,6 @@
 const SDK_URL =
-  `https://cradle-imports-caring-blast.trycloudflare.com/sdk/v1/index.js?v=${Date.now()}`;
+  `https://options-carpet-gravity-pickup.trycloudflare.com/sdk/v1/index.js?v=${Date.now()}`;
+
 
 
 
