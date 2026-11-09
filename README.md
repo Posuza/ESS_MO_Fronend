@@ -43,9 +43,9 @@ The production-ready files will be in the `dist/` folder.
 Copy `.env.example` to `.env` for local development and set your endpoints:
 
 ```
-VITE_API_URL=https://your-api-endpoint
-VITE_ESS_PUBLIC_KEY=Tg2wbdIU3C0JRfSX
-VITE_ESS_SDK_ORIGIN=https://ess-faceregister.esscentor.com
+VITE_API_URL=/api/v1
+VITE_ESS_PUBLIC_KEY=ZjO4FYk9acszpjuo
+VITE_ESS_SDK_ORIGIN=http://183.90.173.206:9091
 ```
 
 The tracked `.env.production` supplies the default SDK origin for production
