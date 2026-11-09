@@ -40,12 +40,18 @@ The production-ready files will be in the `dist/` folder.
 
 ### Environment Variables
 
-Copy `.env.development` or `.env.production` and set your API endpoint:
+Copy `.env.example` to `.env` for local development and set your endpoints:
 
 ```
 VITE_API_URL=https://your-api-endpoint
 VITE_ESS_PUBLIC_KEY=Tg2wbdIU3C0JRfSX
+VITE_ESS_SDK_ORIGIN=https://ess-faceregister.esscentor.com
 ```
+
+The tracked `.env.production` supplies the default SDK origin for production
+builds. The frontend appends `/sdk/v1/index.js`. A deployment can override the
+origin with `VITE_ESS_SDK_ORIGIN` at build time; changing it requires rebuilding
+the frontend.
 
 ESS initializes once in `src/App.tsx` through the shared
 `src/services/ess-auth.ts` service. The browser-verified employee ID is used

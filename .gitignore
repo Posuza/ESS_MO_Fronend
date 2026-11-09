@@ -41,6 +41,7 @@ env/
 .env.test
 .env.test.local
 .env.production
+!.env.production
 .env.production.local
 .env.staging
 .env.staging.local

@@ -11,6 +11,7 @@ declare module 'html2pdf.js';
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
   readonly VITE_ESS_PUBLIC_KEY: string;
+  readonly VITE_ESS_SDK_ORIGIN: string;
 }
 
 interface ImportMeta {

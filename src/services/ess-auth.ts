@@ -1,4 +1,7 @@
-const SDK_URL = "https://ess-faceregister.esscentor.com/sdk/v1/index.js";
+const SDK_URL = new URL(
+  "/sdk/v1/index.js",
+  import.meta.env.VITE_ESS_SDK_ORIGIN,
+).href;
 export type EssAuthClient = {
   employeeId: string | null;
   error: Error | null;
